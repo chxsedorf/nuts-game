@@ -1233,6 +1233,35 @@ export default function Home() {
           mix-blend-mode: overlay;
           opacity: 0.36;
         }
+
+        .slot-surface {
+          background:
+            radial-gradient(circle at 30% 24%, rgba(127, 208, 164, 0.08), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.055), rgba(0,0,0,0.22)),
+            #102b24;
+        }
+
+        .slot-surface::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 7px;
+          border: 2px solid rgba(127, 208, 164, 0.22);
+          border-radius: 0.65rem;
+          box-shadow: inset 2px 2px 0 rgba(255,255,255,0.05), inset -3px -3px 0 rgba(0,0,0,0.22);
+        }
+
+        .slot-surface::after {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          border-radius: 0.75rem;
+          box-shadow:
+            inset 0 0 0 3px #061811,
+            inset 0 0 0 6px rgba(41, 91, 77, 0.58),
+            inset 0 -12px 20px rgba(0,0,0,0.22);
+        }
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -1328,9 +1357,9 @@ export default function Home() {
 
           <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 md:h-[calc(100vh-118px)] md:grid-cols-[minmax(420px,1fr)_260px] lg:h-[calc(100vh-142px)] lg:grid-cols-[minmax(720px,920px)_380px] xl:gap-3 2xl:grid-cols-[minmax(780px,980px)_430px]">
 <div className="flex min-h-0 flex-col">
-              <section className="flex min-h-0 flex-1 flex-col rounded-2xl border-[5px] border-[#061811] bg-[#0b2f27] p-2 shadow-[6px_6px_0_#04120d,0_0_0_2px_#255d48_inset]">
-                <div className="mb-1 flex h-5 items-center justify-between">
-                  <p className="text-xs font-black tracking-[0.25em] text-[#f5d06f]">
+              <section className="relative flex min-h-0 flex-1 flex-col rounded-2xl border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
+                <div className="mb-2 flex h-7 items-center justify-between">
+                  <p className="rounded-md border-[3px] border-[#061811] bg-[#123f32] px-3 py-1 text-xs font-black tracking-[0.25em] text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
                     BOARD
                   </p>
 
@@ -1344,7 +1373,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-[#061811] bg-[#09231d] p-2 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_24px_rgba(0,0,0,0.48)] lg:aspect-auto lg:max-h-none">
+                <div className="relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-2 rounded-2xl border-[5px] border-[#061811] bg-[#09231d] p-3 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none">
                   {game.board.map((boardRow, rowIndex) =>
                     boardRow.map((cell, colIndex) => {
                       const cellKey = keyOf(rowIndex, colIndex);
@@ -1366,12 +1395,12 @@ export default function Home() {
                           onClick={() => placeCard(rowIndex, colIndex)}
                           disabled={!!cell || game.isGameOver}
                           className={[
-                            "relative h-full min-h-0 rounded-xl border-[3px] transition duration-200",
+                            "relative h-full min-h-0 overflow-hidden rounded-xl border-[3px] transition duration-200",
                             cell
-                              ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[3px_3px_0_#04120d]"
-                              : "border-[#061811] bg-[#132e27] shadow-[2px_2px_0_#04120d,inset_0_0_0_2px_#295b4d]",
+                              ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
+                              : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
                             canPlace
-                              ? "cursor-pointer bg-[#173f34] shadow-[0_0_0_3px_#f5d06f,4px_4px_0_#04120d] hover:-translate-y-1 hover:bg-[#215948]"
+                              ? "cursor-pointer shadow-[0_0_0_3px_#f5d06f,4px_4px_0_#04120d] hover:-translate-y-1 hover:brightness-125"
                               : "",
                             !cell && !canPlace ? "hover:bg-[#1c4639]" : "",
                             isHighlighted
@@ -1391,7 +1420,9 @@ export default function Home() {
                         >
                           {cell ? (
                             <>
-                              <CardFace card={cell} size="normal" />
+                              <div className="mx-auto h-full max-h-full aspect-[5/7] max-w-[76%]">
+                                <CardFace card={cell} size="normal" />
+                              </div>
 
                               {isHighlighted && (
                                 <div
@@ -1411,11 +1442,11 @@ export default function Home() {
                           ) : (
                             <span
                               className={[
-                                "text-2xl font-black",
-                                canPlace ? "text-[#f5d06f]" : "text-[#7fbfa0]/25",
+                                "relative z-10 text-3xl font-black",
+                                canPlace ? "text-[#f5d06f]" : "text-[#7fbfa0]/22",
                               ].join(" ")}
                             >
-                              ♣
+                              ♠
                             </span>
                           )}
                         </button>
