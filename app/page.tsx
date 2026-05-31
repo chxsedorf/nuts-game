@@ -71,6 +71,7 @@ type ResultBanner = {
   text: string;
   score: number;
   combo: number;
+  comboNext?: number;
   isBreak?: boolean;
 };
 
@@ -143,6 +144,66 @@ const scoreTable = {
   fullHouse: 150,
 };
 
+
+function getComboTier(combo: number) {
+  if (combo >= 50) {
+    return {
+      label: "LIMITLESS",
+      tone: "from-[#fff4cf] via-[#f0a536] to-[#d23a2f]",
+      glow: "rgba(255, 239, 122, 0.95)",
+      text: "text-[#fff4cf]",
+      intensity: 4,
+    };
+  }
+
+  if (combo >= 25) {
+    return {
+      label: "GOD RUN",
+      tone: "from-[#6ee7ff] via-[#ffef7a] to-[#f0a536]",
+      glow: "rgba(110, 231, 255, 0.9)",
+      text: "text-[#6ee7ff]",
+      intensity: 3.4,
+    };
+  }
+
+  if (combo >= 15) {
+    return {
+      label: "OVERDRIVE",
+      tone: "from-[#f0a536] via-[#ffef7a] to-[#d23a2f]",
+      glow: "rgba(240, 165, 54, 0.85)",
+      text: "text-[#ffef7a]",
+      intensity: 2.8,
+    };
+  }
+
+  if (combo >= 8) {
+    return {
+      label: "FEVER",
+      tone: "from-[#35b66a] via-[#f5d06f] to-[#f0a536]",
+      glow: "rgba(245, 208, 111, 0.78)",
+      text: "text-[#f5d06f]",
+      intensity: 2.15,
+    };
+  }
+
+  if (combo >= 4) {
+    return {
+      label: "HEATING",
+      tone: "from-[#123f32] via-[#35b66a] to-[#f5d06f]",
+      glow: "rgba(53, 182, 106, 0.62)",
+      text: "text-[#8bd8af]",
+      intensity: 1.5,
+    };
+  }
+
+  return {
+    label: "CHAIN",
+    tone: "from-[#07160f] via-[#123f32] to-[#0b2f27]",
+    glow: "rgba(127, 208, 164, 0.38)",
+    text: "text-[#d8eadc]",
+    intensity: 1,
+  };
+}
 
 function createEmptyBoard(): Board {
   return Array.from({ length: BOARD_SIZE }, () =>
@@ -1428,6 +1489,7 @@ export default function Home() {
         text: resultText,
         score: gainedScore,
         combo: game.combo,
+        comboNext: hasHand ? nextCombo : undefined,
         isBreak: resultText === "COMBO BROKEN",
       });
 
@@ -1522,6 +1584,10 @@ export default function Home() {
       ? "THE TABLE REMEMBERS"
       : "ONE MORE DEAL";
 
+  const currentComboTier = getComboTier(game.combo);
+  const resultComboTier = resultBanner ? getComboTier(resultBanner.combo) : null;
+  const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
+
   return (
     <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#1b0f2e] text-white md:h-screen md:overflow-hidden">
       <style>{`
@@ -1529,6 +1595,27 @@ export default function Home() {
           0% { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-3deg); }
           15% { opacity: 1; transform: translateY(0) scale(1.08) rotate(2deg); }
           100% { opacity: 0; transform: translateY(-80px) scale(1.2) rotate(-2deg); }
+        }
+
+        @keyframes comboAuraPulse {
+          0%, 100% { opacity: 0.58; transform: scale(1); filter: blur(0px); }
+          50% { opacity: 0.95; transform: scale(1.04); filter: blur(1px); }
+        }
+
+        @keyframes comboBadgeSlam {
+          0% { opacity: 0; transform: translate(-50%, -18px) scale(0.82) rotate(-4deg); }
+          36% { opacity: 1; transform: translate(-50%, 4px) scale(1.12) rotate(2deg); }
+          100% { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(-1deg); }
+        }
+
+        @keyframes comboElectric {
+          0%, 100% { transform: translateY(0) rotate(-1deg); text-shadow: 4px 4px 0 #03100b, 0 0 12px rgba(245,208,111,0.55); }
+          50% { transform: translateY(-2px) rotate(1deg); text-shadow: 5px 5px 0 #03100b, 0 0 24px rgba(245,208,111,0.95), 0 0 38px rgba(110,231,255,0.55); }
+        }
+
+        @keyframes comboStripe {
+          0% { background-position: 0 0; }
+          100% { background-position: 64px 0; }
         }
 
         @keyframes cardPop {
@@ -1801,6 +1888,47 @@ export default function Home() {
 
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
 
+      {isComboAuraVisible && (
+        <div className="pointer-events-none fixed inset-0 z-[12] overflow-hidden">
+          <div
+            className="absolute inset-[-18%] opacity-25"
+            style={{
+              background: `radial-gradient(circle at 50% 35%, ${currentComboTier.glow}, transparent 34%), radial-gradient(circle at 22% 80%, rgba(110,231,255,0.32), transparent 28%), radial-gradient(circle at 82% 74%, rgba(240,165,54,0.36), transparent 30%)`,
+              animation: `comboAuraPulse ${Math.max(0.9, 2.6 - currentComboTier.intensity * 0.28)}s ease-in-out infinite`,
+              boxShadow: `inset 0 0 ${36 + game.combo * 2}px ${currentComboTier.glow}`,
+            }}
+          />
+          <div
+            className="absolute inset-x-0 top-0 h-16 opacity-35"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(255,239,122,0.55) 20px, transparent 24px)",
+              animation: "comboStripe 720ms linear infinite",
+            }}
+          />
+        </div>
+      )}
+
+      {isComboAuraVisible && (
+        <div
+          className="pointer-events-none fixed left-1/2 top-[118px] z-[65] rounded-2xl border-[5px] border-[#061811] bg-[#0b2f27]/95 px-5 py-2 text-center shadow-[7px_7px_0_#020806]"
+          style={{
+            animation: "comboBadgeSlam 360ms cubic-bezier(.2,1.3,.25,1) both",
+            boxShadow: `7px 7px 0 #020806, 0 0 ${12 + game.combo * 1.8}px ${currentComboTier.glow}`,
+          }}
+        >
+          <p className={`text-[10px] font-black tracking-[0.35em] ${currentComboTier.text}`}>
+            {currentComboTier.label}
+          </p>
+          <p
+            className="mt-0.5 text-4xl font-black leading-none text-[#ffef7a]"
+            style={{ animation: "comboElectric 760ms ease-in-out infinite" }}
+          >
+            x{game.combo}
+          </p>
+        </div>
+      )}
+
       <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#07120f] px-6 text-center text-white md:hidden landscape:hidden">
         <div className="rounded-2xl border-[5px] border-black bg-[#0b3a2b] p-6 shadow-[8px_8px_0_#000]">
           <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#f0a536]">
@@ -2015,7 +2143,7 @@ export default function Home() {
                           "absolute left-1/2 top-1/2 min-w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-[6px] px-5 py-4 text-center shadow-[9px_9px_0_#03100b]",
                           resultBanner.isBreak
                             ? "border-[#061811] bg-[#d23a2f] text-white"
-                            : "border-[#061811] bg-[#f5d06f] text-[#061811]",
+                            : `border-[#061811] bg-gradient-to-br ${resultComboTier?.tone ?? "from-[#f5d06f] to-[#f0a536]"} text-[#061811]`,
                         ].join(" ")}
                         style={{ animation: "resultBurst 980ms ease-out forwards" }}
                       >
@@ -2026,13 +2154,20 @@ export default function Home() {
                           {resultBanner.text}
                         </p>
                         {!resultBanner.isBreak && (
-                          <div className="mt-2 flex items-center justify-center gap-2">
-                            <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#f5d06f] shadow-[3px_3px_0_#03100b]">
-                              +{resultBanner.score}
-                            </span>
-                            <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#6ee7ff] shadow-[3px_3px_0_#03100b]">
-                              x{resultBanner.combo}
-                            </span>
+                          <div className="mt-2 grid gap-2">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#f5d06f] shadow-[3px_3px_0_#03100b]">
+                                +{resultBanner.score}
+                              </span>
+                              <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#6ee7ff] shadow-[3px_3px_0_#03100b]">
+                                x{resultBanner.combo}
+                              </span>
+                            </div>
+                            {resultBanner.comboNext && (
+                              <div className="mx-auto rounded-xl border-[3px] border-[#061811] bg-[#07160f] px-4 py-1 text-sm font-black text-[#ffef7a] shadow-[3px_3px_0_#03100b]">
+                                MULTIPLIER UP&nbsp; x{resultBanner.combo} → x{resultBanner.comboNext}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
