@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Suit = "spade" | "heart" | "diamond" | "club";
 
@@ -75,6 +75,28 @@ type ResultBanner = {
 };
 
 type ScreenState = "home" | "game";
+
+type SoundName =
+  | "start"
+  | "restart"
+  | "select"
+  | "place"
+  | "hit"
+  | "miss"
+  | "gameover";
+
+function createAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as Window & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
+
+  if (!AudioContextClass) return null;
+
+  return new AudioContextClass();
+}
 
 const BOARD_SIZE = 5;
 const HAND_SIZE = 3;
@@ -975,6 +997,8 @@ export default function Home() {
   const [resultPulse, setResultPulse] = useState(false);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
   const [resultBanner, setResultBanner] = useState<ResultBanner | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     const savedHighScore = getSavedHighScore();
@@ -991,6 +1015,145 @@ export default function Home() {
 
   const isResolvingHand = highlightCells.size > 0;
 
+  function getAudioContext() {
+    if (!audioContextRef.current) {
+      audioContextRef.current = createAudioContext();
+    }
+
+    const context = audioContextRef.current;
+
+    if (context?.state === "suspended") {
+      void context.resume();
+    }
+
+    return context;
+  }
+
+  function playNote(
+    context: AudioContext,
+    frequency: number,
+    startTime: number,
+    duration: number,
+    gainValue: number,
+    type: OscillatorType = "square"
+  ) {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration + 0.02);
+  }
+
+  function playNoise(
+    context: AudioContext,
+    startTime: number,
+    duration: number,
+    gainValue: number
+  ) {
+    const sampleRate = context.sampleRate;
+    const buffer = context.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    }
+
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    const filter = context.createBiquadFilter();
+
+    filter.type = "highpass";
+    filter.frequency.setValueAtTime(900, startTime);
+
+    gain.gain.setValueAtTime(gainValue, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    source.buffer = buffer;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(context.destination);
+
+    source.start(startTime);
+    source.stop(startTime + duration);
+  }
+
+  function playSound(sound: SoundName) {
+    if (!soundEnabled) return;
+
+    const context = getAudioContext();
+    if (!context) return;
+
+    const now = context.currentTime;
+
+    if (sound === "place") {
+      playNote(context, 220, now, 0.055, 0.055, "square");
+      playNote(context, 330, now + 0.045, 0.07, 0.045, "triangle");
+      return;
+    }
+
+    if (sound === "select") {
+      playNote(context, 520, now, 0.045, 0.035, "square");
+      playNote(context, 740, now + 0.035, 0.05, 0.03, "square");
+      return;
+    }
+
+    if (sound === "hit") {
+      playNote(context, 392, now, 0.08, 0.055, "square");
+      playNote(context, 523.25, now + 0.06, 0.085, 0.055, "square");
+      playNote(context, 783.99, now + 0.13, 0.13, 0.06, "triangle");
+      playNoise(context, now + 0.02, 0.12, 0.025);
+      return;
+    }
+
+    if (sound === "miss") {
+      playNote(context, 196, now, 0.09, 0.05, "sawtooth");
+      playNote(context, 130.81, now + 0.075, 0.13, 0.045, "sawtooth");
+      playNoise(context, now, 0.16, 0.018);
+      return;
+    }
+
+    if (sound === "gameover") {
+      playNote(context, 392, now, 0.12, 0.055, "triangle");
+      playNote(context, 261.63, now + 0.11, 0.16, 0.052, "triangle");
+      playNote(context, 164.81, now + 0.25, 0.24, 0.055, "sawtooth");
+      return;
+    }
+
+    if (sound === "start") {
+      playNote(context, 261.63, now, 0.07, 0.045, "square");
+      playNote(context, 329.63, now + 0.06, 0.07, 0.045, "square");
+      playNote(context, 523.25, now + 0.13, 0.12, 0.055, "triangle");
+      return;
+    }
+
+    playNote(context, 180, now, 0.055, 0.04, "square");
+    playNote(context, 260, now + 0.05, 0.08, 0.04, "square");
+  }
+
+  function toggleSound() {
+    const willEnable = !soundEnabled;
+    setSoundEnabled(willEnable);
+
+    if (willEnable) {
+      const context = getAudioContext();
+      if (!context) return;
+
+      const now = context.currentTime;
+      playNote(context, 520, now, 0.045, 0.035, "square");
+      playNote(context, 780, now + 0.04, 0.06, 0.035, "triangle");
+    }
+  }
+
   function resetEffects() {
     setPlacedCell(null);
     setHighlightCells(new Set());
@@ -1003,11 +1166,13 @@ export default function Home() {
   }
 
   function restartGame() {
+    playSound("restart");
     resetEffects();
     setGame((prev) => createInitialGame(prev.highScore));
   }
 
   function startGame() {
+    playSound("start");
     resetEffects();
     setGame((prev) => createInitialGame(prev.highScore));
     setScreen("game");
@@ -1016,6 +1181,8 @@ export default function Home() {
   function selectHandCard(index: number) {
     if (game.isGameOver) return;
     if (index !== 0) return;
+
+    playSound("select");
 
     setGame((prev) => ({
       ...prev,
@@ -1029,6 +1196,8 @@ export default function Home() {
     if (game.isGameOver) return;
     if (!game.hand[0]) return;
     if (game.board[row][col]) return;
+
+    playSound("place");
 
     const selected = game.hand[0];
 
@@ -1105,6 +1274,16 @@ export default function Home() {
       : game.combo > 1
       ? `NO HAND - ${nextComboWindow} LEFT`
       : "NO HAND";
+
+    if (hasHand) {
+      window.setTimeout(() => playSound("hit"), 90);
+    } else if (resultText === "COMBO BROKEN") {
+      window.setTimeout(() => playSound("miss"), 90);
+    }
+
+    if (nextGameOver) {
+      window.setTimeout(() => playSound("gameover"), 220);
+    }
 
     setPlacedCell(keyOf(row, col));
     setHighlightCells(handTargets);
@@ -1807,7 +1986,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="grid shrink-0 grid-cols-2 gap-2">
+              <div className="grid shrink-0 grid-cols-3 gap-2">
                 <button
                   onClick={restartGame}
                   className="rounded-xl border-[5px] border-[#061811] bg-[#1787d8] px-3 py-3 text-base font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
@@ -1817,7 +1996,17 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => setScreen("home")}
+                  onClick={toggleSound}
+                  className="rounded-xl border-[5px] border-[#061811] bg-[#f5d06f] px-3 py-3 text-base font-black text-[#061811] shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                >
+                  {soundEnabled ? "SFX ON" : "SFX OFF"}
+                </button>
+
+                <button
+                  onClick={() => {
+                    playSound("select");
+                    setScreen("home");
+                  }}
                   className="rounded-xl border-[5px] border-[#061811] bg-[#d23a2f] px-3 py-3 text-base font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
