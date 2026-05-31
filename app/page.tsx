@@ -66,6 +66,14 @@ type FloatingScore = {
   value: number;
 };
 
+type ResultBanner = {
+  id: number;
+  text: string;
+  score: number;
+  combo: number;
+  isBreak?: boolean;
+};
+
 type ScreenState = "home" | "game";
 
 const BOARD_SIZE = 5;
@@ -966,6 +974,7 @@ export default function Home() {
   const [comboPulse, setComboPulse] = useState(false);
   const [resultPulse, setResultPulse] = useState(false);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
+  const [resultBanner, setResultBanner] = useState<ResultBanner | null>(null);
 
   useEffect(() => {
     const savedHighScore = getSavedHighScore();
@@ -990,6 +999,7 @@ export default function Home() {
     setComboPulse(false);
     setResultPulse(false);
     setFloatingScores([]);
+    setResultBanner(null);
   }
 
   function restartGame() {
@@ -1103,6 +1113,22 @@ export default function Home() {
     setScorePulse(gainedScore > 0);
     setComboPulse(hasHand || nextCombo === 1);
 
+    if (hasHand || resultText === "COMBO BROKEN") {
+      const bannerId = Date.now() + 1;
+
+      setResultBanner({
+        id: bannerId,
+        text: resultText,
+        score: gainedScore,
+        combo: game.combo,
+        isBreak: resultText === "COMBO BROKEN",
+      });
+
+      window.setTimeout(() => {
+        setResultBanner((prev) => (prev?.id === bannerId ? null : prev));
+      }, 980);
+    }
+
     if (gainedScore > 0) {
       const floatingId = Date.now();
 
@@ -1213,6 +1239,32 @@ export default function Home() {
         @keyframes targetBanner {
           0% { transform: scale(0.92); opacity: 0; }
           100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes boardKick {
+          0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+          18% { transform: translate3d(-4px, 2px, 0) rotate(-0.25deg); }
+          36% { transform: translate3d(5px, -2px, 0) rotate(0.22deg); }
+          54% { transform: translate3d(-2px, 1px, 0) rotate(-0.12deg); }
+          100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+        }
+
+        @keyframes resultBurst {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.68) rotate(-5deg); filter: brightness(1); }
+          22% { opacity: 1; transform: translate(-50%, -50%) scale(1.14) rotate(3deg); filter: brightness(1.35); }
+          62% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-1deg); filter: brightness(1.08); }
+          100% { opacity: 0; transform: translate(-50%, -62%) scale(0.92) rotate(0deg); filter: brightness(0.9); }
+        }
+
+        @keyframes resultRing {
+          0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.35); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(1.75); }
+        }
+
+        @keyframes sparklePop {
+          0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+          30% { opacity: 1; transform: scale(1.18) rotate(18deg); }
+          100% { opacity: 0; transform: scale(0.6) rotate(55deg); }
         }
 
         .nuts-pixel {
@@ -1444,7 +1496,10 @@ export default function Home() {
       )}
 
       <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col overflow-hidden px-1.5 py-1.5">
-        <section className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] p-2 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
+        <section
+          className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] p-2 shadow-[10px_10px_0_#03100b] backdrop-blur-sm"
+          style={{ animation: resultPulse ? "boardKick 360ms ease-out" : undefined }}
+        >
           <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-2 shadow-[6px_6px_0_#03100b] md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
             <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
@@ -1509,6 +1564,64 @@ export default function Home() {
                 </div>
 
                 <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 border-[5px] border-[#061811] bg-[#09231d] p-2 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                  {resultBanner && (
+                    <div className="pointer-events-none absolute inset-0 z-40">
+                      {!resultBanner.isBreak && (
+                        <>
+                          <div
+                            className="absolute left-1/2 top-1/2 h-64 w-64 rounded-full border-[8px] border-[#f5d06f]/80"
+                            style={{ animation: "resultRing 780ms ease-out forwards" }}
+                          />
+                          <div
+                            className="absolute left-[18%] top-[18%] text-4xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#061811]"
+                            style={{ animation: "sparklePop 700ms ease-out forwards" }}
+                          >
+                            ✦
+                          </div>
+                          <div
+                            className="absolute right-[18%] top-[22%] text-3xl font-black text-[#6ee7ff] drop-shadow-[3px_3px_0_#061811]"
+                            style={{ animation: "sparklePop 820ms ease-out forwards" }}
+                          >
+                            ✦
+                          </div>
+                          <div
+                            className="absolute bottom-[20%] left-[22%] text-3xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#061811]"
+                            style={{ animation: "sparklePop 900ms ease-out forwards" }}
+                          >
+                            ✦
+                          </div>
+                        </>
+                      )}
+
+                      <div
+                        className={[
+                          "absolute left-1/2 top-1/2 min-w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-[6px] px-5 py-4 text-center shadow-[9px_9px_0_#03100b]",
+                          resultBanner.isBreak
+                            ? "border-[#061811] bg-[#d23a2f] text-white"
+                            : "border-[#061811] bg-[#f5d06f] text-[#061811]",
+                        ].join(" ")}
+                        style={{ animation: "resultBurst 980ms ease-out forwards" }}
+                      >
+                        <p className="text-[11px] font-black tracking-[0.28em] opacity-80">
+                          {resultBanner.isBreak ? "MISS" : "HAND HIT"}
+                        </p>
+                        <p className="mt-1 text-3xl font-black leading-tight drop-shadow-[2px_2px_0_rgba(255,255,255,0.35)]">
+                          {resultBanner.text}
+                        </p>
+                        {!resultBanner.isBreak && (
+                          <div className="mt-2 flex items-center justify-center gap-2">
+                            <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#f5d06f] shadow-[3px_3px_0_#03100b]">
+                              +{resultBanner.score}
+                            </span>
+                            <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#6ee7ff] shadow-[3px_3px_0_#03100b]">
+                              x{resultBanner.combo}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {game.board.map((boardRow, rowIndex) =>
                     boardRow.map((cell, colIndex) => {
                       const cellKey = keyOf(rowIndex, colIndex);
@@ -1571,7 +1684,15 @@ export default function Home() {
                               )}
 
                               {isHighlighted && (
-                                <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffef7a] blur-md" />
+                                <>
+                                  <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffef7a] blur-md" />
+                                  <span
+                                    className="pointer-events-none absolute right-2 top-2 z-30 text-xl font-black text-[#f5d06f] drop-shadow-[2px_2px_0_#061811]"
+                                    style={{ animation: "sparklePop 620ms ease-out infinite" }}
+                                  >
+                                    ✦
+                                  </span>
+                                </>
                               )}
                             </>
                           ) : (
