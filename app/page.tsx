@@ -137,13 +137,52 @@ const suitNames: Record<Suit, string> = {
 };
 
 const scoreTable = {
-  pair: 10,
-  three: 40,
-  straight: 60,
-  flush: 70,
-  fullHouse: 150,
+  pair: 12,
+  three: 55,
+  straight: 75,
+  flush: 85,
+  fullHouse: 190,
 };
 
+const comboMilestones = [5, 10, 15, 25, 50, 100];
+
+function getHandCountBonus(handCount: number) {
+  if (handCount >= 4) return 2.2;
+  if (handCount === 3) return 1.75;
+  if (handCount === 2) return 1.35;
+  return 1;
+}
+
+function getComboMilestoneBonus(combo: number) {
+  const hitMilestone = comboMilestones.includes(combo);
+
+  if (!hitMilestone) return 0;
+
+  return combo * 120;
+}
+
+function calculateGainedScore(baseScore: number, combo: number, handCount: number) {
+  const multiHandBonus = getHandCountBonus(handCount);
+  const rawScore = baseScore * combo * multiHandBonus;
+  const milestoneBonus = getComboMilestoneBonus(combo);
+
+  return Math.floor(rawScore + milestoneBonus);
+}
+
+function getScoreDetailText(baseScore: number, combo: number, handCount: number) {
+  const multiHandBonus = getHandCountBonus(handCount);
+  const milestoneBonus = getComboMilestoneBonus(combo);
+
+  if (milestoneBonus > 0) {
+    return `BASE ${baseScore} ×${combo} ×${multiHandBonus.toFixed(2)} + ${milestoneBonus} BONUS`;
+  }
+
+  if (handCount >= 2) {
+    return `BASE ${baseScore} ×${combo} ×${multiHandBonus.toFixed(2)}`;
+  }
+
+  return `BASE ${baseScore} ×${combo}`;
+}
 
 function getComboTier(combo: number) {
   if (combo >= 50) {
@@ -1397,7 +1436,12 @@ export default function Home() {
     const hasHand = results.length > 0;
 
     const baseScore = results.reduce((sum, result) => sum + result.score, 0);
-    const gainedScore = hasHand ? baseScore * game.combo : 0;
+    const gainedScore = hasHand
+      ? calculateGainedScore(baseScore, game.combo, results.length)
+      : 0;
+    const scoreDetailText = hasHand
+      ? getScoreDetailText(baseScore, game.combo, results.length)
+      : "";
 
     let nextCombo = game.combo;
     let nextComboWindow = game.comboWindow;
@@ -1464,6 +1508,10 @@ export default function Home() {
       ? `NO HAND - ${nextComboWindow} LEFT`
       : "NO HAND";
 
+    const lastResultText = hasHand
+      ? `${resultText} · ${scoreDetailText}`
+      : resultText;
+
     if (hasHand) {
       window.setTimeout(() => playSound("hit"), 90);
     } else if (resultText === "COMBO BROKEN") {
@@ -1526,7 +1574,7 @@ export default function Home() {
         combo: nextCombo,
         comboWindow: nextComboWindow,
         selectedHandIndex: nextGameOver ? null : 0,
-        lastResult: nextGameOver ? "GAME OVER" : resultText,
+        lastResult: nextGameOver ? "GAME OVER" : lastResultText,
         lastScore: gainedScore,
         isGameOver: nextGameOver,
       });
@@ -1567,20 +1615,22 @@ export default function Home() {
   }
 
   const gameOverRank =
-    game.score >= 2500
+    game.score >= 50000
+      ? "LIMITLESS"
+      : game.score >= 25000
       ? "LEGEND"
-      : game.score >= 1500
+      : game.score >= 12000
       ? "SHARK"
-      : game.score >= 800
+      : game.score >= 5000
       ? "HOT STREAK"
-      : game.score >= 300
+      : game.score >= 1500
       ? "GOOD RUN"
       : "TRY AGAIN";
 
   const gameOverMessage =
     game.score >= game.highScore && game.score > 0
       ? "NEW BEST SCORE"
-      : game.score >= 800
+      : game.score >= 12000
       ? "THE TABLE REMEMBERS"
       : "ONE MORE DEAL";
 
