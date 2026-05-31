@@ -588,7 +588,7 @@ function StatBox({
   return (
     <div
       className={[
-        "rounded-xl border-[3px] border-black bg-[#101b3b] px-4 py-3 shadow-[4px_4px_0_#000] transition",
+        "rounded-xl border-[3px] border-black bg-[#101b3b] px-2 py-2 shadow-[4px_4px_0_#000] transition md:px-2 md:py-2 lg:px-4 lg:py-3",
         pulse ? "scale-105 bg-[#ffef7a]" : "",
       ].join(" ")}
     >
@@ -602,7 +602,7 @@ function StatBox({
       </p>
       <p
         className={[
-          "mt-1 text-2xl font-black leading-none",
+          "mt-1 text-xl font-black leading-none lg:text-2xl",
           pulse ? "text-black" : accent ? "text-[#ffef7a]" : "text-white",
         ].join(" ")}
       >
@@ -696,8 +696,8 @@ function RoleListPanel() {
   }
 
   return (
-    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-3 shadow-[6px_6px_0_#000] lg:flex lg:flex-col">
-      <div className="mb-3 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
+    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000] md:flex md:flex-col lg:p-3">
+      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000] lg:mb-3">
         <p className="text-[11px] font-black tracking-[0.25em]">HANDS</p>
       </div>
 
@@ -765,6 +765,20 @@ function HomeScreen({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,211,74,0.22),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(64,151,255,0.25),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(255,73,96,0.22),transparent_32%)]" />
 
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
+
+      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#1b0f2e] px-6 text-center text-white md:hidden landscape:hidden">
+        <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-6 shadow-[8px_8px_0_#000]">
+          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#ffef7a]">
+            NUTS
+          </p>
+          <p className="text-2xl font-black leading-tight">
+            Rotate your phone
+          </p>
+          <p className="mt-3 text-xs font-bold leading-5">
+            This game is designed for landscape play.
+          </p>
+        </div>
+      </div>
 
       <div
         className="pointer-events-none absolute left-[8%] top-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff4cf] shadow-[8px_8px_0_#000] md:block"
@@ -1162,13 +1176,13 @@ export default function Home() {
 
       <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1 py-1">
         <section className="w-full rounded-2xl border-[5px] border-black bg-[#2d1850] p-2 shadow-[8px_8px_0_#000]">
-          <header className="mb-2 grid gap-2 lg:grid-cols-[1fr_620px] lg:items-end">
-            <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] px-4 py-2 shadow-[5px_5px_0_#000]">
+          <header className="mb-2 grid gap-2 md:grid-cols-[1fr_360px] md:items-end lg:grid-cols-[1fr_620px]">
+            <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] px-3 py-2 shadow-[5px_5px_0_#000] lg:px-4">
               <p className="mb-1 text-xs font-black tracking-[0.4em] text-[#ffef7a]">
                 GRID POKER
               </p>
 
-              <h1 className="text-3xl font-black leading-none text-white drop-shadow-[3px_3px_0_#000] md:text-5xl">
+              <h1 className="text-3xl font-black leading-none text-white drop-shadow-[3px_3px_0_#000] lg:text-5xl">
                 NUTS
               </h1>
             </div>
@@ -1190,7 +1204,7 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 xl:gap-3 lg:grid-cols-[230px_minmax(620px,840px)_380px] 2xl:grid-cols-[250px_minmax(660px,920px)_410px]">
+          <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 md:h-[calc(100vh-118px)] md:grid-cols-[150px_minmax(340px,1fr)_260px] lg:h-[calc(100vh-142px)] lg:grid-cols-[230px_minmax(620px,840px)_380px] xl:gap-3 2xl:grid-cols-[250px_minmax(660px,920px)_410px]">
             <RoleListPanel />
 
             <section className="flex h-full min-h-0 flex-col rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000]">
@@ -1291,7 +1305,7 @@ export default function Home() {
             </section>
 
             <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
-<div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-3 shadow-[6px_6px_0_#000]">
+<div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-2 shadow-[6px_6px_0_#000] lg:p-3">
                 <div className="mb-3 rounded-xl border-[3px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
                   <p className="text-[10px] font-black tracking-[0.25em]">
                     NOW
@@ -1301,9 +1315,9 @@ export default function Home() {
                 <button
                   onClick={() => selectHandCard(0)}
                   disabled={game.isGameOver || !game.hand[0]}
-                  className="mb-4 flex w-full items-center gap-4 rounded-2xl border-[4px] border-black bg-[#283c86] p-3 text-left shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000]"
+                  className="mb-3 flex w-full items-center gap-3 rounded-2xl border-[4px] border-black bg-[#283c86] p-2 text-left shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000] lg:mb-4 lg:gap-4 lg:p-3"
                 >
-                  <div className="w-28 shrink-0 rotate-[-2deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-1 shadow-[4px_4px_0_#000]" style={{ aspectRatio: "5 / 7" }}>
+                  <div className="w-20 shrink-0 rotate-[-2deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-1 shadow-[4px_4px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}>
                     {game.hand[0] ? (
                       <CardFace card={game.hand[0]} size="small" />
                     ) : (
@@ -1330,11 +1344,11 @@ export default function Home() {
                     NEXT
                   </p>
 
-                  <div className="grid grid-cols-2 items-center justify-items-center gap-3">
+                  <div className="grid grid-cols-2 items-center justify-items-center gap-2 lg:gap-3">
                     {game.hand.slice(1, 3).map((card, index) => (
                       <div
                         key={card.id}
-                        className="relative mx-auto w-28 rounded-xl border-[3px] border-black bg-[#fff4cf] p-1.5 opacity-90 shadow-[3px_3px_0_#000]" style={{ aspectRatio: "5 / 7" }}
+                        className="relative mx-auto w-20 rounded-xl border-[3px] border-black bg-[#fff4cf] p-1.5 opacity-90 shadow-[3px_3px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}
                       >
                         <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-black bg-[#101b3b] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#ffef7a] shadow-[2px_2px_0_#000]">
                           +{index + 1}
