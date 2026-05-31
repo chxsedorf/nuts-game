@@ -593,6 +593,42 @@ function StatBox({
   );
 }
 
+const roleExamples = [
+  {
+    name: "Pair",
+    cards: [
+      { rank: "7", suit: "heart" as Suit },
+      { rank: "7", suit: "spade" as Suit },
+    ],
+  },
+  {
+    name: "Three",
+    cards: [
+      { rank: "Q", suit: "heart" as Suit },
+      { rank: "Q", suit: "diamond" as Suit },
+      { rank: "Q", suit: "club" as Suit },
+    ],
+  },
+  {
+    name: "Straight",
+    cards: [
+      { rank: "5", suit: "spade" as Suit },
+      { rank: "6", suit: "heart" as Suit },
+      { rank: "7", suit: "club" as Suit },
+    ],
+  },
+  {
+    name: "Full House",
+    cards: [
+      { rank: "9", suit: "heart" as Suit },
+      { rank: "9", suit: "spade" as Suit },
+      { rank: "9", suit: "club" as Suit },
+      { rank: "K", suit: "diamond" as Suit },
+      { rank: "K", suit: "heart" as Suit },
+    ],
+  },
+];
+
 function RoleListPanel() {
   const roles = roleExamples;
 
