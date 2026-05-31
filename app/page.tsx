@@ -576,7 +576,7 @@ function StatBox({
   return (
     <div
       className={[
-        "pixel-hard-sm relative flex min-h-[74px] flex-col items-center justify-center border-[4px] border-[#07160f] bg-[#071a15] px-3 py-2 text-center shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition",
+        "pixel-hard-sm relative flex min-h-[58px] flex-col items-center justify-center border-[4px] border-[#07160f] bg-[#071a15] px-2 py-1.5 text-center shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition",
         "[clip-path:polygon(8%_0,92%_0,100%_18%,100%_82%,92%_100%,8%_100%,0_82%,0_18%)]",
         pulse ? "scale-105 bg-[#f0a536]" : "",
       ].join(" ")}
@@ -595,7 +595,7 @@ function StatBox({
 
       <p
         className={[
-          "relative z-10 mt-2 text-3xl font-black leading-none",
+          "relative z-10 mt-1 text-2xl font-black leading-none xl:text-3xl",
           pulse ? "text-[#07160f]" : accent ? "text-[#f5c247]" : "text-[#f2f2eb]",
         ].join(" ")}
         style={{ textShadow: pulse ? "none" : "3px 3px 0 #06100c" }}
@@ -1443,9 +1443,9 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1.5 py-1.5">
-        <section className="table-frame pixel-hard relative w-full overflow-hidden border-[6px] border-[#061811] p-3 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
-          <header className="pixel-hard pixel-inner relative z-10 mb-3 grid gap-3 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[6px_6px_0_#03100b] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
+      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col overflow-hidden px-1.5 py-1.5">
+        <section className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] p-2 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
+          <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-2 shadow-[6px_6px_0_#03100b] md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
             <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
             <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
@@ -1453,10 +1453,10 @@ export default function Home() {
             <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
             <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
 
-            <div className="relative z-10 flex min-h-[86px] items-center px-2">
+            <div className="relative z-10 flex min-h-[68px] items-center px-2">
               <div>
                 <h1
-                  className="text-6xl font-black leading-[0.82] text-[#f1a22d] lg:text-7xl"
+                  className="text-5xl font-black leading-[0.82] text-[#f1a22d] lg:text-6xl"
                   style={{
                     textShadow:
                       "4px 0 #5a2b05, 0 4px #5a2b05, 5px 5px 0 #1d0c02, -2px -2px 0 #ffd16b",
@@ -1473,7 +1473,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative z-10 grid grid-cols-4 gap-3">
+            <div className="relative z-10 grid grid-cols-4 gap-2 xl:gap-3">
               <StatBox
                 label="SCORE"
                 value={game.score}
@@ -1490,9 +1490,9 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="relative z-10 grid h-[calc(100vh-154px)] max-h-[748px] justify-center gap-3 md:h-[calc(100vh-132px)] md:grid-cols-[minmax(420px,1fr)_260px] lg:h-[calc(100vh-154px)] lg:grid-cols-[minmax(720px,920px)_380px] xl:gap-4 2xl:grid-cols-[minmax(780px,980px)_430px]">
-<div className="flex min-h-0 flex-col">
-              <section className="pixel-hard relative flex min-h-0 flex-1 flex-col border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
+          <div className="relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
+<div className="flex min-h-0 flex-col overflow-hidden">
+              <section className="pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                 <div className="mb-2 flex h-7 items-center justify-between">
                   <p className="rounded-md border-[3px] border-[#061811] bg-[#123f32] px-3 py-1 text-xs font-black tracking-[0.25em] text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
                     BOARD
@@ -1508,7 +1508,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-2 border-[5px] border-[#061811] bg-[#09231d] p-3 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none">
+                <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 border-[5px] border-[#061811] bg-[#09231d] p-2 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                   {game.board.map((boardRow, rowIndex) =>
                     boardRow.map((cell, colIndex) => {
                       const cellKey = keyOf(rowIndex, colIndex);
@@ -1594,10 +1594,10 @@ export default function Home() {
               
             </div>
 
-            <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
-              <div className="queue-panel pixel-hard border-[6px] border-[#061811] p-3 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
-                <div className="pixel-hard-sm mb-3 border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
-                  <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
+            <aside className="flex min-h-0 flex-col gap-2 overflow-hidden">
+              <div className="queue-panel pixel-hard flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+                <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
+                  <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                     NOW
                   </p>
                 </div>
@@ -1605,10 +1605,10 @@ export default function Home() {
                 <button
                   onClick={() => selectHandCard(0)}
                   disabled={game.isGameOver || !game.hand[0]}
-                  className="queue-card-well mb-3 flex w-full flex-col items-center rounded-2xl border-[4px] border-[#061811] p-3 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
+                  className="queue-card-well mb-2 flex w-full shrink-0 flex-col items-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
-                    className="w-24 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] lg:w-32"
+                    className="w-20 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] lg:w-24 xl:w-28"
                     style={{ aspectRatio: "5 / 7" }}
                   >
                     {game.hand[0] ? (
@@ -1620,11 +1620,11 @@ export default function Home() {
                     )}
                   </div>
 
-                  <p className="mt-3 text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
+                  <p className="mt-2 text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
                     PLACE THIS
                   </p>
                   <p
-                    className="mt-1 text-3xl font-black leading-none text-white"
+                    className="mt-1 text-2xl font-black leading-none text-white xl:text-3xl"
                     style={{ textShadow: "3px 3px 0 #03100b" }}
                   >
                     {game.hand[0]
@@ -1632,16 +1632,16 @@ export default function Home() {
                       : "-"}
                   </p>
 
-                  <div className="mt-3 flex justify-center gap-2">
+                  <div className="mt-2 flex justify-center gap-2">
                     <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#35b66a] shadow-[2px_2px_0_#04120d]" />
                     <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#234338] shadow-[2px_2px_0_#04120d]" />
                     <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#234338] shadow-[2px_2px_0_#04120d]" />
                   </div>
                 </button>
 
-                <div className="pixel-hard border-[4px] border-[#061811] bg-[#081b18] p-3 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
-                  <div className="mb-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
-                    <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
+                <div className="pixel-hard flex min-h-0 flex-1 flex-col border-[4px] border-[#061811] bg-[#081b18] p-2 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
+                  <div className="mb-2 shrink-0 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
+                    <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                       DECK
                     </p>
                     <p className="mt-1 text-[9px] font-black tracking-[0.18em] text-[#7fd0a4]">
@@ -1649,19 +1649,19 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-center">
-                    <div className="relative flex w-full max-w-[12rem] items-center justify-center py-2">
+                  <div className="flex min-h-0 flex-1 items-center justify-center">
+                    <div className="relative flex w-full max-w-[9rem] items-center justify-center py-1">
                       <div
                         className="absolute translate-x-3 translate-y-3 border-[5px] border-[#061811] bg-[#123f32] shadow-[5px_5px_0_#04120d]"
-                        style={{ width: "5.5rem", aspectRatio: "5 / 7" }}
+                        style={{ width: "4.6rem", aspectRatio: "5 / 7" }}
                       />
                       <div
                         className="absolute translate-x-1.5 translate-y-1.5 border-[5px] border-[#061811] bg-[#0f382d] shadow-[5px_5px_0_#04120d]"
-                        style={{ width: "5.5rem", aspectRatio: "5 / 7" }}
+                        style={{ width: "4.6rem", aspectRatio: "5 / 7" }}
                       />
                       <div
                         className="relative border-[5px] border-[#061811] bg-[#102a25] p-1.5 shadow-[5px_5px_0_#04120d]"
-                        style={{ width: "5.5rem", aspectRatio: "5 / 7" }}
+                        style={{ width: "4.6rem", aspectRatio: "5 / 7" }}
                       >
                         <div className="flex h-full w-full items-center justify-center border-[3px] border-[#061811] bg-[radial-gradient(circle_at_center,rgba(245,208,111,0.18),transparent_28%),repeating-linear-gradient(45deg,#123f32_0px,#123f32_6px,#0b2f27_6px,#0b2f27_12px)] shadow-[inset_0_0_0_3px_rgba(245,181,68,0.18),inset_0_0_18px_rgba(0,0,0,0.35)]">
                           <span className="text-4xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#03100b]">
@@ -1672,7 +1672,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
+                  <div className="mt-2 shrink-0 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
                       REMAINING
                     </p>
@@ -1686,10 +1686,10 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid shrink-0 grid-cols-2 gap-2">
                 <button
                   onClick={restartGame}
-                  className="rounded-xl border-[5px] border-[#061811] bg-[#1787d8] px-3 py-4 text-lg font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  className="rounded-xl border-[5px] border-[#061811] bg-[#1787d8] px-3 py-3 text-base font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   RESTART
@@ -1697,7 +1697,7 @@ export default function Home() {
 
                 <button
                   onClick={() => setScreen("home")}
-                  className="rounded-xl border-[5px] border-[#061811] bg-[#d23a2f] px-3 py-4 text-lg font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  className="rounded-xl border-[5px] border-[#061811] bg-[#d23a2f] px-3 py-3 text-base font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   HOME
