@@ -530,7 +530,7 @@ function CardFace({
   return (
     <div
       className={[
-        "nuts-card-paper relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg border-[2px] border-[#2d2114] font-black",
+        "nuts-card-paper pixel-hard-sm relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-[2px] border-[#2d2114] font-black",
         colorClass,
       ].join(" ")}
     >
@@ -576,7 +576,7 @@ function StatBox({
   return (
     <div
       className={[
-        "relative flex min-h-[74px] flex-col items-center justify-center border-[4px] border-[#07160f] bg-[#071a15] px-3 py-2 text-center shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition",
+        "pixel-hard-sm relative flex min-h-[74px] flex-col items-center justify-center border-[4px] border-[#07160f] bg-[#071a15] px-3 py-2 text-center shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition",
         "[clip-path:polygon(8%_0,92%_0,100%_18%,100%_82%,92%_100%,8%_100%,0_82%,0_18%)]",
         pulse ? "scale-105 bg-[#f0a536]" : "",
       ].join(" ")}
@@ -773,7 +773,7 @@ function HomeScreen({
   }
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg relative h-screen overflow-hidden text-white">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither relative h-screen overflow-hidden text-white">
       <style>{`
         @keyframes titleFloat {
           0%, 100% { transform: translateY(0) rotate(-1deg); }
@@ -1348,10 +1348,44 @@ export default function Home() {
           pointer-events: none;
           position: absolute;
           inset: 0;
-          border-radius: 1.35rem;
+          border-radius: 0.45rem;
           box-shadow:
+            inset 0 0 0 4px rgba(6,24,17,0.72),
             inset 0 0 44px rgba(0,0,0,0.48),
             inset 0 0 0 2px rgba(255,255,255,0.03);
+        }
+
+        .pixel-dither {
+          background-image:
+            radial-gradient(circle, rgba(245, 208, 111, 0.16) 1px, transparent 1px),
+            radial-gradient(circle, rgba(0, 0, 0, 0.18) 1px, transparent 1px);
+          background-position: 0 0, 4px 4px;
+          background-size: 8px 8px;
+        }
+
+        .pixel-hard {
+          border-radius: 0.45rem !important;
+          image-rendering: pixelated;
+        }
+
+        .pixel-hard-sm {
+          border-radius: 0.28rem !important;
+          image-rendering: pixelated;
+        }
+
+        .pixel-shadow {
+          box-shadow:
+            6px 0 0 #03100b,
+            0 6px 0 #03100b,
+            6px 6px 0 #03100b;
+        }
+
+        .pixel-inner {
+          box-shadow:
+            inset 0 0 0 3px #061811,
+            inset 0 0 0 6px rgba(245, 181, 68, 0.18),
+            inset 8px 8px 0 rgba(255,255,255,0.025),
+            inset -8px -8px 0 rgba(0,0,0,0.22);
         }
 
         .felt-bg {
@@ -1410,8 +1444,8 @@ export default function Home() {
       )}
 
       <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1.5 py-1.5">
-        <section className="table-frame relative w-full overflow-hidden rounded-[1.35rem] border-[6px] border-[#061811] p-3 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
-          <header className="relative z-10 mb-3 grid gap-3 overflow-hidden rounded-[1.2rem] border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[6px_6px_0_#03100b,0_0_0_2px_#b57422_inset] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
+        <section className="table-frame pixel-hard relative w-full overflow-hidden border-[6px] border-[#061811] p-3 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
+          <header className="pixel-hard pixel-inner relative z-10 mb-3 grid gap-3 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[6px_6px_0_#03100b] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
             <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
             <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
@@ -1458,7 +1492,7 @@ export default function Home() {
 
           <div className="relative z-10 grid h-[calc(100vh-154px)] max-h-[748px] justify-center gap-3 md:h-[calc(100vh-132px)] md:grid-cols-[minmax(420px,1fr)_260px] lg:h-[calc(100vh-154px)] lg:grid-cols-[minmax(720px,920px)_380px] xl:gap-4 2xl:grid-cols-[minmax(780px,980px)_430px]">
 <div className="flex min-h-0 flex-col">
-              <section className="relative flex min-h-0 flex-1 flex-col rounded-2xl border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
+              <section className="pixel-hard relative flex min-h-0 flex-1 flex-col border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                 <div className="mb-2 flex h-7 items-center justify-between">
                   <p className="rounded-md border-[3px] border-[#061811] bg-[#123f32] px-3 py-1 text-xs font-black tracking-[0.25em] text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
                     BOARD
@@ -1474,7 +1508,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-2 rounded-2xl border-[5px] border-[#061811] bg-[#09231d] p-3 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none">
+                <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-2 border-[5px] border-[#061811] bg-[#09231d] p-3 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none">
                   {game.board.map((boardRow, rowIndex) =>
                     boardRow.map((cell, colIndex) => {
                       const cellKey = keyOf(rowIndex, colIndex);
@@ -1496,7 +1530,7 @@ export default function Home() {
                           onClick={() => placeCard(rowIndex, colIndex)}
                           disabled={!!cell || game.isGameOver}
                           className={[
-                            "relative h-full min-h-0 overflow-hidden rounded-xl border-[3px] transition duration-200",
+                            "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                             cell
                               ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
                               : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
@@ -1561,8 +1595,8 @@ export default function Home() {
             </div>
 
             <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
-              <div className="queue-panel rounded-2xl border-[6px] border-[#061811] p-3 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
-                <div className="mb-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
+              <div className="queue-panel pixel-hard border-[6px] border-[#061811] p-3 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+                <div className="pixel-hard-sm mb-3 border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
                   <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                     NOW
                   </p>
@@ -1574,7 +1608,7 @@ export default function Home() {
                   className="queue-card-well mb-3 flex w-full flex-col items-center rounded-2xl border-[4px] border-[#061811] p-3 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
-                    className="w-24 shrink-0 rotate-[-2deg] rounded-xl border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] lg:w-32"
+                    className="w-24 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] lg:w-32"
                     style={{ aspectRatio: "5 / 7" }}
                   >
                     {game.hand[0] ? (
@@ -1605,7 +1639,7 @@ export default function Home() {
                   </div>
                 </button>
 
-                <div className="rounded-2xl border-[4px] border-[#061811] bg-[#081b18] p-3 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
+                <div className="pixel-hard border-[4px] border-[#061811] bg-[#081b18] p-3 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
                   <div className="mb-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                       NEXT
@@ -1616,7 +1650,7 @@ export default function Home() {
                     {game.hand.slice(1, 3).map((card, index) => (
                       <div
                         key={card.id}
-                        className="relative mx-auto w-20 rounded-xl border-[5px] border-[#061811] bg-[#fff8e4] p-1.5 opacity-95 shadow-[5px_5px_0_#04120d] lg:w-28"
+                        className="relative mx-auto w-20 pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1.5 opacity-95 shadow-[5px_5px_0_#04120d] lg:w-28"
                         style={{ aspectRatio: "5 / 7" }}
                       >
                         <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-[#061811] bg-[#081b18] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#f5d06f] shadow-[2px_2px_0_#04120d]">
