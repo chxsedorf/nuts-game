@@ -563,23 +563,29 @@ function StatBox({
   return (
     <div
       className={[
-        "rounded-xl border-[4px] border-[#061811] bg-[#081b18] px-2 py-2 shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,190,77,0.18)_inset] transition md:px-2 md:py-2 lg:px-4 lg:py-3",
-        pulse ? "scale-105 bg-[#f3a52d]" : "",
+        "relative flex min-h-[74px] flex-col items-center justify-center border-[4px] border-[#07160f] bg-[#071a15] px-3 py-2 text-center shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition",
+        "[clip-path:polygon(8%_0,92%_0,100%_18%,100%_82%,92%_100%,8%_100%,0_82%,0_18%)]",
+        pulse ? "scale-105 bg-[#f0a536]" : "",
       ].join(" ")}
     >
+      <div className="pointer-events-none absolute inset-[5px] border-[2px] border-[#184936]/70 [clip-path:polygon(8%_0,92%_0,100%_18%,100%_82%,92%_100%,8%_100%,0_82%,0_18%)]" />
+
       <p
         className={[
-          "text-[10px] font-black tracking-widest",
-          pulse ? "text-[#3c1605]" : "text-[#f5b544]",
+          "relative z-10 text-[14px] font-black leading-none tracking-[0.12em]",
+          pulse ? "text-[#3b1604]" : "text-[#f6bd4a]",
         ].join(" ")}
+        style={{ textShadow: pulse ? "none" : "2px 2px 0 #2a1603" }}
       >
         {label}
       </p>
+
       <p
         className={[
-          "mt-1 text-xl font-black leading-none lg:text-2xl",
-          pulse ? "text-[#061811]" : accent ? "text-[#f5d06f]" : "text-white",
+          "relative z-10 mt-2 text-3xl font-black leading-none",
+          pulse ? "text-[#07160f]" : accent ? "text-[#f5c247]" : "text-[#f2f2eb]",
         ].join(" ")}
+        style={{ textShadow: pulse ? "none" : "3px 3px 0 #06100c" }}
       >
         {value}
       </p>
@@ -1239,17 +1245,35 @@ export default function Home() {
 
       <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1 py-1">
         <section className="w-full rounded-2xl border-[5px] border-[#061811] bg-[#0a2b22]/80 p-2 shadow-[8px_8px_0_#04120d,0_0_0_2px_#b77820_inset] backdrop-blur-sm">
-          <header className="mb-2 grid gap-2 rounded-2xl border-[4px] border-[#061811] bg-[#123f32] p-2 shadow-[5px_5px_0_#04120d,0_0_0_2px_#b77820_inset] md:grid-cols-[1fr_360px] md:items-center lg:grid-cols-[1fr_620px]">
-            <div className="px-3 py-1 lg:px-4">
-              <h1 className="text-5xl font-black leading-none text-[#f3a52d] drop-shadow-[4px_4px_0_#361b05] lg:text-7xl">
-                NUTS
-              </h1>
-              <p className="mt-1 text-xs font-black tracking-[0.35em] text-[#7fd0a4]">
-                GRID POKER
-              </p>
+          <header className="relative mb-2 grid gap-3 overflow-hidden rounded-[1.4rem] border-[5px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[8px_8px_0_#03100b,0_0_0_2px_#b57422_inset] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
+            <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
+            <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
+            <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
+            <div className="pointer-events-none absolute right-1 top-1 h-5 w-5 rounded-bl-xl border-b-[4px] border-l-[4px] border-[#f0b342]" />
+            <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
+            <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
+
+            <div className="relative z-10 flex min-h-[86px] items-center px-2">
+              <div>
+                <h1
+                  className="text-6xl font-black leading-[0.82] text-[#f1a22d] lg:text-7xl"
+                  style={{
+                    textShadow:
+                      "4px 0 #5a2b05, 0 4px #5a2b05, 5px 5px 0 #1d0c02, -2px -2px 0 #ffd16b",
+                  }}
+                >
+                  NUTS
+                </h1>
+                <p
+                  className="mt-2 text-xs font-black tracking-[0.38em] text-[#7fd0a4]"
+                  style={{ textShadow: "2px 2px 0 #03100b" }}
+                >
+                  GRID POKER
+                </p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
+            <div className="relative z-10 grid grid-cols-4 gap-3">
               <StatBox
                 label="SCORE"
                 value={game.score}
