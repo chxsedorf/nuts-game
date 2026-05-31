@@ -505,45 +505,58 @@ function CardFace({
 }) {
   const rankSize =
     size === "large"
-      ? "text-3xl"
+      ? "text-4xl"
       : size === "tiny"
       ? "text-sm"
       : size === "small"
-      ? "text-base"
-      : "text-xl";
+      ? "text-lg"
+      : "text-2xl";
 
   const suitSize =
     size === "large"
-      ? "text-6xl"
+      ? "text-7xl"
       : size === "tiny"
       ? "text-2xl"
       : size === "small"
-      ? "text-3xl"
-      : "text-4xl";
+      ? "text-4xl"
+      : "text-5xl";
+
+  const cornerSize =
+    size === "tiny" ? "text-[10px]" : size === "small" ? "text-xs" : "text-sm";
+
+  const isRed = card.suit === "heart" || card.suit === "diamond";
+  const colorClass = isRed ? "text-[#b83224]" : "text-[#10271f]";
 
   return (
     <div
-      className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg bg-[#fff8e4] font-black ${getCardColor(
-        card
-      )}`}
+      className={[
+        "nuts-card-paper relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg border-[2px] border-[#2d2114] font-black",
+        colorClass,
+      ].join(" ")}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,232,194,0.86)),repeating-linear-gradient(to_bottom,rgba(0,0,0,0.035)_0px,rgba(0,0,0,0.035)_1px,transparent_2px,transparent_4px)]" />
-
-      <div className="absolute left-1 top-1 flex flex-col items-center leading-none">
-        <span className="text-[10px]">{card.rank}</span>
-        <span className="text-xs">{suitSymbols[card.suit]}</span>
+      <div className="absolute left-1 top-1 z-20 flex flex-col items-center leading-none">
+        <span className={`${cornerSize} drop-shadow-[1px_1px_0_#fff4cf]`}>
+          {card.rank}
+        </span>
+        <span className="text-sm leading-none drop-shadow-[1px_1px_0_#fff4cf]">
+          {suitSymbols[card.suit]}
+        </span>
       </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-sm">
+      <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-[2px_2px_0_rgba(255,244,207,0.75)]">
         <span className={`${rankSize} leading-none`}>{card.rank}</span>
         <span className={`${suitSize} -mt-1 leading-none`}>
           {suitSymbols[card.suit]}
         </span>
       </div>
 
-      <div className="absolute bottom-1 right-1 flex rotate-180 flex-col items-center leading-none">
-        <span className="text-[10px]">{card.rank}</span>
-        <span className="text-xs">{suitSymbols[card.suit]}</span>
+      <div className="absolute bottom-1 right-1 z-20 flex rotate-180 flex-col items-center leading-none">
+        <span className={`${cornerSize} drop-shadow-[1px_1px_0_#fff4cf]`}>
+          {card.rank}
+        </span>
+        <span className="text-sm leading-none drop-shadow-[1px_1px_0_#fff4cf]">
+          {suitSymbols[card.suit]}
+        </span>
       </div>
     </div>
   );
@@ -749,7 +762,7 @@ function HomeScreen({
     return (
       <div
         className={[
-          "flex h-10 w-7 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff4cf] text-[11px] font-black leading-none shadow-[2px_2px_0_#000]",
+          "flex h-10 w-7 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-[#061811] bg-[#fff8e4] text-[11px] font-black leading-none shadow-[2px_2px_0_#04120d]",
           isRed ? "text-red-600" : "text-blue-950",
         ].join(" ")}
       >
@@ -1276,6 +1289,39 @@ export default function Home() {
             linear-gradient(145deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28)),
             #102a25;
         }
+
+        .nuts-card-paper {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(255,255,255,0.9), transparent 25%),
+            linear-gradient(145deg, #fff8e4 0%, #f4dfad 100%);
+        }
+
+        .nuts-card-paper::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          background:
+            repeating-linear-gradient(
+              to bottom,
+              rgba(0,0,0,0.035) 0px,
+              rgba(0,0,0,0.035) 1px,
+              transparent 2px,
+              transparent 4px
+            );
+          mix-blend-mode: multiply;
+          opacity: 0.55;
+        }
+
+        .nuts-card-paper::after {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 4px;
+          border: 2px solid rgba(44, 32, 18, 0.16);
+          border-radius: 0.55rem;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
+        }
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -1434,7 +1480,7 @@ export default function Home() {
                         >
                           {cell ? (
                             <>
-                              <div className="mx-auto h-full max-h-full aspect-[5/7] max-w-[76%]">
+                              <div className="mx-auto h-full max-h-full aspect-[5/7] max-w-[82%]">
                                 <CardFace card={cell} size="normal" />
                               </div>
 
@@ -1487,7 +1533,7 @@ export default function Home() {
                   className="queue-card-well mb-3 flex w-full flex-col items-center rounded-2xl border-[4px] border-[#061811] p-3 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
-                    className="w-24 shrink-0 rotate-[-2deg] rounded-lg border-[4px] border-[#061811] bg-[#fff8e4] p-1 shadow-[4px_4px_0_#04120d] lg:w-32"
+                    className="w-24 shrink-0 rotate-[-2deg] rounded-xl border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] lg:w-32"
                     style={{ aspectRatio: "5 / 7" }}
                   >
                     {game.hand[0] ? (
@@ -1529,7 +1575,7 @@ export default function Home() {
                     {game.hand.slice(1, 3).map((card, index) => (
                       <div
                         key={card.id}
-                        className="relative mx-auto w-20 rounded-lg border-[4px] border-[#061811] bg-[#fff8e4] p-1.5 opacity-95 shadow-[4px_4px_0_#04120d] lg:w-28"
+                        className="relative mx-auto w-20 rounded-xl border-[5px] border-[#061811] bg-[#fff8e4] p-1.5 opacity-95 shadow-[5px_5px_0_#04120d] lg:w-28"
                         style={{ aspectRatio: "5 / 7" }}
                       >
                         <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-[#061811] bg-[#081b18] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#f5d06f] shadow-[2px_2px_0_#04120d]">
