@@ -102,7 +102,6 @@ const BOARD_SIZE = 5;
 const HAND_SIZE = 3;
 const HIGH_SCORE_KEY = "nuts-high-score";
 const MAX_COMBO_WINDOW = 3;
-const MAX_COMBO = 10;
 
 const suits: Suit[] = ["spade", "heart", "diamond", "club"];
 
@@ -1059,7 +1058,7 @@ function HomeScreen({
                     <span className="text-[#f5c247]">02</span> Make hands vertically or horizontally.
                   </p>
                   <p>
-                    <span className="text-[#f5c247]">03</span> Hit cards vanish. Keep the combo alive.
+                    <span className="text-[#f5c247]">03</span> Hit cards vanish. Every hit raises the multiplier forever.
                   </p>
                 </div>
               </div>
@@ -1343,7 +1342,7 @@ export default function Home() {
     let nextComboWindow = game.comboWindow;
 
     if (hasHand) {
-      nextCombo = Math.min(game.combo + 1, MAX_COMBO);
+      nextCombo = game.combo + 1;
       nextComboWindow = MAX_COMBO_WINDOW;
     } else if (game.combo > 1) {
       nextComboWindow = game.comboWindow - 1;
