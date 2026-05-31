@@ -1865,24 +1865,13 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#08241b] p-3 shadow-[5px_5px_0_#020806]">
-                    <p className="text-[9px] font-black tracking-[0.22em] text-[#7fd0a4]">
-                      LAST HIT
-                    </p>
-                    <p className="mt-1 truncate text-lg font-black text-[#fff4cf]">
-                      {game.lastResult}
-                    </p>
-                  </div>
-
-                  <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#08241b] p-3 shadow-[5px_5px_0_#020806]">
-                    <p className="text-[9px] font-black tracking-[0.22em] text-[#7fd0a4]">
-                      COMBO
-                    </p>
-                    <p className="mt-1 text-3xl font-black leading-none text-[#f0a536] drop-shadow-[3px_3px_0_#000]">
-                      x{game.combo}
-                    </p>
-                  </div>
+                <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#08241b] p-3 shadow-[5px_5px_0_#020806]">
+                  <p className="text-[9px] font-black tracking-[0.22em] text-[#7fd0a4]">
+                    COMBO
+                  </p>
+                  <p className="mt-1 text-3xl font-black leading-none text-[#f0a536] drop-shadow-[3px_3px_0_#000]">
+                    x{game.combo}
+                  </p>
                 </div>
               </section>
             </div>
