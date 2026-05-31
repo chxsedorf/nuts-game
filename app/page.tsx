@@ -606,7 +606,7 @@ function StatBox({
   return (
     <div
       className={[
-        "pixel-hard-sm relative flex min-h-[58px] flex-col items-center justify-center border-[4px] border-[#07160f] bg-[#071a15] px-2 py-1.5 text-center shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition",
+        "pixel-hard-sm relative flex min-h-[48px] flex-col items-center justify-center border-[3px] border-[#07160f] bg-[#071a15] px-1.5 py-1 text-center shadow-[4px_4px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset] transition sm:min-h-[58px] sm:border-[4px] sm:px-2 sm:py-1.5 sm:shadow-[5px_5px_0_#03100b,0_0_0_2px_#154231_inset,0_0_18px_rgba(0,0,0,0.28)_inset]",
         "[clip-path:polygon(8%_0,92%_0,100%_18%,100%_82%,92%_100%,8%_100%,0_82%,0_18%)]",
         pulse ? "scale-105 bg-[#f0a536]" : "",
       ].join(" ")}
@@ -615,7 +615,7 @@ function StatBox({
 
       <p
         className={[
-          "relative z-10 text-[14px] font-black leading-none tracking-[0.12em]",
+          "relative z-10 text-[11px] font-black leading-none tracking-[0.12em] sm:text-[14px]",
           pulse ? "text-[#3b1604]" : "text-[#f6bd4a]",
         ].join(" ")}
         style={{ textShadow: pulse ? "none" : "2px 2px 0 #2a1603" }}
@@ -625,7 +625,7 @@ function StatBox({
 
       <p
         className={[
-          "relative z-10 mt-1 text-2xl font-black leading-none xl:text-3xl",
+          "relative z-10 mt-1 text-xl font-black leading-none sm:text-2xl xl:text-3xl",
           pulse ? "text-[#07160f]" : accent ? "text-[#f5c247]" : "text-[#f2f2eb]",
         ].join(" ")}
         style={{ textShadow: pulse ? "none" : "3px 3px 0 #06100c" }}
@@ -819,7 +819,7 @@ function HomeScreen({
   }
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither relative h-screen overflow-hidden bg-[#07120f] text-white">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white lg:h-screen lg:overflow-hidden">
       <style>{`
         @keyframes logoRise {
           0% { transform: translateY(16px) scale(0.96); opacity: 0; }
@@ -858,7 +858,7 @@ function HomeScreen({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 to-transparent" />
 
       {showHands && (
-        <div className="absolute inset-0 z-[95] flex items-center justify-center bg-black/75 px-4">
+        <div className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 sm:px-4">
           <div className="pixel-hard relative max-h-[88vh] w-full max-w-3xl overflow-hidden border-[5px] border-[#07160f] bg-[#08241b] p-4 shadow-[10px_10px_0_#020806,0_0_0_2px_#f0a536_inset]">
             <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#f0a536]/70" />
 
@@ -925,10 +925,10 @@ function HomeScreen({
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto flex h-screen max-w-[1180px] items-center justify-center px-4 py-4 md:px-6">
-        <section className="grid w-full max-w-[1100px] gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1180px] items-center justify-center px-3 py-4 sm:px-4 md:px-6 lg:h-screen">
+        <section className="grid w-full max-w-[1100px] gap-3 sm:gap-4 lg:grid-cols-[1.05fr_0.95fr]">
           <div
-            className="pixel-hard relative min-h-[560px] overflow-hidden border-[6px] border-[#06160f] bg-[#08241b] p-5 shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset] md:p-7"
+            className="pixel-hard relative min-h-[480px] overflow-hidden border-[5px] border-[#06160f] bg-[#08241b] p-4 shadow-[8px_8px_0_#020806,0_0_0_3px_#f0a536_inset] sm:min-h-[540px] sm:border-[6px] sm:p-5 md:p-7 lg:min-h-[560px] lg:shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset]"
             style={{ animation: "logoRise 520ms ease-out both" }}
           >
             <div className="pointer-events-none absolute inset-[12px] border-[2px] border-[#f0a536]/70" />
@@ -965,29 +965,29 @@ function HomeScreen({
                 </div>
               </div>
 
-              <div className="relative z-10 mt-6 flex items-end justify-center gap-2 md:gap-3">
+              <div className="relative z-10 mt-5 flex items-end justify-center gap-1.5 sm:mt-6 sm:gap-2 md:gap-3">
                 {titleCards.map((card, index) => {
                   const isRed = card.suit === "heart" || card.suit === "diamond";
 
                   return (
                     <div
                       key={`${card.rank}-${card.suit}`}
-                      className={`h-32 w-24 rounded-xl border-[4px] border-[#1c1208] bg-[#fff4cf] p-2 text-center shadow-[6px_6px_0_#020806] md:h-40 md:w-28 ${card.tilt}`}
+                      className={`h-24 w-16 rounded-xl border-[4px] border-[#1c1208] bg-[#fff4cf] p-1.5 text-center shadow-[5px_5px_0_#020806] sm:h-32 sm:w-24 sm:p-2 md:h-40 md:w-28 md:shadow-[6px_6px_0_#020806] ${card.tilt}`}
                       style={{
                         "--tilt": `${index * 5 - 8}deg`,
                         animation: `cardFloatSoft ${3 + index * 0.25}s ease-in-out infinite`,
                       } as Record<string, string>}
                     >
                       <div className={["flex h-full flex-col items-center justify-center font-black", isRed ? "text-[#b83224]" : "text-[#10271f]"].join(" ")}>
-                        <p className="text-3xl md:text-4xl">{card.rank}</p>
-                        <p className="text-5xl md:text-6xl">{suitSymbols[card.suit]}</p>
+                        <p className="text-2xl sm:text-3xl md:text-4xl">{card.rank}</p>
+                        <p className="text-4xl sm:text-5xl md:text-6xl">{suitSymbols[card.suit]}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="relative z-10 mt-6 grid grid-cols-3 gap-2 text-center">
+              <div className="relative z-10 mt-5 grid grid-cols-3 gap-1.5 text-center sm:mt-6 sm:gap-2">
                 <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
                   <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">MODE</p>
                   <p className="mt-1 text-sm font-black text-[#fff4cf]">ENDLESS</p>
@@ -1005,7 +1005,7 @@ function HomeScreen({
           </div>
 
           <div
-            className="grid min-h-[560px] gap-4"
+            className="grid min-h-0 gap-4 lg:min-h-[560px]"
             style={{ animation: "menuRise 640ms 120ms ease-out both" }}
           >
             <div className="pixel-hard relative overflow-hidden border-[6px] border-[#06160f] bg-[#0a2119] p-4 shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset]">
@@ -1524,7 +1524,7 @@ export default function Home() {
       : "ONE MORE DEAL";
 
   return (
-    <main className="relative h-screen overflow-hidden bg-[#1b0f2e] text-white">
+    <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#1b0f2e] text-white md:h-screen md:overflow-hidden">
       <style>{`
         @keyframes floatScore {
           0% { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-3deg); }
@@ -1802,6 +1802,20 @@ export default function Home() {
 
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
 
+      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#07120f] px-6 text-center text-white md:hidden landscape:hidden">
+        <div className="rounded-2xl border-[5px] border-black bg-[#0b3a2b] p-6 shadow-[8px_8px_0_#000]">
+          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#f0a536]">
+            NUTS
+          </p>
+          <p className="text-2xl font-black leading-tight">
+            Rotate your phone
+          </p>
+          <p className="mt-3 text-xs font-bold leading-5 text-[#d8eadc]">
+            Landscape mode gives the board enough space.
+          </p>
+        </div>
+      </div>
+
       {floatingScores.map((score) => (
         <div
           key={score.id}
@@ -1813,12 +1827,12 @@ export default function Home() {
       ))}
 
       {game.isGameOver && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 px-3 py-4 sm:px-4">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(245,208,111,0.22),transparent_26%),radial-gradient(circle_at_28%_72%,rgba(32,163,111,0.18),transparent_28%),radial-gradient(circle_at_74%_22%,rgba(210,58,47,0.18),transparent_26%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.11] [background-image:linear-gradient(#f5d06f_1px,transparent_1px),linear-gradient(90deg,#f5d06f_1px,transparent_1px)] [background-size:18px_18px]" />
 
           <div
-            className="gameover-card pixel-hard relative w-full max-w-2xl overflow-hidden border-[6px] border-[#061811] bg-[#0b2f27] p-4 text-center shadow-[14px_14px_0_#020806,0_0_0_3px_#f0a536_inset] sm:p-6"
+            className="gameover-card pixel-hard relative w-full max-w-2xl overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-3 text-center shadow-[9px_9px_0_#020806,0_0_0_3px_#f0a536_inset] sm:border-[6px] sm:p-6 sm:shadow-[14px_14px_0_#020806,0_0_0_3px_#f0a536_inset]"
             style={{ animation: "gameOverDrop 520ms cubic-bezier(.2,1.3,.25,1) both" }}
           >
             <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#f5d06f]/65" />
@@ -1838,7 +1852,7 @@ export default function Home() {
                 </p>
 
                 <h2
-                  className="my-2 text-6xl font-black leading-none text-[#ffef7a] sm:text-7xl"
+                  className="my-2 text-5xl font-black leading-none text-[#ffef7a] sm:text-7xl"
                   style={{ textShadow: "5px 5px 0 #061811, -2px -2px 0 #fff4cf" }}
                 >
                   {game.score}
@@ -1899,12 +1913,12 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col overflow-hidden px-1.5 py-1.5">
+      <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
         <section
-          className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] p-2 shadow-[10px_10px_0_#03100b] backdrop-blur-sm"
+          className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]"
           style={{ animation: resultPulse ? "boardKick 360ms ease-out" : undefined }}
         >
-          <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-2 shadow-[6px_6px_0_#03100b] md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center">
+          <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
             <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
             <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
@@ -1912,10 +1926,10 @@ export default function Home() {
             <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
             <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
 
-            <div className="relative z-10 flex min-h-[68px] items-center px-2">
+            <div className="relative z-10 flex min-h-[52px] items-center px-2 sm:min-h-[68px]">
               <div>
                 <h1
-                  className="text-5xl font-black leading-[0.82] text-[#f1a22d] lg:text-6xl"
+                  className="text-4xl font-black leading-[0.82] text-[#f1a22d] sm:text-5xl lg:text-6xl"
                   style={{
                     textShadow:
                       "4px 0 #5a2b05, 0 4px #5a2b05, 5px 5px 0 #1d0c02, -2px -2px 0 #ffd16b",
@@ -1932,7 +1946,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative z-10 grid grid-cols-4 gap-2 xl:gap-3">
+            <div className="relative z-10 grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2 xl:gap-3">
               <StatBox
                 label="SCORE"
                 value={game.score}
@@ -1950,8 +1964,8 @@ export default function Home() {
           </header>
 
           <div className="relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
-<div className="flex min-h-0 flex-col overflow-hidden">
-              <section className="pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
+<div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
+              <section className="pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                 <div className="mb-2 flex h-7 items-center justify-between">
                   <p className="rounded-md border-[3px] border-[#061811] bg-[#123f32] px-3 py-1 text-xs font-black tracking-[0.25em] text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
                     BOARD
@@ -1967,7 +1981,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 border-[5px] border-[#061811] bg-[#09231d] p-2 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                   {resultBanner && (
                     <div className="pointer-events-none absolute inset-0 z-40">
                       {!resultBanner.isBreak && (
@@ -2119,8 +2133,8 @@ export default function Home() {
               
             </div>
 
-            <aside className="flex min-h-0 flex-col gap-2 overflow-hidden">
-              <div className="queue-panel pixel-hard flex min-h-0 flex-1 flex-col overflow-hidden border-[6px] border-[#061811] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+            <aside className="flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+              <div className="queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                 <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                   <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                     NOW
@@ -2133,7 +2147,7 @@ export default function Home() {
                   className="queue-card-well mb-2 flex w-full shrink-0 flex-col items-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
-                    className="w-20 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] lg:w-24 xl:w-28"
+                    className="w-16 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] sm:w-20 lg:w-24 xl:w-28"
                     style={{ aspectRatio: "5 / 7" }}
                   >
                     {game.hand[0] ? (
@@ -2211,10 +2225,10 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="grid shrink-0 grid-cols-3 gap-2">
+              <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:gap-2">
                 <button
                   onClick={restartGame}
-                  className="rounded-xl border-[5px] border-[#061811] bg-[#1787d8] px-3 py-3 text-base font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   RESTART
@@ -2222,7 +2236,7 @@ export default function Home() {
 
                 <button
                   onClick={toggleSound}
-                  className="rounded-xl border-[5px] border-[#061811] bg-[#f5d06f] px-3 py-3 text-base font-black text-[#061811] shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  className="rounded-xl border-[4px] border-[#061811] bg-[#f5d06f] px-2 py-2.5 text-sm font-black text-[#061811] shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.18)_inset]"
                 >
                   {soundEnabled ? "SFX ON" : "SFX OFF"}
                 </button>
@@ -2232,7 +2246,7 @@ export default function Home() {
                     playSound("select");
                     setScreen("home");
                   }}
-                  className="rounded-xl border-[5px] border-[#061811] bg-[#d23a2f] px-3 py-3 text-base font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  className="rounded-xl border-[4px] border-[#061811] bg-[#d23a2f] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   HOME
