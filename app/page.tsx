@@ -530,45 +530,60 @@ function CardFace({
 }) {
   const rankSize =
     size === "large"
-      ? "text-3xl"
+      ? "text-4xl"
       : size === "tiny"
       ? "text-sm"
       : size === "small"
-      ? "text-base"
-      : "text-xl";
+      ? "text-lg"
+      : "text-2xl";
 
   const suitSize =
     size === "large"
-      ? "text-6xl"
+      ? "text-7xl"
       : size === "tiny"
       ? "text-2xl"
       : size === "small"
-      ? "text-3xl"
-      : "text-4xl";
+      ? "text-4xl"
+      : "text-5xl";
+
+  const cornerTextSize =
+    size === "tiny" ? "text-[10px]" : size === "small" ? "text-xs" : "text-sm";
 
   return (
     <div
-      className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-xl font-black ${getCardColor(
+      className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg font-black ${getCardColor(
         card
       )}`}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.7),transparent_25%),radial-gradient(circle_at_80%_80%,rgba(0,0,0,0.08),transparent_30%)]" />
+      <div className="absolute inset-0 bg-[#fff3cf]" />
+      <div className="absolute inset-0 opacity-80 bg-[radial-gradient(circle_at_25%_18%,rgba(255,255,255,0.9),transparent_25%),radial-gradient(circle_at_65%_65%,rgba(255,214,129,0.38),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.28),transparent_42%,rgba(0,0,0,0.08))]" />
+      <div className="absolute inset-[3px] rounded-md border border-black/10" />
 
-      <div className="absolute left-1 top-1 flex flex-col items-center leading-none">
-        <span className="text-[10px]">{card.rank}</span>
-        <span className="text-xs">{suitSymbols[card.suit]}</span>
+      <div className="absolute left-1 top-1 z-20 flex flex-col items-center leading-none">
+        <span className={`${cornerTextSize} tracking-[-0.03em]`}>
+          {card.rank}
+        </span>
+        <span className={size === "tiny" ? "text-xs" : "text-sm"}>
+          {suitSymbols[card.suit]}
+        </span>
       </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-sm">
-        <span className={`${rankSize} leading-none`}>{card.rank}</span>
+      <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-[1px_1px_0_rgba(0,0,0,0.16)]">
+        <span className={`${rankSize} leading-none tracking-[-0.04em]`}>
+          {card.rank}
+        </span>
         <span className={`${suitSize} -mt-1 leading-none`}>
           {suitSymbols[card.suit]}
         </span>
       </div>
 
-      <div className="absolute bottom-1 right-1 flex rotate-180 flex-col items-center leading-none">
-        <span className="text-[10px]">{card.rank}</span>
-        <span className="text-xs">{suitSymbols[card.suit]}</span>
+      <div className="absolute bottom-1 right-1 z-20 flex rotate-180 flex-col items-center leading-none">
+        <span className={`${cornerTextSize} tracking-[-0.03em]`}>
+          {card.rank}
+        </span>
+        <span className={size === "tiny" ? "text-xs" : "text-sm"}>
+          {suitSymbols[card.suit]}
+        </span>
       </div>
     </div>
   );
@@ -588,14 +603,14 @@ function StatBox({
   return (
     <div
       className={[
-        "rounded-xl border-[3px] border-black bg-[#101b3b] px-2 py-2 shadow-[4px_4px_0_#000] transition md:px-2 md:py-2 lg:px-4 lg:py-3",
-        pulse ? "scale-105 bg-[#ffef7a]" : "",
+        "rounded-xl border-[3px] border-black bg-[#0f2146] px-2 py-2 shadow-[4px_4px_0_#000] transition md:px-2 md:py-2 lg:px-4 lg:py-3",
+        pulse ? "scale-105 bg-[#ffe975]" : "",
       ].join(" ")}
     >
       <p
         className={[
           "text-[10px] font-black tracking-widest",
-          pulse ? "text-[#d43d4f]" : "text-[#f8d34a]",
+          pulse ? "text-[#d43d4f]" : "text-[#ffe975]",
         ].join(" ")}
       >
         {label}
@@ -603,7 +618,7 @@ function StatBox({
       <p
         className={[
           "mt-1 text-xl font-black leading-none lg:text-2xl",
-          pulse ? "text-black" : accent ? "text-[#ffef7a]" : "text-white",
+          pulse ? "text-black" : accent ? "text-[#ffe975]" : "text-white",
         ].join(" ")}
       >
         {value}
@@ -688,7 +703,7 @@ function RoleListPanel() {
     return (
       <div
         className={[
-          "flex h-10 w-8 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff4cf] text-[11px] font-black leading-none shadow-[2px_2px_0_#000]",
+          "flex h-10 w-8 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff3cf] text-[11px] font-black leading-none shadow-[2px_2px_0_#000]",
           isRed ? "text-red-600" : "text-blue-950",
         ].join(" ")}
       >
@@ -699,8 +714,8 @@ function RoleListPanel() {
   }
 
   return (
-    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-3 shadow-[6px_6px_0_#000] lg:flex lg:flex-col">
-      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000] lg:mb-3">
+    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#0f2146] p-3 shadow-[6px_6px_0_#000] lg:flex lg:flex-col">
+      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffe975] px-3 py-2 text-black shadow-[3px_3px_0_#000] lg:mb-3">
         <p className="text-[11px] font-black tracking-[0.25em]">HANDS</p>
       </div>
 
@@ -708,10 +723,10 @@ function RoleListPanel() {
         {roles.map((role) => (
           <div
             key={role.name}
-            className="rounded-xl border-[3px] border-black bg-[#2d1850] p-2 shadow-[3px_3px_0_#000]"
+            className="rounded-xl border-[3px] border-black bg-[#2b1a4a] p-2 shadow-[3px_3px_0_#000]"
           >
             <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="text-sm font-black leading-none text-[#ffef7a]">
+              <p className="text-sm font-black leading-none text-[#ffe975]">
                 {role.name}
               </p>
 
@@ -742,7 +757,7 @@ function MobileRoleListPanel() {
     return (
       <div
         className={[
-          "flex h-8 w-6 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff4cf] text-[9px] font-black leading-none shadow-[2px_2px_0_#000]",
+          "flex h-8 w-6 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff3cf] text-[9px] font-black leading-none shadow-[2px_2px_0_#000]",
           isRed ? "text-red-600" : "text-blue-950",
         ].join(" ")}
       >
@@ -753,8 +768,8 @@ function MobileRoleListPanel() {
   }
 
   return (
-    <aside className="mt-2 hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000] md:block lg:hidden">
-      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
+    <aside className="mt-2 hidden rounded-2xl border-[5px] border-black bg-[#0f2146] p-2 shadow-[6px_6px_0_#000] md:block lg:hidden">
+      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffe975] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
         <p className="text-[10px] font-black tracking-[0.25em]">HANDS</p>
       </div>
 
@@ -762,9 +777,9 @@ function MobileRoleListPanel() {
         {roleExamples.map((role) => (
           <div
             key={role.name}
-            className="min-w-[116px] rounded-xl border-[3px] border-black bg-[#2d1850] p-2 shadow-[3px_3px_0_#000]"
+            className="min-w-[116px] rounded-xl border-[3px] border-black bg-[#2b1a4a] p-2 shadow-[3px_3px_0_#000]"
           >
-            <p className="mb-1 text-xs font-black leading-none text-[#ffef7a]">
+            <p className="mb-1 text-xs font-black leading-none text-[#ffe975]">
               {role.name}
             </p>
 
@@ -792,7 +807,7 @@ function HomeScreen({
   onStart: () => void;
 }) {
   return (
-    <main className="relative h-screen overflow-hidden bg-[#1b0f2e] text-white">
+    <main className="relative h-screen overflow-hidden bg-[#17102b] text-white">
       <style>{`
         @keyframes titleFloat {
           0%, 100% { transform: translateY(0) rotate(-1deg); }
@@ -817,14 +832,14 @@ function HomeScreen({
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,211,74,0.22),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(64,151,255,0.25),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(255,73,96,0.22),transparent_32%)]" />
 
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.075] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
 
-      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#1b0f2e] px-6 text-center text-white md:hidden landscape:hidden">
-        <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-6 shadow-[8px_8px_0_#000]">
-          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#ffef7a]">
+      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#17102b] px-6 text-center text-white md:hidden landscape:hidden">
+        <div className="rounded-2xl border-[5px] border-black bg-[#d93555] p-6 shadow-[8px_8px_0_#000]">
+          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#ffe975]">
             NUTS
           </p>
-          <p className="text-2xl font-black leading-tight">
+          <p className="text-xl font-black leading-tight">
             Rotate your phone
           </p>
           <p className="mt-3 text-xs font-bold leading-5">
@@ -834,7 +849,7 @@ function HomeScreen({
       </div>
 
       <div
-        className="pointer-events-none absolute left-[8%] top-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff4cf] shadow-[8px_8px_0_#000] md:block"
+        className="pointer-events-none absolute left-[8%] top-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff3cf] shadow-[8px_8px_0_#000] md:block"
         style={{ animation: "cardDriftA 3.4s ease-in-out infinite" }}
       >
         <div className="flex h-full flex-col items-center justify-center text-blue-950">
@@ -844,7 +859,7 @@ function HomeScreen({
       </div>
 
       <div
-        className="pointer-events-none absolute right-[8%] bottom-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff4cf] shadow-[8px_8px_0_#000] md:block"
+        className="pointer-events-none absolute right-[8%] bottom-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff3cf] shadow-[8px_8px_0_#000] md:block"
         style={{ animation: "cardDriftB 3.8s ease-in-out infinite" }}
       >
         <div className="flex h-full flex-col items-center justify-center text-red-600">
@@ -855,11 +870,11 @@ function HomeScreen({
 
       <div className="relative z-10 mx-auto flex h-screen max-w-5xl flex-col items-center justify-center px-4">
         <section
-          className="w-full max-w-3xl rounded-[2rem] border-[6px] border-black bg-[#2d1850] p-5 text-center shadow-[12px_12px_0_#000] md:p-8"
+          className="w-full max-w-3xl rounded-[2rem] border-[6px] border-black bg-[#2b1a4a] p-5 text-center shadow-[12px_12px_0_#000] md:p-8"
           style={{ animation: "titleFloat 4s ease-in-out infinite" }}
         >
-          <div className="mb-5 rounded-[1.5rem] border-[5px] border-black bg-[#d43d4f] px-5 py-6 shadow-[7px_7px_0_#000]">
-            <p className="mb-2 text-sm font-black tracking-[0.55em] text-[#ffef7a]">
+          <div className="mb-5 rounded-[1.5rem] border-[5px] border-black bg-[#d93555] px-5 py-6 shadow-[7px_7px_0_#000]">
+            <p className="mb-2 text-sm font-black tracking-[0.55em] text-[#ffe975]">
               GRID POKER
             </p>
 
@@ -871,17 +886,17 @@ function HomeScreen({
           </div>
 
           <div className="mx-auto mb-5 grid max-w-md grid-cols-3 gap-2">
-            <div className="rotate-[-4deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
+            <div className="rotate-[-4deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
               <p className="text-2xl font-black">Q</p>
               <p className="text-4xl font-black">♣</p>
             </div>
 
-            <div className="rotate-[2deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-3 text-red-600 shadow-[4px_4px_0_#000]">
+            <div className="rotate-[2deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-3 text-red-600 shadow-[4px_4px_0_#000]">
               <p className="text-2xl font-black">10</p>
               <p className="text-4xl font-black">♦</p>
             </div>
 
-            <div className="rotate-[5deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
+            <div className="rotate-[5deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
               <p className="text-2xl font-black">J</p>
               <p className="text-4xl font-black">♠</p>
             </div>
@@ -890,22 +905,22 @@ function HomeScreen({
           <div className="mx-auto mb-5 grid max-w-md grid-cols-2 gap-3">
             <button
               onClick={onStart}
-              className="rounded-2xl border-[5px] border-black bg-[#ffef7a] px-5 py-4 text-2xl font-black text-black shadow-[7px_7px_0_#000] transition hover:-translate-y-1 hover:shadow-[9px_9px_0_#000]"
+              className="rounded-2xl border-[5px] border-black bg-[#ffe975] px-5 py-4 text-2xl font-black text-black shadow-[7px_7px_0_#000] transition hover:-translate-y-1 hover:shadow-[9px_9px_0_#000]"
               style={{ animation: "pulseGlow 1.8s ease-in-out infinite" }}
             >
               PLAY
             </button>
 
-            <div className="rounded-2xl border-[5px] border-black bg-[#101b3b] px-4 py-3 text-left shadow-[7px_7px_0_#000]">
-              <p className="text-[10px] font-black tracking-[0.25em] text-[#6ee7ff]">
+            <div className="rounded-2xl border-[5px] border-black bg-[#0f2146] px-4 py-3 text-left shadow-[7px_7px_0_#000]">
+              <p className="text-[10px] font-black tracking-[0.25em] text-[#62e7ff]">
                 BEST
               </p>
-              <p className="text-3xl font-black text-[#ffef7a]">{highScore}</p>
+              <p className="text-3xl font-black text-[#ffe975]">{highScore}</p>
             </div>
           </div>
 
-          <div className="mx-auto max-w-md rounded-2xl border-[4px] border-black bg-[#101b3b] p-4 text-left shadow-[5px_5px_0_#000]">
-            <p className="mb-2 text-xs font-black tracking-[0.3em] text-[#ffef7a]">
+          <div className="mx-auto max-w-md rounded-2xl border-[4px] border-black bg-[#0f2146] p-4 text-left shadow-[5px_5px_0_#000]">
+            <p className="mb-2 text-xs font-black tracking-[0.3em] text-[#ffe975]">
               RULE
             </p>
 
@@ -1124,9 +1139,9 @@ export default function Home() {
 
   if (!isLoaded) {
     return (
-      <main className="flex h-screen items-center justify-center overflow-hidden bg-[#1b0f2e] text-white">
-        <div className="rounded-2xl border-[4px] border-black bg-[#d43d4f] px-8 py-5 shadow-[8px_8px_0_#000]">
-          <p className="text-2xl font-black tracking-[0.3em] text-[#ffef7a]">
+      <main className="flex h-screen items-center justify-center overflow-hidden bg-[#17102b] text-white">
+        <div className="rounded-2xl border-[4px] border-black bg-[#d93555] px-8 py-5 shadow-[8px_8px_0_#000]">
+          <p className="text-2xl font-black tracking-[0.3em] text-[#ffe975]">
             NUTS
           </p>
         </div>
@@ -1139,7 +1154,7 @@ export default function Home() {
   }
 
   return (
-    <main className="relative h-screen overflow-hidden bg-[#1b0f2e] text-white">
+    <main className="relative h-screen overflow-hidden bg-[#17102b] text-white">
       <style>{`
         @keyframes floatScore {
           0% { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-3deg); }
@@ -1183,14 +1198,14 @@ export default function Home() {
         }
       `}</style>
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(255,211,74,0.18),transparent_26%),radial-gradient(circle_at_90%_20%,rgba(64,151,255,0.22),transparent_28%),radial-gradient(circle_at_50%_95%,rgba(255,73,96,0.22),transparent_30%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(255,233,117,0.16),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(98,231,255,0.18),transparent_30%),radial-gradient(circle_at_50%_95%,rgba(217,53,85,0.28),transparent_34%)]" />
 
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.075] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
 
       {floatingScores.map((score) => (
         <div
           key={score.id}
-          className="pointer-events-none fixed left-1/2 top-[20%] z-[70] -translate-x-1/2 rounded-2xl border-[5px] border-black bg-[#ffef7a] px-6 py-3 text-5xl font-black text-[#d43d4f] shadow-[8px_8px_0_#000]"
+          className="pointer-events-none fixed left-1/2 top-[20%] z-[70] -translate-x-1/2 rounded-2xl border-[5px] border-black bg-[#ffe975] px-6 py-3 text-5xl font-black text-[#d43d4f] shadow-[8px_8px_0_#000]"
           style={{ animation: "floatScore 900ms ease-out forwards" }}
         >
           +{score.value}
@@ -1199,8 +1214,8 @@ export default function Home() {
 
       {game.isGameOver && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 px-5">
-          <div className="w-full max-w-md rotate-[-1deg] rounded-[2rem] border-[5px] border-black bg-[#d43d4f] p-6 text-center shadow-[12px_12px_0_#000]">
-            <p className="mb-2 text-sm font-black tracking-[0.5em] text-[#ffef7a]">
+          <div className="w-full max-w-md rotate-[-1deg] rounded-[2rem] border-[5px] border-black bg-[#d93555] p-6 text-center shadow-[12px_12px_0_#000]">
+            <p className="mb-2 text-sm font-black tracking-[0.5em] text-[#ffe975]">
               GAME OVER
             </p>
 
@@ -1208,18 +1223,18 @@ export default function Home() {
               {game.score}
             </h2>
 
-            <div className="mb-5 rounded-2xl border-[4px] border-black bg-[#101b3b] p-4 shadow-[5px_5px_0_#000]">
-              <p className="text-xs font-black tracking-widest text-[#6ee7ff]">
+            <div className="mb-5 rounded-2xl border-[4px] border-black bg-[#0f2146] p-4 shadow-[5px_5px_0_#000]">
+              <p className="text-xs font-black tracking-widest text-[#62e7ff]">
                 BEST SCORE
               </p>
-              <p className="mt-1 text-3xl font-black text-[#ffef7a]">
+              <p className="mt-1 text-3xl font-black text-[#ffe975]">
                 {game.highScore}
               </p>
             </div>
 
             <button
               onClick={restartGame}
-              className="w-full rounded-2xl border-[4px] border-black bg-[#ffef7a] px-5 py-4 text-xl font-black text-black shadow-[6px_6px_0_#000] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#000]"
+              className="w-full rounded-2xl border-[4px] border-black bg-[#ffe975] px-5 py-4 text-xl font-black text-black shadow-[6px_6px_0_#000] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#000]"
             >
               RESTART
             </button>
@@ -1228,10 +1243,10 @@ export default function Home() {
       )}
 
       <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1 py-1">
-        <section className="w-full rounded-2xl border-[5px] border-black bg-[#2d1850] p-2 shadow-[8px_8px_0_#000]">
+        <section className="w-full rounded-2xl border-[5px] border-black bg-[#2b1a4a] p-2 shadow-[8px_8px_0_#000]">
           <header className="mb-2 grid gap-2 md:grid-cols-[1fr_360px] md:items-end lg:grid-cols-[1fr_620px]">
-            <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] px-3 py-2 shadow-[5px_5px_0_#000] lg:px-4">
-              <p className="mb-1 text-xs font-black tracking-[0.4em] text-[#ffef7a]">
+            <div className="rounded-2xl border-[5px] border-black bg-[#d93555] px-3 py-2 shadow-[5px_5px_0_#000] lg:px-4">
+              <p className="mb-1 text-xs font-black tracking-[0.4em] text-[#ffe975]">
                 GRID POKER
               </p>
 
@@ -1261,15 +1276,15 @@ export default function Home() {
             <RoleListPanel />
 
             <div className="flex min-h-0 flex-col">
-              <section className="flex min-h-0 flex-1 flex-col rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000]">
+              <section className="flex min-h-0 flex-1 flex-col rounded-2xl border-[5px] border-black bg-[#0f2146] p-2 shadow-[6px_6px_0_#000]">
                 <div className="mb-1 flex h-5 items-center justify-between">
-                  <p className="text-xs font-black tracking-[0.25em] text-[#ffef7a]">
+                  <p className="text-xs font-black tracking-[0.25em] text-[#ffe975]">
                     BOARD
                   </p>
 
                   {isResolvingHand && (
                     <div
-                      className="rounded-full border-[3px] border-black bg-[#ffef7a] px-3 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                      className="rounded-full border-[3px] border-black bg-[#ffe975] px-3 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
                       style={{ animation: "targetBanner 180ms ease-out" }}
                     >
                       CLEAR TARGETS
@@ -1277,7 +1292,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-black bg-[#0b1026] p-2 shadow-inner lg:aspect-auto lg:max-h-none">
+                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-black bg-[#081735] p-2 shadow-[inset_0_0_0_2px_rgba(255,233,117,0.08),inset_0_18px_40px_rgba(0,0,0,0.22)] lg:aspect-auto lg:max-h-none">
                   {game.board.map((boardRow, rowIndex) =>
                     boardRow.map((cell, colIndex) => {
                       const cellKey = keyOf(rowIndex, colIndex);
@@ -1301,14 +1316,14 @@ export default function Home() {
                           className={[
                             "relative h-full min-h-0 rounded-xl border-[3px] transition duration-200",
                             cell
-                              ? "rotate-[-1deg] border-black bg-[#fff4cf] p-1 shadow-[3px_3px_0_#000]"
-                              : "border-black bg-[#172554] shadow-[2px_2px_0_#000]",
+                              ? "rotate-[-1deg] border-black bg-[#fff3cf] p-1 shadow-[3px_3px_0_#000]"
+                              : "border-black bg-[#122a59] shadow-[2px_2px_0_#000]",
                             canPlace
                               ? "cursor-pointer bg-[#2853a7] shadow-[0_0_0_3px_#ffef7a,4px_4px_0_#000] hover:-translate-y-1 hover:bg-[#3268d4]"
                               : "",
                             !cell && !canPlace ? "hover:bg-[#223b7c]" : "",
                             isHighlighted
-                              ? "z-20 bg-[#ffef7a] shadow-[0_0_0_4px_#6ee7ff,0_0_24px_rgba(255,239,122,0.85),5px_5px_0_#000]"
+                              ? "z-20 bg-[#ffe975] shadow-[0_0_0_4px_#6ee7ff,0_0_24px_rgba(255,239,122,0.85),5px_5px_0_#000]"
                               : "",
                             shouldDim ? "opacity-35 grayscale" : "",
                           ].join(" ")}
@@ -1328,7 +1343,7 @@ export default function Home() {
 
                               {isHighlighted && (
                                 <div
-                                  className="pointer-events-none absolute left-1/2 top-1/2 z-30 rounded-full border-[3px] border-black bg-[#6ee7ff] px-2 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                                  className="pointer-events-none absolute left-1/2 top-1/2 z-30 rounded-full border-[3px] border-black bg-[#62e7ff] px-2 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
                                   style={{
                                     animation: "hitBadge 220ms ease-out forwards",
                                   }}
@@ -1338,14 +1353,14 @@ export default function Home() {
                               )}
 
                               {isHighlighted && (
-                                <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffef7a] blur-md" />
+                                <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffe975] blur-md" />
                               )}
                             </>
                           ) : (
                             <span
                               className={[
                                 "text-2xl font-black",
-                                canPlace ? "text-[#ffef7a]" : "text-white/20",
+                                canPlace ? "text-[#ffe975]" : "text-white/20",
                               ].join(" ")}
                             >
                               ＋
@@ -1363,8 +1378,8 @@ export default function Home() {
             </div>
 
             <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
-<div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-2 shadow-[6px_6px_0_#000] lg:p-3">
-                <div className="mb-3 rounded-xl border-[3px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
+<div className="rounded-2xl border-[5px] border-black bg-[#d93555] p-2 shadow-[6px_6px_0_#000] lg:p-3">
+                <div className="mb-3 rounded-xl border-[3px] border-black bg-[#ffe975] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
                   <p className="text-[10px] font-black tracking-[0.25em]">
                     NOW
                   </p>
@@ -1373,20 +1388,20 @@ export default function Home() {
                 <button
                   onClick={() => selectHandCard(0)}
                   disabled={game.isGameOver || !game.hand[0]}
-                  className="mb-3 flex w-full items-center gap-3 rounded-2xl border-[4px] border-black bg-[#283c86] p-2 text-left shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000] lg:mb-4 lg:gap-4 lg:p-3"
+                  className="mb-3 flex w-full items-center gap-3 rounded-2xl border-[4px] border-black bg-[#274b96] p-2 text-left shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000] lg:mb-4 lg:gap-4 lg:p-3"
                 >
-                  <div className="w-20 shrink-0 rotate-[-2deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-1 shadow-[4px_4px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}>
+                  <div className="w-20 shrink-0 rotate-[-2deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-1 shadow-[4px_4px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}>
                     {game.hand[0] ? (
                       <CardFace card={game.hand[0]} size="small" />
                     ) : (
-                      <div className="flex h-full items-center justify-center rounded-xl bg-[#fff4cf] text-center text-xs font-black text-black/50">
+                      <div className="flex h-full items-center justify-center rounded-xl bg-[#fff3cf] text-center text-xs font-black text-black/50">
                         EMPTY
                       </div>
                     )}
                   </div>
 
                   <div>
-                    <p className="text-[10px] font-black tracking-widest text-[#6ee7ff]">
+                    <p className="text-[10px] font-black tracking-widest text-[#62e7ff]">
                       PLACE THIS
                     </p>
                     <p className="mt-1 text-2xl font-black text-white drop-shadow-[2px_2px_0_#000]">
@@ -1397,8 +1412,8 @@ export default function Home() {
                   </div>
                 </button>
 
-                <div className="rounded-xl border-[3px] border-black bg-[#101b3b] p-3 shadow-[3px_3px_0_#000]">
-                  <p className="mb-2 text-[10px] font-black tracking-[0.25em] text-[#ffef7a]">
+                <div className="rounded-xl border-[3px] border-black bg-[#0f2146] p-3 shadow-[3px_3px_0_#000]">
+                  <p className="mb-2 text-[10px] font-black tracking-[0.25em] text-[#ffe975]">
                     NEXT
                   </p>
 
@@ -1406,9 +1421,9 @@ export default function Home() {
                     {game.hand.slice(1, 3).map((card, index) => (
                       <div
                         key={card.id}
-                        className="relative mx-auto w-20 rounded-xl border-[3px] border-black bg-[#fff4cf] p-1.5 opacity-90 shadow-[3px_3px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}
+                        className="relative mx-auto w-20 rounded-xl border-[3px] border-black bg-[#fff3cf] p-1.5 opacity-90 shadow-[3px_3px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}
                       >
-                        <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-black bg-[#101b3b] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#ffef7a] shadow-[2px_2px_0_#000]">
+                        <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-black bg-[#0f2146] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#ffe975] shadow-[2px_2px_0_#000]">
                           +{index + 1}
                         </div>
                         <CardFace card={card} size="tiny" />
@@ -1421,14 +1436,14 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={restartGame}
-                  className="rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-3 text-base font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000]"
+                  className="rounded-xl border-[4px] border-black bg-[#ffe975] px-3 py-3 text-base font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:brightness-105 hover:shadow-[6px_6px_0_#000]"
                 >
                   RESTART
                 </button>
 
                 <button
                   onClick={() => setScreen("home")}
-                  className="rounded-xl border-[4px] border-black bg-[#6ee7ff] px-3 py-3 text-base font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000]"
+                  className="rounded-xl border-[4px] border-black bg-[#62e7ff] px-3 py-3 text-base font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:brightness-105 hover:shadow-[6px_6px_0_#000]"
                 >
                   HOME
                 </button>
