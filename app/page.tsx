@@ -527,7 +527,7 @@ function CardFace({
         card
       )}`}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.85),rgba(244,229,190,0.72)),repeating-linear-gradient(to_bottom,rgba(0,0,0,0.04)_0px,rgba(0,0,0,0.04)_1px,transparent_2px,transparent_4px)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,232,194,0.86)),repeating-linear-gradient(to_bottom,rgba(0,0,0,0.035)_0px,rgba(0,0,0,0.035)_1px,transparent_2px,transparent_4px)]" />
 
       <div className="absolute left-1 top-1 flex flex-col items-center leading-none">
         <span className="text-[10px]">{card.rank}</span>
@@ -586,42 +586,6 @@ function StatBox({
     </div>
   );
 }
-
-const roleExamples = [
-  {
-    name: "Pair",
-    cards: [
-      { rank: "7", suit: "heart" as Suit },
-      { rank: "7", suit: "spade" as Suit },
-    ],
-  },
-  {
-    name: "Three",
-    cards: [
-      { rank: "Q", suit: "heart" as Suit },
-      { rank: "Q", suit: "diamond" as Suit },
-      { rank: "Q", suit: "club" as Suit },
-    ],
-  },
-  {
-    name: "Straight",
-    cards: [
-      { rank: "5", suit: "spade" as Suit },
-      { rank: "6", suit: "heart" as Suit },
-      { rank: "7", suit: "club" as Suit },
-    ],
-  },
-  {
-    name: "Full House",
-    cards: [
-      { rank: "9", suit: "heart" as Suit },
-      { rank: "9", suit: "spade" as Suit },
-      { rank: "9", suit: "club" as Suit },
-      { rank: "K", suit: "diamond" as Suit },
-      { rank: "K", suit: "heart" as Suit },
-    ],
-  },
-];
 
 function RoleListPanel() {
   const roles = roleExamples;
@@ -828,8 +792,8 @@ function HomeScreen({
         </div>
       )}
 
-      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#082820] px-6 text-center text-white md:hidden landscape:hidden">
-        <div className="rounded-2xl border-[5px] border-black bg-[#123f32] p-6 shadow-[8px_8px_0_#000]">
+      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#1b0f2e] px-6 text-center text-white md:hidden landscape:hidden">
+        <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-6 shadow-[8px_8px_0_#000]">
           <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#ffef7a]">
             NUTS
           </p>
@@ -927,7 +891,7 @@ NUTS
               <p>Only the left card can be placed.</p>
               <p>The next 2 cards are visible.</p>
               <p>Pair / Three / Straight / Full House only.</p>
-                          </div>
+            </div>
           </div>
         </section>
       </div>
@@ -1204,11 +1168,12 @@ export default function Home() {
 
         .felt-bg {
           background:
-            radial-gradient(circle at 18% 22%, rgba(255, 210, 80, 0.08), transparent 24%),
-            radial-gradient(circle at 82% 12%, rgba(80, 255, 190, 0.10), transparent 28%),
-            linear-gradient(135deg, rgba(255,255,255,0.035) 0 12%, transparent 12% 24%, rgba(0,0,0,0.04) 24% 36%, transparent 36% 48%),
-            radial-gradient(circle at center, #1b6b53 0%, #0e4638 46%, #082820 100%);
-          background-size: auto, auto, 72px 72px, auto;
+            radial-gradient(circle at 16% 14%, rgba(255, 180, 70, 0.12), transparent 27%),
+            radial-gradient(circle at 82% 24%, rgba(80, 255, 180, 0.08), transparent 30%),
+            radial-gradient(circle at 50% 90%, rgba(0, 0, 0, 0.38), transparent 55%),
+            linear-gradient(135deg, rgba(255,255,255,0.025) 0 12%, transparent 12% 24%, rgba(0,0,0,0.045) 24% 36%, transparent 36% 48%),
+            #0f4a39;
+          background-size: auto, auto, auto, 72px 72px, auto;
         }
 
         .crt-lines::after {
@@ -1224,11 +1189,11 @@ export default function Home() {
             rgba(0,0,0,0.03) 4px
           );
           mix-blend-mode: overlay;
-          opacity: 0.45;
+          opacity: 0.36;
         }
       `}</style>
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,190,70,0.16),transparent_28%),radial-gradient(circle_at_78%_26%,rgba(60,255,185,0.10),transparent_30%),radial-gradient(circle_at_50%_88%,rgba(0,0,0,0.28),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
 
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
 
@@ -1273,9 +1238,9 @@ export default function Home() {
       )}
 
       <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1 py-1">
-        <section className="w-full rounded-2xl border-[5px] border-[#061811] bg-[#0a2b22]/80 p-2 shadow-[8px_8px_0_#04120d,0_0_0_2px_#ba7a22_inset] backdrop-blur-sm">
-          <header className="mb-2 grid gap-2 md:grid-cols-[1fr_360px] md:items-end lg:grid-cols-[1fr_620px]">
-            <div className="rounded-2xl border-[5px] border-[#061811] bg-[#123f32] px-4 py-2 shadow-[5px_5px_0_#04120d,0_0_0_2px_#b77820_inset] lg:px-5">
+        <section className="w-full rounded-2xl border-[5px] border-[#061811] bg-[#0a2b22]/80 p-2 shadow-[8px_8px_0_#04120d,0_0_0_2px_#b77820_inset] backdrop-blur-sm">
+          <header className="mb-2 grid gap-2 rounded-2xl border-[4px] border-[#061811] bg-[#123f32] p-2 shadow-[5px_5px_0_#04120d,0_0_0_2px_#b77820_inset] md:grid-cols-[1fr_360px] md:items-center lg:grid-cols-[1fr_620px]">
+            <div className="px-3 py-1 lg:px-4">
               <h1 className="text-5xl font-black leading-none text-[#f3a52d] drop-shadow-[4px_4px_0_#361b05] lg:text-7xl">
                 NUTS
               </h1>
@@ -1319,7 +1284,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-[#061811] bg-[#09231d] p-2 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_24px_rgba(0,0,0,0.45)] lg:aspect-auto lg:max-h-none">
+                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-[#061811] bg-[#09231d] p-2 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_24px_rgba(0,0,0,0.48)] lg:aspect-auto lg:max-h-none">
                   {game.board.map((boardRow, rowIndex) =>
                     boardRow.map((cell, colIndex) => {
                       const cellKey = keyOf(rowIndex, colIndex);
@@ -1344,7 +1309,7 @@ export default function Home() {
                             "relative h-full min-h-0 rounded-xl border-[3px] transition duration-200",
                             cell
                               ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[3px_3px_0_#04120d]"
-                              : "border-[#061811] bg-[#122e27] shadow-[2px_2px_0_#04120d,inset_0_0_0_2px_#295b4d]",
+                              : "border-[#061811] bg-[#132e27] shadow-[2px_2px_0_#04120d,inset_0_0_0_2px_#295b4d]",
                             canPlace
                               ? "cursor-pointer bg-[#173f34] shadow-[0_0_0_3px_#f5d06f,4px_4px_0_#04120d] hover:-translate-y-1 hover:bg-[#215948]"
                               : "",
