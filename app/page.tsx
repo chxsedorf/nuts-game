@@ -1262,6 +1262,20 @@ export default function Home() {
             inset 0 0 0 6px rgba(41, 91, 77, 0.58),
             inset 0 -12px 20px rgba(0,0,0,0.22);
         }
+
+        .queue-panel {
+          background:
+            radial-gradient(circle at 28% 18%, rgba(127, 208, 164, 0.09), transparent 28%),
+            linear-gradient(145deg, rgba(255,255,255,0.04), rgba(0,0,0,0.26)),
+            #0b2f27;
+        }
+
+        .queue-card-well {
+          background:
+            radial-gradient(circle at 30% 18%, rgba(245, 208, 111, 0.08), transparent 24%),
+            linear-gradient(145deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28)),
+            #102a25;
+        }
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -1459,10 +1473,10 @@ export default function Home() {
               
             </div>
 
-            <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
-<div className="rounded-2xl border-[5px] border-[#061811] bg-[#0b2f27] p-2 shadow-[6px_6px_0_#04120d,0_0_0_2px_#255d48_inset] lg:p-3">
-                <div className="mb-3 rounded-xl border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
-                  <p className="text-[10px] font-black tracking-[0.25em]">
+            <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+              <div className="queue-panel rounded-2xl border-[6px] border-[#061811] p-3 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+                <div className="mb-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
+                  <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                     NOW
                   </p>
                 </div>
@@ -1470,42 +1484,55 @@ export default function Home() {
                 <button
                   onClick={() => selectHandCard(0)}
                   disabled={game.isGameOver || !game.hand[0]}
-                  className="mb-3 flex w-full items-center gap-3 rounded-2xl border-[4px] border-[#061811] bg-[#102a25] p-2 text-left shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#04120d] lg:mb-4 lg:gap-4 lg:p-3"
+                  className="queue-card-well mb-3 flex w-full flex-col items-center rounded-2xl border-[4px] border-[#061811] p-3 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
-                  <div className="w-20 shrink-0 rotate-[-2deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-1 shadow-[4px_4px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}>
+                  <div
+                    className="w-24 shrink-0 rotate-[-2deg] rounded-lg border-[4px] border-[#061811] bg-[#fff8e4] p-1 shadow-[4px_4px_0_#04120d] lg:w-32"
+                    style={{ aspectRatio: "5 / 7" }}
+                  >
                     {game.hand[0] ? (
                       <CardFace card={game.hand[0]} size="small" />
                     ) : (
-                      <div className="flex h-full items-center justify-center rounded-xl bg-[#fff4cf] text-center text-xs font-black text-black/50">
+                      <div className="flex h-full items-center justify-center rounded-lg bg-[#fff8e4] text-center text-xs font-black text-black/50">
                         EMPTY
                       </div>
                     )}
                   </div>
 
-                  <div>
-                    <p className="text-[10px] font-black tracking-widest text-[#7fd0a4]">
-                      PLACE THIS
-                    </p>
-                    <p className="mt-1 text-2xl font-black text-white drop-shadow-[2px_2px_0_#000]">
-                      {game.hand[0]
-                        ? `${game.hand[0].rank}${suitSymbols[game.hand[0].suit]}`
-                        : "-"}
-                    </p>
+                  <p className="mt-3 text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
+                    PLACE THIS
+                  </p>
+                  <p
+                    className="mt-1 text-3xl font-black leading-none text-white"
+                    style={{ textShadow: "3px 3px 0 #03100b" }}
+                  >
+                    {game.hand[0]
+                      ? `${game.hand[0].rank}${suitSymbols[game.hand[0].suit]}`
+                      : "-"}
+                  </p>
+
+                  <div className="mt-3 flex justify-center gap-2">
+                    <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#35b66a] shadow-[2px_2px_0_#04120d]" />
+                    <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#234338] shadow-[2px_2px_0_#04120d]" />
+                    <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#234338] shadow-[2px_2px_0_#04120d]" />
                   </div>
                 </button>
 
-                <div className="rounded-xl border-[3px] border-[#061811] bg-[#081b18] p-3 shadow-[3px_3px_0_#04120d,inset_0_0_0_2px_#255d48]">
-                  <p className="mb-2 text-[10px] font-black tracking-[0.25em] text-[#f5d06f]">
-                    NEXT
-                  </p>
+                <div className="rounded-2xl border-[4px] border-[#061811] bg-[#081b18] p-3 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
+                  <div className="mb-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
+                    <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
+                      NEXT
+                    </p>
+                  </div>
 
-                  <div className="grid grid-cols-2 items-center justify-items-center gap-2 lg:gap-3">
+                  <div className="grid grid-cols-2 items-center justify-items-center gap-3">
                     {game.hand.slice(1, 3).map((card, index) => (
                       <div
                         key={card.id}
-                        className="relative mx-auto w-20 rounded-xl border-[3px] border-black bg-[#fff4cf] p-1.5 opacity-90 shadow-[3px_3px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}
+                        className="relative mx-auto w-20 rounded-lg border-[4px] border-[#061811] bg-[#fff8e4] p-1.5 opacity-95 shadow-[4px_4px_0_#04120d] lg:w-28"
+                        style={{ aspectRatio: "5 / 7" }}
                       >
-                        <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-black bg-[#101b3b] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#ffef7a] shadow-[2px_2px_0_#000]">
+                        <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-[#061811] bg-[#081b18] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#f5d06f] shadow-[2px_2px_0_#04120d]">
                           +{index + 1}
                         </div>
                         <CardFace card={card} size="tiny" />
@@ -1515,17 +1542,19 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={restartGame}
-                  className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-3 py-3 text-base font-black text-white shadow-[4px_4px_0_#04120d] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#04120d]"
+                  className="rounded-xl border-[5px] border-[#061811] bg-[#1787d8] px-3 py-4 text-lg font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   RESTART
                 </button>
 
                 <button
                   onClick={() => setScreen("home")}
-                  className="rounded-xl border-[4px] border-[#061811] bg-[#d23a2f] px-3 py-3 text-base font-black text-white shadow-[4px_4px_0_#04120d] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#04120d]"
+                  className="rounded-xl border-[5px] border-[#061811] bg-[#d23a2f] px-3 py-4 text-lg font-black text-white shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d]"
+                  style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   HOME
                 </button>
