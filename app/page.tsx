@@ -1322,6 +1322,47 @@ export default function Home() {
           border-radius: 0.55rem;
           box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
         }
+
+        .table-frame {
+          background:
+            radial-gradient(circle at 18% 15%, rgba(245, 181, 68, 0.08), transparent 24%),
+            radial-gradient(circle at 78% 30%, rgba(115, 255, 190, 0.08), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.32)),
+            #0b3f31;
+        }
+
+        .table-frame::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 7px;
+          border: 3px solid rgba(245, 181, 68, 0.74);
+          border-radius: 1rem;
+          box-shadow:
+            0 2px 0 #3b2107,
+            inset 0 0 0 2px rgba(6, 24, 17, 0.72);
+        }
+
+        .table-frame::after {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          border-radius: 1.35rem;
+          box-shadow:
+            inset 0 0 44px rgba(0,0,0,0.48),
+            inset 0 0 0 2px rgba(255,255,255,0.03);
+        }
+
+        .felt-bg {
+          background:
+            radial-gradient(circle at 12% 8%, rgba(245, 181, 68, 0.10), transparent 26%),
+            radial-gradient(circle at 85% 24%, rgba(72, 210, 160, 0.10), transparent 30%),
+            radial-gradient(circle at 50% 98%, rgba(0, 0, 0, 0.48), transparent 55%),
+            linear-gradient(135deg, rgba(255,255,255,0.025) 0 12%, transparent 12% 24%, rgba(0,0,0,0.04) 24% 36%, transparent 36% 48%),
+            #0b3a2d;
+          background-size: auto, auto, auto, 82px 82px, auto;
+        }
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -1331,7 +1372,7 @@ export default function Home() {
       {floatingScores.map((score) => (
         <div
           key={score.id}
-          className="pointer-events-none fixed left-1/2 top-[20%] z-[70] -translate-x-1/2 rounded-2xl border-[5px] border-black bg-[#ffef7a] px-6 py-3 text-5xl font-black text-[#d43d4f] shadow-[8px_8px_0_#000]"
+          className="pointer-events-none fixed left-1/2 top-[20%] z-[70] -translate-x-1/2 rounded-2xl border-[5px] border-[#061811] bg-[#f5d06f] px-6 py-3 text-5xl font-black text-[#b83224] shadow-[8px_8px_0_#03100b]"
           style={{ animation: "floatScore 900ms ease-out forwards" }}
         >
           +{score.value}
@@ -1340,7 +1381,7 @@ export default function Home() {
 
       {game.isGameOver && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 px-5">
-          <div className="w-full max-w-md rotate-[-1deg] rounded-[2rem] border-[5px] border-black bg-[#d43d4f] p-6 text-center shadow-[12px_12px_0_#000]">
+          <div className="w-full max-w-md rotate-[-1deg] rounded-[2rem] border-[5px] border-[#061811] bg-[#123f32] p-6 text-center shadow-[12px_12px_0_#03100b,0_0_0_2px_#b57422_inset]">
             <p className="mb-2 text-sm font-black tracking-[0.5em] text-[#ffef7a]">
               GAME OVER
             </p>
@@ -1368,9 +1409,9 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1 py-1">
-        <section className="w-full rounded-2xl border-[5px] border-[#061811] bg-[#0a2b22]/80 p-2 shadow-[8px_8px_0_#04120d,0_0_0_2px_#b77820_inset] backdrop-blur-sm">
-          <header className="relative mb-2 grid gap-3 overflow-hidden rounded-[1.4rem] border-[5px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[8px_8px_0_#03100b,0_0_0_2px_#b57422_inset] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
+      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1.5 py-1.5">
+        <section className="table-frame relative w-full overflow-hidden rounded-[1.35rem] border-[6px] border-[#061811] p-3 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
+          <header className="relative z-10 mb-3 grid gap-3 overflow-hidden rounded-[1.2rem] border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[6px_6px_0_#03100b,0_0_0_2px_#b57422_inset] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
             <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
             <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
@@ -1415,7 +1456,7 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 md:h-[calc(100vh-118px)] md:grid-cols-[minmax(420px,1fr)_260px] lg:h-[calc(100vh-142px)] lg:grid-cols-[minmax(720px,920px)_380px] xl:gap-3 2xl:grid-cols-[minmax(780px,980px)_430px]">
+          <div className="relative z-10 grid h-[calc(100vh-154px)] max-h-[748px] justify-center gap-3 md:h-[calc(100vh-132px)] md:grid-cols-[minmax(420px,1fr)_260px] lg:h-[calc(100vh-154px)] lg:grid-cols-[minmax(720px,920px)_380px] xl:gap-4 2xl:grid-cols-[minmax(780px,980px)_430px]">
 <div className="flex min-h-0 flex-col">
               <section className="relative flex min-h-0 flex-1 flex-col rounded-2xl border-[6px] border-[#061811] bg-[#0b2f27] p-2 shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                 <div className="mb-2 flex h-7 items-center justify-between">
@@ -1425,7 +1466,7 @@ export default function Home() {
 
                   {isResolvingHand && (
                     <div
-                      className="rounded-full border-[3px] border-black bg-[#ffef7a] px-3 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                      className="rounded-full border-[3px] border-[#061811] bg-[#f5d06f] px-3 py-1 text-[10px] font-black text-[#061811] shadow-[3px_3px_0_#04120d]"
                       style={{ animation: "targetBanner 180ms ease-out" }}
                     >
                       CLEAR TARGETS
