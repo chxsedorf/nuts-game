@@ -786,80 +786,114 @@ function HomeScreen({
 }) {
   const [showHands, setShowHands] = useState(false);
 
+  const titleCards: { rank: string; suit: Suit; tilt: string }[] = [
+    { rank: "A", suit: "spade", tilt: "rotate-[-8deg] translate-y-3" },
+    { rank: "K", suit: "heart", tilt: "rotate-[-3deg] translate-y-0" },
+    { rank: "Q", suit: "club", tilt: "rotate-[4deg] translate-y-4" },
+    { rank: "J", suit: "diamond", tilt: "rotate-[9deg] translate-y-1" },
+  ];
+
+  const previewCells = [
+    "", "", "", "", "",
+    "", "7♠", "8♠", "9♠", "",
+    "", "", "", "", "",
+    "", "Q♥", "Q♣", "", "",
+    "", "", "", "", "",
+  ];
+
   function GuideMiniCard({ rank, suit }: { rank: string; suit: Suit }) {
     const isRed = suit === "heart" || suit === "diamond";
 
     return (
       <div
         className={[
-          "flex h-10 w-7 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-[#061811] bg-[#fff8e4] text-[11px] font-black leading-none shadow-[2px_2px_0_#04120d]",
-          isRed ? "text-red-600" : "text-blue-950",
+          "relative flex h-12 w-9 shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg border-[3px] border-[#1c1208] bg-[#fff4cf] text-[12px] font-black leading-none shadow-[3px_3px_0_#06110c]",
+          isRed ? "text-[#b83224]" : "text-[#10271f]",
         ].join(" ")}
       >
-        <span>{rank}</span>
-        <span className="text-base">{suitSymbols[suit]}</span>
+        <div className="absolute inset-0 opacity-30 [background-image:repeating-linear-gradient(0deg,transparent_0,transparent_5px,rgba(83,59,30,0.12)_6px)]" />
+        <span className="relative z-10">{rank}</span>
+        <span className="relative z-10 text-xl">{suitSymbols[suit]}</span>
       </div>
     );
   }
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither relative h-screen overflow-hidden text-white">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither relative h-screen overflow-hidden bg-[#07120f] text-white">
       <style>{`
-        @keyframes titleFloat {
-          0%, 100% { transform: translateY(0) rotate(-1deg); }
-          50% { transform: translateY(-8px) rotate(1deg); }
+        @keyframes logoRise {
+          0% { transform: translateY(16px) scale(0.96); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
         }
 
-        @keyframes cardDriftA {
-          0%, 100% { transform: translateY(0) rotate(-12deg); }
-          50% { transform: translateY(-14px) rotate(-8deg); }
+        @keyframes menuRise {
+          0% { transform: translateY(18px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
         }
 
-        @keyframes cardDriftB {
-          0%, 100% { transform: translateY(0) rotate(10deg); }
-          50% { transform: translateY(12px) rotate(14deg); }
+        @keyframes titleGlow {
+          0%, 100% { filter: drop-shadow(5px 5px 0 #3b1604) drop-shadow(0 0 10px rgba(242,149,48,0.35)); }
+          50% { filter: drop-shadow(6px 6px 0 #3b1604) drop-shadow(0 0 22px rgba(255,202,91,0.75)); }
         }
 
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 8px 8px 0 #000; }
-          50% { box-shadow: 0 0 0 4px #ffef7a, 10px 10px 0 #000; }
+        @keyframes cardFloatSoft {
+          0%, 100% { transform: translateY(0) rotate(var(--tilt)); }
+          50% { transform: translateY(-10px) rotate(calc(var(--tilt) + 2deg)); }
+        }
+
+        @keyframes shineSweep {
+          0% { transform: translateX(-120%) skewX(-18deg); }
+          45%, 100% { transform: translateX(180%) skewX(-18deg); }
+        }
+
+        @keyframes buttonPulseGold {
+          0%, 100% { box-shadow: 5px 5px 0 #03100b, 0 0 0 2px #ffcf63 inset, 0 0 12px rgba(242,149,48,0.25); }
+          50% { box-shadow: 7px 7px 0 #03100b, 0 0 0 2px #fff0a1 inset, 0 0 28px rgba(255,207,99,0.72); }
         }
       `}</style>
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,211,74,0.22),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(64,151,255,0.25),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(255,73,96,0.22),transparent_32%)]" />
-
-      <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#f7d377_1px,transparent_1px),linear-gradient(90deg,#f7d377_1px,transparent_1px)] [background-size:24px_24px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(240,165,54,0.22),transparent_25%),radial-gradient(circle_at_82%_24%,rgba(28,91,68,0.42),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(7,26,21,0.9),transparent_42%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#f5c247_1px,transparent_1px),linear-gradient(90deg,#f5c247_1px,transparent_1px)] [background-size:22px_22px]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#2b1743]/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 to-transparent" />
 
       {showHands && (
-        <div className="absolute inset-0 z-[95] flex items-center justify-center bg-black/70 px-4">
-          <div className="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border-[6px] border-black bg-[#101b3b] p-4 shadow-[12px_12px_0_#000]">
-            <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="absolute inset-0 z-[95] flex items-center justify-center bg-black/75 px-4">
+          <div className="pixel-hard relative max-h-[88vh] w-full max-w-3xl overflow-hidden border-[5px] border-[#07160f] bg-[#08241b] p-4 shadow-[10px_10px_0_#020806,0_0_0_2px_#f0a536_inset]">
+            <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#f0a536]/70" />
+
+            <div className="relative z-10 mb-4 flex items-center justify-between gap-3 border-b-[3px] border-[#144431] pb-3">
               <div>
-                <p className="text-[10px] font-black tracking-[0.35em] text-[#ffef7a]">
-                  NUTS
+                <p className="text-[10px] font-black tracking-[0.42em] text-[#f0a536]">
+                  NUTS GUIDE
                 </p>
-                <h2 className="text-3xl font-black text-white drop-shadow-[3px_3px_0_#000]">
+                <h2 className="text-3xl font-black text-[#fff4cf] drop-shadow-[3px_3px_0_#06100c]">
                   HANDS
                 </h2>
               </div>
 
               <button
                 onClick={() => setShowHands(false)}
-                className="rounded-xl border-[4px] border-black bg-[#ffef7a] px-4 py-2 text-sm font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1"
+                className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#f0a536] px-4 py-2 text-sm font-black text-[#2a1603] shadow-[4px_4px_0_#020806] transition hover:-translate-y-1"
               >
                 CLOSE
               </button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="relative z-10 grid max-h-[65vh] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
               {roleExamples.map((role) => (
                 <div
                   key={role.name}
-                  className="rounded-2xl border-[4px] border-black bg-[#2d1850] p-3 shadow-[4px_4px_0_#000]"
+                  className="rounded-2xl border-[3px] border-[#06160f] bg-[#0c3628] p-3 shadow-[4px_4px_0_#020806,0_0_0_2px_#1e5f47_inset]"
                 >
-                  <p className="mb-2 text-lg font-black text-[#ffef7a]">
-                    {role.name}
-                  </p>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-lg font-black text-[#f5c247]">
+                      {role.name}
+                    </p>
+                    <p className="text-[10px] font-black tracking-[0.18em] text-[#8bd8af]">
+                      LINE HIT
+                    </p>
+                  </div>
 
                   <div className="flex items-center gap-1.5">
                     {role.cards.map((card, index) => (
@@ -877,105 +911,200 @@ function HomeScreen({
         </div>
       )}
 
-      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#1b0f2e] px-6 text-center text-white md:hidden landscape:hidden">
-        <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-6 shadow-[8px_8px_0_#000]">
-          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#ffef7a]">
+      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#07120f] px-6 text-center text-white md:hidden landscape:hidden">
+        <div className="rounded-2xl border-[5px] border-black bg-[#0b3a2b] p-6 shadow-[8px_8px_0_#000]">
+          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#f0a536]">
             NUTS
           </p>
           <p className="text-2xl font-black leading-tight">
             Rotate your phone
           </p>
-          <p className="mt-3 text-xs font-bold leading-5">
+          <p className="mt-3 text-xs font-bold leading-5 text-[#d8eadc]">
             This game is designed for landscape play.
           </p>
         </div>
       </div>
 
-      <div
-        className="pointer-events-none absolute left-[8%] top-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff4cf] shadow-[8px_8px_0_#000] md:block"
-        style={{ animation: "cardDriftA 3.4s ease-in-out infinite" }}
-      >
-        <div className="flex h-full flex-col items-center justify-center text-blue-950">
-          <p className="text-4xl font-black">A</p>
-          <p className="text-6xl font-black">♠</p>
-        </div>
-      </div>
+      <div className="relative z-10 mx-auto flex h-screen max-w-[1180px] items-center justify-center px-4 py-4 md:px-6">
+        <section className="grid w-full max-w-[1100px] gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div
+            className="pixel-hard relative min-h-[560px] overflow-hidden border-[6px] border-[#06160f] bg-[#08241b] p-5 shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset] md:p-7"
+            style={{ animation: "logoRise 520ms ease-out both" }}
+          >
+            <div className="pointer-events-none absolute inset-[12px] border-[2px] border-[#f0a536]/70" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#145238]/80 to-transparent" />
+            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#f0a536]/15 blur-2xl" />
 
-      <div
-        className="pointer-events-none absolute right-[8%] bottom-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff4cf] shadow-[8px_8px_0_#000] md:block"
-        style={{ animation: "cardDriftB 3.8s ease-in-out infinite" }}
-      >
-        <div className="flex h-full flex-col items-center justify-center text-red-600">
-          <p className="text-4xl font-black">K</p>
-          <p className="text-6xl font-black">♥</p>
-        </div>
-      </div>
+            <div className="relative z-10 flex h-full flex-col justify-between">
+              <div>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border-[3px] border-[#06160f] bg-[#0d3a2b] px-4 py-2 shadow-[4px_4px_0_#020806]">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#f0a536] shadow-[0_0_12px_#f0a536]" />
+                  <p className="text-[11px] font-black tracking-[0.32em] text-[#e7d79e]">
+                    GRID POKER
+                  </p>
+                </div>
 
-      <div className="relative z-10 mx-auto flex h-screen max-w-5xl flex-col items-center justify-center px-4">
-        <section
-          className="w-full max-w-3xl rounded-[2rem] border-[6px] border-black bg-[#2d1850] p-5 text-center shadow-[12px_12px_0_#000] md:p-8"
-          style={{ animation: "titleFloat 4s ease-in-out infinite" }}
-        >
-          <div className="mb-5 rounded-[1.5rem] border-[5px] border-black bg-[#d43d4f] px-5 py-6 shadow-[7px_7px_0_#000]">
-            <p className="mb-2 text-sm font-black tracking-[0.55em] text-[#ffef7a]">
-              GRID POKER
-            </p>
+                <div className="relative overflow-hidden rounded-[1.25rem] border-[4px] border-[#06160f] bg-[#0b3025] px-5 py-5 shadow-[7px_7px_0_#020806,0_0_0_2px_#1f6a4e_inset]">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-white/10" style={{ animation: "shineSweep 3.6s ease-in-out infinite" }} />
+                  <p className="relative z-10 mb-1 text-[12px] font-black tracking-[0.48em] text-[#f0a536]">
+                    CASINO PUZZLE
+                  </p>
+                  <h1
+                    className="relative z-10 text-[clamp(4.5rem,13vw,9rem)] font-black leading-[0.82] text-[#f29530]"
+                    style={{
+                      WebkitTextStroke: "2px #ffd47a",
+                      textShadow: "7px 7px 0 #2a1603, 10px 10px 0 #020806",
+                      animation: "titleGlow 2.8s ease-in-out infinite",
+                    }}
+                  >
+                    NUTS
+                  </h1>
+                  <p className="relative z-10 mt-3 text-sm font-black tracking-[0.38em] text-[#e7d79e] md:text-base">
+                    BUILD HANDS. BREAK THE GRID.
+                  </p>
+                </div>
+              </div>
 
-            <h1 className="text-5xl font-black leading-none text-white drop-shadow-[5px_5px_0_#000] md:text-8xl">
-NUTS
-            </h1>
+              <div className="relative z-10 mt-6 flex items-end justify-center gap-2 md:gap-3">
+                {titleCards.map((card, index) => {
+                  const isRed = card.suit === "heart" || card.suit === "diamond";
+
+                  return (
+                    <div
+                      key={`${card.rank}-${card.suit}`}
+                      className={`h-32 w-24 rounded-xl border-[4px] border-[#1c1208] bg-[#fff4cf] p-2 text-center shadow-[6px_6px_0_#020806] md:h-40 md:w-28 ${card.tilt}`}
+                      style={{
+                        "--tilt": `${index * 5 - 8}deg`,
+                        animation: `cardFloatSoft ${3 + index * 0.25}s ease-in-out infinite`,
+                      } as Record<string, string>}
+                    >
+                      <div className={["flex h-full flex-col items-center justify-center font-black", isRed ? "text-[#b83224]" : "text-[#10271f]"].join(" ")}>
+                        <p className="text-3xl md:text-4xl">{card.rank}</p>
+                        <p className="text-5xl md:text-6xl">{suitSymbols[card.suit]}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="relative z-10 mt-6 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
+                  <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">MODE</p>
+                  <p className="mt-1 text-sm font-black text-[#fff4cf]">ENDLESS</p>
+                </div>
+                <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
+                  <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">BOARD</p>
+                  <p className="mt-1 text-sm font-black text-[#fff4cf]">5 x 5</p>
+                </div>
+                <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
+                  <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">CLEAR</p>
+                  <p className="mt-1 text-sm font-black text-[#fff4cf]">LINE</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="mx-auto mb-5 grid max-w-md grid-cols-3 gap-2">
-            <div className="rotate-[-4deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
-              <p className="text-2xl font-black">Q</p>
-              <p className="text-4xl font-black">♣</p>
+          <div
+            className="grid min-h-[560px] gap-4"
+            style={{ animation: "menuRise 640ms 120ms ease-out both" }}
+          >
+            <div className="pixel-hard relative overflow-hidden border-[6px] border-[#06160f] bg-[#0a2119] p-4 shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset]">
+              <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#18533c]" />
+
+              <div className="relative z-10 grid gap-3">
+                <button
+                  onClick={onStart}
+                  className="pixel-hard-sm relative overflow-hidden border-[5px] border-[#06160f] bg-[#f0a536] px-6 py-5 text-3xl font-black text-[#2a1603] shadow-[5px_5px_0_#03100b] transition hover:-translate-y-1 active:translate-y-0"
+                  style={{ animation: "buttonPulseGold 1.7s ease-in-out infinite" }}
+                >
+                  <span className="relative z-10">PLAY</span>
+                  <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-white/25" style={{ animation: "shineSweep 2.7s ease-in-out infinite" }} />
+                </button>
+
+                <div className="grid grid-cols-[1fr_0.85fr] gap-3">
+                  <button
+                    onClick={() => setShowHands(true)}
+                    className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#124733] px-4 py-4 text-xl font-black text-[#fff4cf] shadow-[5px_5px_0_#020806] transition hover:-translate-y-1"
+                  >
+                    HANDS
+                  </button>
+
+                  <div className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#07160f] px-4 py-3 text-left shadow-[5px_5px_0_#020806]">
+                    <p className="text-[10px] font-black tracking-[0.28em] text-[#f0a536]">
+                      BEST
+                    </p>
+                    <p className="mt-1 text-3xl font-black leading-none text-[#fff4cf] drop-shadow-[3px_3px_0_#020806]">
+                      {highScore}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="rotate-[2deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-3 text-red-600 shadow-[4px_4px_0_#000]">
-              <p className="text-2xl font-black">10</p>
-              <p className="text-4xl font-black">♦</p>
+            <div className="pixel-hard relative grid gap-4 overflow-hidden border-[6px] border-[#06160f] bg-[#08241b] p-4 shadow-[12px_12px_0_#020806,0_0_0_3px_#1c5b44_inset] md:grid-cols-[0.95fr_1.05fr]">
+              <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#18533c]" />
+
+              <div className="relative z-10">
+                <div className="mb-3 rounded-lg border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-2 shadow-[3px_3px_0_#020806]">
+                  <p className="text-[11px] font-black tracking-[0.34em] text-[#f0a536]">
+                    HOW TO PLAY
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-sm font-bold leading-6 text-[#d8eadc]">
+                  <p>
+                    <span className="text-[#f5c247]">01</span> Place the visible card on the grid.
+                  </p>
+                  <p>
+                    <span className="text-[#f5c247]">02</span> Make hands vertically or horizontally.
+                  </p>
+                  <p>
+                    <span className="text-[#f5c247]">03</span> Hit cards vanish. Keep the combo alive.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 rounded-2xl border-[4px] border-[#06160f] bg-[#051610] p-3 shadow-[4px_4px_0_#020806,0_0_0_2px_#123e2e_inset]">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[10px] font-black tracking-[0.3em] text-[#8bd8af]">
+                    PREVIEW
+                  </p>
+                  <p className="text-[10px] font-black tracking-[0.18em] text-[#f0a536]">
+                    STRAIGHT HIT
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-5 gap-1.5">
+                  {previewCells.map((cell, index) => {
+                    const hit = cell === "7♠" || cell === "8♠" || cell === "9♠";
+
+                    return (
+                      <div
+                        key={`${cell}-${index}`}
+                        className={[
+                          "flex aspect-square items-center justify-center rounded-md border-[2px] border-[#0d3a2b] bg-[#09251c] text-[12px] font-black shadow-[0_0_0_1px_#06160f_inset]",
+                          hit ? "bg-[#f0a536] text-[#2a1603] shadow-[0_0_14px_rgba(240,165,54,0.75)]" : "text-[#366653]",
+                        ].join(" ")}
+                      >
+                        {cell || "♠"}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="rotate-[5deg] rounded-xl border-[4px] border-black bg-[#fff4cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
-              <p className="text-2xl font-black">J</p>
-              <p className="text-4xl font-black">♠</p>
-            </div>
-          </div>
-
-          <div className="mx-auto mb-5 grid max-w-lg grid-cols-3 gap-3">
-            <button
-              onClick={onStart}
-              className="rounded-2xl border-[5px] border-black bg-[#ffef7a] px-5 py-4 text-2xl font-black text-black shadow-[7px_7px_0_#000] transition hover:-translate-y-1 hover:shadow-[9px_9px_0_#000]"
-              style={{ animation: "pulseGlow 1.8s ease-in-out infinite" }}
-            >
-              PLAY
-            </button>
-
-            <button
-              onClick={() => setShowHands(true)}
-              className="rounded-2xl border-[5px] border-black bg-[#6ee7ff] px-5 py-4 text-2xl font-black text-black shadow-[7px_7px_0_#000] transition hover:-translate-y-1 hover:shadow-[9px_9px_0_#000]"
-            >
-              HANDS
-            </button>
-
-            <div className="rounded-2xl border-[5px] border-black bg-[#101b3b] px-4 py-3 text-left shadow-[7px_7px_0_#000]">
-              <p className="text-[10px] font-black tracking-[0.25em] text-[#6ee7ff]">
-                BEST
-              </p>
-              <p className="text-3xl font-black text-[#ffef7a]">{highScore}</p>
-            </div>
-          </div>
-
-          <div className="mx-auto max-w-md rounded-2xl border-[4px] border-black bg-[#101b3b] p-4 text-left shadow-[5px_5px_0_#000]">
-            <p className="mb-2 text-xs font-black tracking-[0.3em] text-[#ffef7a]">
-              RULE
-            </p>
-
-            <div className="grid gap-2 text-xs font-bold leading-5 text-white">
-              <p>Only the left card can be placed.</p>
-              <p>Only the current card is visible. The rest stays in the deck.</p>
-              <p>Pair / Three / Straight / Full House only.</p>
+            <div className="grid grid-cols-3 gap-3">
+              {["PAIR", "THREE", "STRAIGHT"].map((label) => (
+                <div
+                  key={label}
+                  className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 text-center shadow-[5px_5px_0_#020806]"
+                >
+                  <p className="text-[11px] font-black tracking-[0.2em] text-[#f5c247]">
+                    {label}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
