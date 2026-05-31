@@ -1505,6 +1505,24 @@ export default function Home() {
     return <HomeScreen highScore={game.highScore} onStart={startGame} />;
   }
 
+  const gameOverRank =
+    game.score >= 2500
+      ? "LEGEND"
+      : game.score >= 1500
+      ? "SHARK"
+      : game.score >= 800
+      ? "HOT STREAK"
+      : game.score >= 300
+      ? "GOOD RUN"
+      : "TRY AGAIN";
+
+  const gameOverMessage =
+    game.score >= game.highScore && game.score > 0
+      ? "NEW BEST SCORE"
+      : game.score >= 800
+      ? "THE TABLE REMEMBERS"
+      : "ONE MORE DEAL";
+
   return (
     <main className="relative h-screen overflow-hidden bg-[#1b0f2e] text-white">
       <style>{`
@@ -1573,6 +1591,27 @@ export default function Home() {
           0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
           30% { opacity: 1; transform: scale(1.18) rotate(18deg); }
           100% { opacity: 0; transform: scale(0.6) rotate(55deg); }
+        }
+
+        @keyframes gameOverDrop {
+          0% { opacity: 0; transform: translateY(28px) scale(0.92) rotate(-2deg); filter: brightness(0.75); }
+          58% { opacity: 1; transform: translateY(-6px) scale(1.03) rotate(1deg); filter: brightness(1.18); }
+          100% { opacity: 1; transform: translateY(0) scale(1) rotate(-1deg); filter: brightness(1); }
+        }
+
+        .gameover-card::after {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: -45%;
+          background: linear-gradient(120deg, transparent 38%, rgba(255,244,207,0.18) 47%, transparent 56%);
+          animation: gameOverShine 1800ms ease-in-out infinite;
+        }
+
+        @keyframes gameOverShine {
+          0%, 28% { transform: translateX(-38%) rotate(0deg); opacity: 0; }
+          42% { opacity: 1; }
+          70%, 100% { transform: translateX(38%) rotate(0deg); opacity: 0; }
         }
 
         .nuts-pixel {
@@ -1774,31 +1813,99 @@ export default function Home() {
       ))}
 
       {game.isGameOver && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 px-5">
-          <div className="w-full max-w-md rotate-[-1deg] rounded-[2rem] border-[5px] border-[#061811] bg-[#123f32] p-6 text-center shadow-[12px_12px_0_#03100b,0_0_0_2px_#b57422_inset]">
-            <p className="mb-2 text-sm font-black tracking-[0.5em] text-[#ffef7a]">
-              GAME OVER
-            </p>
+        <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 px-4">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(245,208,111,0.22),transparent_26%),radial-gradient(circle_at_28%_72%,rgba(32,163,111,0.18),transparent_28%),radial-gradient(circle_at_74%_22%,rgba(210,58,47,0.18),transparent_26%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.11] [background-image:linear-gradient(#f5d06f_1px,transparent_1px),linear-gradient(90deg,#f5d06f_1px,transparent_1px)] [background-size:18px_18px]" />
 
-            <h2 className="mb-4 text-5xl font-black text-white drop-shadow-[3px_3px_0_#000]">
-              {game.score}
-            </h2>
+          <div
+            className="gameover-card pixel-hard relative w-full max-w-2xl overflow-hidden border-[6px] border-[#061811] bg-[#0b2f27] p-4 text-center shadow-[14px_14px_0_#020806,0_0_0_3px_#f0a536_inset] sm:p-6"
+            style={{ animation: "gameOverDrop 520ms cubic-bezier(.2,1.3,.25,1) both" }}
+          >
+            <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#f5d06f]/65" />
+            <div className="pointer-events-none absolute -left-16 top-10 h-32 w-32 rotate-12 rounded-[2rem] border-[5px] border-[#061811] bg-[#fff4cf]/10 shadow-[7px_7px_0_#020806]" />
+            <div className="pointer-events-none absolute -right-14 bottom-16 h-28 w-24 rotate-[-14deg] rounded-[1.4rem] border-[5px] border-[#061811] bg-[#fff4cf]/10 shadow-[7px_7px_0_#020806]" />
 
-            <div className="mb-5 rounded-2xl border-[4px] border-black bg-[#101b3b] p-4 shadow-[5px_5px_0_#000]">
-              <p className="text-xs font-black tracking-widest text-[#6ee7ff]">
-                BEST SCORE
-              </p>
-              <p className="mt-1 text-3xl font-black text-[#ffef7a]">
-                {game.highScore}
+            <div className="relative z-10 mx-auto mb-4 w-fit rotate-[-2deg] rounded-2xl border-[5px] border-[#061811] bg-[#d23a2f] px-5 py-2 shadow-[6px_6px_0_#020806]">
+              <p className="text-sm font-black tracking-[0.45em] text-[#ffef7a] drop-shadow-[2px_2px_0_#061811] sm:text-base">
+                GAME OVER
               </p>
             </div>
 
-            <button
-              onClick={restartGame}
-              className="w-full rounded-2xl border-[4px] border-black bg-[#ffef7a] px-5 py-4 text-xl font-black text-black shadow-[6px_6px_0_#000] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#000]"
-            >
-              RESTART
-            </button>
+            <div className="relative z-10 grid gap-4 lg:grid-cols-[1.25fr_0.75fr] lg:items-stretch">
+              <section className="rounded-[1.5rem] border-[5px] border-[#061811] bg-[#123f32] p-4 shadow-[7px_7px_0_#020806,0_0_0_2px_rgba(255,255,255,0.05)_inset]">
+                <p className="text-[10px] font-black tracking-[0.34em] text-[#7fd0a4]">
+                  FINAL SCORE
+                </p>
+
+                <h2
+                  className="my-2 text-6xl font-black leading-none text-[#ffef7a] sm:text-7xl"
+                  style={{ textShadow: "5px 5px 0 #061811, -2px -2px 0 #fff4cf" }}
+                >
+                  {game.score}
+                </h2>
+
+                <div className="mx-auto mb-3 w-fit rounded-xl border-[4px] border-[#061811] bg-[#f0a536] px-4 py-1.5 shadow-[4px_4px_0_#020806]">
+                  <p className="text-sm font-black tracking-[0.16em] text-[#2a1603]">
+                    {gameOverRank}
+                  </p>
+                </div>
+
+                <p className="text-xs font-black tracking-[0.18em] text-[#fff4cf]">
+                  {gameOverMessage}
+                </p>
+              </section>
+
+              <section className="grid gap-3">
+                <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#101b3b] p-3 shadow-[5px_5px_0_#020806]">
+                  <p className="text-[10px] font-black tracking-[0.24em] text-[#6ee7ff]">
+                    BEST SCORE
+                  </p>
+                  <p className="mt-1 text-4xl font-black leading-none text-[#ffef7a] drop-shadow-[3px_3px_0_#000]">
+                    {game.highScore}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#08241b] p-3 shadow-[5px_5px_0_#020806]">
+                    <p className="text-[9px] font-black tracking-[0.22em] text-[#7fd0a4]">
+                      LAST HIT
+                    </p>
+                    <p className="mt-1 truncate text-lg font-black text-[#fff4cf]">
+                      {game.lastResult}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#08241b] p-3 shadow-[5px_5px_0_#020806]">
+                    <p className="text-[9px] font-black tracking-[0.22em] text-[#7fd0a4]">
+                      COMBO
+                    </p>
+                    <p className="mt-1 text-3xl font-black leading-none text-[#f0a536] drop-shadow-[3px_3px_0_#000]">
+                      x{game.combo}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2">
+              <button
+                onClick={restartGame}
+                className="rounded-2xl border-[5px] border-[#061811] bg-[#ffef7a] px-5 py-4 text-xl font-black text-[#061811] shadow-[6px_6px_0_#020806,0_0_0_2px_#fff4cf_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806]"
+              >
+                RETRY
+              </button>
+
+              <button
+                onClick={() => {
+                  playSound("select");
+                  setScreen("home");
+                }}
+                className="rounded-2xl border-[5px] border-[#061811] bg-[#1787d8] px-5 py-4 text-xl font-black text-white shadow-[6px_6px_0_#020806,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806]"
+                style={{ textShadow: "2px 2px 0 #03100b" }}
+              >
+                TITLE
+              </button>
+            </div>
           </div>
         </div>
       )}
