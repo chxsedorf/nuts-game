@@ -944,7 +944,7 @@ NUTS
 
             <div className="grid gap-2 text-xs font-bold leading-5 text-white">
               <p>Only the left card can be placed.</p>
-              <p>The next 2 cards are visible.</p>
+              <p>Only the current card is visible. The rest stays in the deck.</p>
               <p>Pair / Three / Straight / Full House only.</p>
             </div>
           </div>
@@ -1642,23 +1642,46 @@ export default function Home() {
                 <div className="pixel-hard border-[4px] border-[#061811] bg-[#081b18] p-3 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
                   <div className="mb-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-xl font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
-                      NEXT
+                      DECK
+                    </p>
+                    <p className="mt-1 text-[9px] font-black tracking-[0.18em] text-[#7fd0a4]">
+                      UNKNOWN
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 items-center justify-items-center gap-3">
-                    {game.hand.slice(1, 3).map((card, index) => (
+                  <div className="flex items-center justify-center">
+                    <div className="relative flex w-full max-w-[12rem] items-center justify-center py-2">
                       <div
-                        key={card.id}
-                        className="relative mx-auto w-20 pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1.5 opacity-95 shadow-[5px_5px_0_#04120d] lg:w-28"
-                        style={{ aspectRatio: "5 / 7" }}
+                        className="absolute translate-x-3 translate-y-3 border-[5px] border-[#061811] bg-[#123f32] shadow-[5px_5px_0_#04120d]"
+                        style={{ width: "5.5rem", aspectRatio: "5 / 7" }}
+                      />
+                      <div
+                        className="absolute translate-x-1.5 translate-y-1.5 border-[5px] border-[#061811] bg-[#0f382d] shadow-[5px_5px_0_#04120d]"
+                        style={{ width: "5.5rem", aspectRatio: "5 / 7" }}
+                      />
+                      <div
+                        className="relative border-[5px] border-[#061811] bg-[#102a25] p-1.5 shadow-[5px_5px_0_#04120d]"
+                        style={{ width: "5.5rem", aspectRatio: "5 / 7" }}
                       >
-                        <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-[#061811] bg-[#081b18] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#f5d06f] shadow-[2px_2px_0_#04120d]">
-                          +{index + 1}
+                        <div className="flex h-full w-full items-center justify-center border-[3px] border-[#061811] bg-[radial-gradient(circle_at_center,rgba(245,208,111,0.18),transparent_28%),repeating-linear-gradient(45deg,#123f32_0px,#123f32_6px,#0b2f27_6px,#0b2f27_12px)] shadow-[inset_0_0_0_3px_rgba(245,181,68,0.18),inset_0_0_18px_rgba(0,0,0,0.35)]">
+                          <span className="text-4xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#03100b]">
+                            ?
+                          </span>
                         </div>
-                        <CardFace card={card} size="tiny" />
                       </div>
-                    ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-2 text-center shadow-[3px_3px_0_#04120d]">
+                    <p className="text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
+                      REMAINING
+                    </p>
+                    <p
+                      className="mt-1 text-3xl font-black leading-none text-[#f5d06f]"
+                      style={{ textShadow: "3px 3px 0 #03100b" }}
+                    >
+                      {game.deck.length}
+                    </p>
                   </div>
                 </div>
               </div>
