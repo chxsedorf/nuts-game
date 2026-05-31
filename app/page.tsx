@@ -612,8 +612,7 @@ function StatBox({
   );
 }
 
-function RoleListPanel() {
-  const roles = [
+const roleExamples = [
     {
       name: "Pair",
       cards: [
@@ -679,6 +678,10 @@ function RoleListPanel() {
     },
   ];
 
+
+function RoleListPanel() {
+  const roles = roleExamples;
+
   function MiniCard({ rank, suit }: { rank: string; suit: Suit }) {
     const isRed = suit === "heart" || suit === "diamond";
 
@@ -696,7 +699,7 @@ function RoleListPanel() {
   }
 
   return (
-    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000] md:flex md:flex-col lg:p-3">
+    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-3 shadow-[6px_6px_0_#000] lg:flex lg:flex-col">
       <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000] lg:mb-3">
         <p className="text-[11px] font-black tracking-[0.25em]">HANDS</p>
       </div>
@@ -724,6 +727,56 @@ function RoleListPanel() {
               ))}
             </div>
 
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+
+function MobileRoleListPanel() {
+  function MiniCard({ rank, suit }: { rank: string; suit: Suit }) {
+    const isRed = suit === "heart" || suit === "diamond";
+
+    return (
+      <div
+        className={[
+          "flex h-8 w-6 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff4cf] text-[9px] font-black leading-none shadow-[2px_2px_0_#000]",
+          isRed ? "text-red-600" : "text-blue-950",
+        ].join(" ")}
+      >
+        <span>{rank}</span>
+        <span className="text-sm">{suitSymbols[suit]}</span>
+      </div>
+    );
+  }
+
+  return (
+    <aside className="mt-2 hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000] md:block lg:hidden">
+      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
+        <p className="text-[10px] font-black tracking-[0.25em]">HANDS</p>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {roleExamples.map((role) => (
+          <div
+            key={role.name}
+            className="min-w-[116px] rounded-xl border-[3px] border-black bg-[#2d1850] p-2 shadow-[3px_3px_0_#000]"
+          >
+            <p className="mb-1 text-xs font-black leading-none text-[#ffef7a]">
+              {role.name}
+            </p>
+
+            <div className="flex items-center gap-1">
+              {role.cards.map((card, index) => (
+                <MiniCard
+                  key={`${role.name}-${card.rank}-${card.suit}-${index}`}
+                  rank={card.rank}
+                  suit={card.suit}
+                />
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -1204,105 +1257,110 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 md:h-[calc(100vh-118px)] md:grid-cols-[150px_minmax(340px,1fr)_260px] lg:h-[calc(100vh-142px)] lg:grid-cols-[230px_minmax(620px,840px)_380px] xl:gap-3 2xl:grid-cols-[250px_minmax(660px,920px)_410px]">
+          <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 md:h-[calc(100vh-118px)] md:grid-cols-[minmax(360px,1fr)_260px] lg:h-[calc(100vh-142px)] lg:grid-cols-[230px_minmax(620px,840px)_380px] xl:gap-3 2xl:grid-cols-[250px_minmax(660px,920px)_410px]">
             <RoleListPanel />
 
-            <section className="flex h-full min-h-0 flex-col rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000]">
-              <div className="mb-1 flex h-5 items-center justify-between">
-                <p className="text-xs font-black tracking-[0.25em] text-[#ffef7a]">
-                  BOARD
-                </p>
+            <div className="flex min-h-0 flex-col">
+              <section className="flex min-h-0 flex-1 flex-col rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000]">
+                <div className="mb-1 flex h-5 items-center justify-between">
+                  <p className="text-xs font-black tracking-[0.25em] text-[#ffef7a]">
+                    BOARD
+                  </p>
 
-                {isResolvingHand && (
-                  <div
-                    className="rounded-full border-[3px] border-black bg-[#ffef7a] px-3 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
-                    style={{ animation: "targetBanner 180ms ease-out" }}
-                  >
-                    CLEAR TARGETS
-                  </div>
-                )}
-              </div>
+                  {isResolvingHand && (
+                    <div
+                      className="rounded-full border-[3px] border-black bg-[#ffef7a] px-3 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                      style={{ animation: "targetBanner 180ms ease-out" }}
+                    >
+                      CLEAR TARGETS
+                    </div>
+                  )}
+                </div>
 
-              <div className="grid min-h-0 w-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-black bg-[#0b1026] p-2 shadow-inner">
-                {game.board.map((boardRow, rowIndex) =>
-                  boardRow.map((cell, colIndex) => {
-                    const cellKey = keyOf(rowIndex, colIndex);
+                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-black bg-[#0b1026] p-2 shadow-inner lg:aspect-auto lg:max-h-none">
+                  {game.board.map((boardRow, rowIndex) =>
+                    boardRow.map((cell, colIndex) => {
+                      const cellKey = keyOf(rowIndex, colIndex);
 
-                    const canPlace =
-                      !cell &&
-                      !game.isGameOver &&
-                      game.hand.length > 0;
+                      const canPlace =
+                        !cell &&
+                        !game.isGameOver &&
+                        game.hand.length > 0;
 
-                    const isPlaced = placedCell === cellKey;
-                    const isHighlighted = highlightCells.has(cellKey);
-                    const isClearing = clearingCells.has(cellKey);
-                    const shouldDim =
-                      isResolvingHand && !!cell && !isHighlighted;
+                      const isPlaced = placedCell === cellKey;
+                      const isHighlighted = highlightCells.has(cellKey);
+                      const isClearing = clearingCells.has(cellKey);
+                      const shouldDim =
+                        isResolvingHand && !!cell && !isHighlighted;
 
-                    return (
-                      <button
-                        key={cellKey}
-                        onClick={() => placeCard(rowIndex, colIndex)}
-                        disabled={!!cell || game.isGameOver}
-                        className={[
-                          "relative h-full min-h-0 rounded-xl border-[3px] transition duration-200",
-                          cell
-                            ? "rotate-[-1deg] border-black bg-[#fff4cf] p-1 shadow-[3px_3px_0_#000]"
-                            : "border-black bg-[#172554] shadow-[2px_2px_0_#000]",
-                          canPlace
-                            ? "cursor-pointer bg-[#2853a7] shadow-[0_0_0_3px_#ffef7a,4px_4px_0_#000] hover:-translate-y-1 hover:bg-[#3268d4]"
-                            : "",
-                          !cell && !canPlace ? "hover:bg-[#223b7c]" : "",
-                          isHighlighted
-                            ? "z-20 bg-[#ffef7a] shadow-[0_0_0_4px_#6ee7ff,0_0_24px_rgba(255,239,122,0.85),5px_5px_0_#000]"
-                            : "",
-                          shouldDim ? "opacity-35 grayscale" : "",
-                        ].join(" ")}
-                        style={{
-                          animation: isClearing
-                            ? "clearShake 520ms ease-in-out forwards"
-                            : isHighlighted
-                            ? "handGlow 580ms ease-in-out infinite"
-                            : isPlaced
-                            ? "cardPop 360ms ease-out"
-                            : undefined,
-                        }}
-                      >
-                        {cell ? (
-                          <>
-                            <CardFace card={cell} size="normal" />
+                      return (
+                        <button
+                          key={cellKey}
+                          onClick={() => placeCard(rowIndex, colIndex)}
+                          disabled={!!cell || game.isGameOver}
+                          className={[
+                            "relative h-full min-h-0 rounded-xl border-[3px] transition duration-200",
+                            cell
+                              ? "rotate-[-1deg] border-black bg-[#fff4cf] p-1 shadow-[3px_3px_0_#000]"
+                              : "border-black bg-[#172554] shadow-[2px_2px_0_#000]",
+                            canPlace
+                              ? "cursor-pointer bg-[#2853a7] shadow-[0_0_0_3px_#ffef7a,4px_4px_0_#000] hover:-translate-y-1 hover:bg-[#3268d4]"
+                              : "",
+                            !cell && !canPlace ? "hover:bg-[#223b7c]" : "",
+                            isHighlighted
+                              ? "z-20 bg-[#ffef7a] shadow-[0_0_0_4px_#6ee7ff,0_0_24px_rgba(255,239,122,0.85),5px_5px_0_#000]"
+                              : "",
+                            shouldDim ? "opacity-35 grayscale" : "",
+                          ].join(" ")}
+                          style={{
+                            animation: isClearing
+                              ? "clearShake 520ms ease-in-out forwards"
+                              : isHighlighted
+                              ? "handGlow 580ms ease-in-out infinite"
+                              : isPlaced
+                              ? "cardPop 360ms ease-out"
+                              : undefined,
+                          }}
+                        >
+                          {cell ? (
+                            <>
+                              <CardFace card={cell} size="normal" />
 
-                            {isHighlighted && (
-                              <div
-                                className="pointer-events-none absolute left-1/2 top-1/2 z-30 rounded-full border-[3px] border-black bg-[#6ee7ff] px-2 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
-                                style={{
-                                  animation: "hitBadge 220ms ease-out forwards",
-                                }}
-                              >
-                                HIT
-                              </div>
-                            )}
+                              {isHighlighted && (
+                                <div
+                                  className="pointer-events-none absolute left-1/2 top-1/2 z-30 rounded-full border-[3px] border-black bg-[#6ee7ff] px-2 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                                  style={{
+                                    animation: "hitBadge 220ms ease-out forwards",
+                                  }}
+                                >
+                                  HIT
+                                </div>
+                              )}
 
-                            {isHighlighted && (
-                              <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffef7a] blur-md" />
-                            )}
-                          </>
-                        ) : (
-                          <span
-                            className={[
-                              "text-2xl font-black",
-                              canPlace ? "text-[#ffef7a]" : "text-white/20",
-                            ].join(" ")}
-                          >
-                            ＋
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+                              {isHighlighted && (
+                                <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffef7a] blur-md" />
+                              )}
+                            </>
+                          ) : (
+                            <span
+                              className={[
+                                "text-2xl font-black",
+                                canPlace ? "text-[#ffef7a]" : "text-white/20",
+                              ].join(" ")}
+                            >
+                              ＋
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
+              
+              <MobileRoleListPanel />
+            </div>
 
             <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
 <div className="rounded-2xl border-[5px] border-black bg-[#d43d4f] p-2 shadow-[6px_6px_0_#000] lg:p-3">
