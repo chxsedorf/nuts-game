@@ -1648,8 +1648,8 @@ export default function Home() {
         }
 
         @keyframes comboAuraPulse {
-          0%, 100% { opacity: 0.58; transform: scale(1); filter: blur(0px); }
-          50% { opacity: 0.95; transform: scale(1.04); filter: blur(1px); }
+          0%, 100% { opacity: 0.12; transform: scale(1); filter: blur(0px); }
+          50% { opacity: 0.24; transform: scale(1.02); filter: blur(0px); }
         }
 
         @keyframes comboBadgeSlam {
@@ -1705,9 +1705,9 @@ export default function Home() {
 
         @keyframes boardKick {
           0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-          18% { transform: translate3d(-4px, 2px, 0) rotate(-0.25deg); }
-          36% { transform: translate3d(5px, -2px, 0) rotate(0.22deg); }
-          54% { transform: translate3d(-2px, 1px, 0) rotate(-0.12deg); }
+          18% { transform: translate3d(-1px, 1px, 0) rotate(-0.06deg); }
+          36% { transform: translate3d(1px, -1px, 0) rotate(0.06deg); }
+          54% { transform: translate3d(-1px, 0, 0) rotate(-0.03deg); }
           100% { transform: translate3d(0, 0, 0) rotate(0deg); }
         }
 
@@ -1939,9 +1939,9 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
 
       {isComboAuraVisible && (
-        <div className="pointer-events-none fixed inset-0 z-[12] overflow-hidden">
+        <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
           <div
-            className="absolute inset-[-18%] opacity-25"
+            className="absolute inset-[-18%] opacity-10"
             style={{
               background: `radial-gradient(circle at 50% 35%, ${currentComboTier.glow}, transparent 34%), radial-gradient(circle at 22% 80%, rgba(110,231,255,0.32), transparent 28%), radial-gradient(circle at 82% 74%, rgba(240,165,54,0.36), transparent 30%)`,
               animation: `comboAuraPulse ${Math.max(0.9, 2.6 - currentComboTier.intensity * 0.28)}s ease-in-out infinite`,
@@ -1949,7 +1949,7 @@ export default function Home() {
             }}
           />
           <div
-            className="absolute inset-x-0 top-0 h-16 opacity-35"
+            className="absolute inset-x-0 top-0 h-10 opacity-10"
             style={{
               backgroundImage:
                 "repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(255,239,122,0.55) 20px, transparent 24px)",
@@ -1996,7 +1996,7 @@ export default function Home() {
       {floatingScores.map((score) => (
         <div
           key={score.id}
-          className="pointer-events-none fixed left-1/2 top-[20%] z-[70] -translate-x-1/2 rounded-2xl border-[5px] border-[#061811] bg-[#f5d06f] px-6 py-3 text-5xl font-black text-[#b83224] shadow-[8px_8px_0_#03100b]"
+          className="pointer-events-none fixed left-1/2 top-[12%] z-[35] -translate-x-1/2 rounded-xl border-[4px] border-[#061811] bg-[#f5d06f]/95 px-4 py-2 text-3xl font-black text-[#b83224] shadow-[5px_5px_0_#03100b]"
           style={{ animation: "floatScore 900ms ease-out forwards" }}
         >
           +{score.value}
@@ -2160,63 +2160,34 @@ export default function Home() {
 
                 <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                   {resultBanner && (
-                    <div className="pointer-events-none absolute inset-0 z-40">
-                      {!resultBanner.isBreak && (
-                        <>
-                          <div
-                            className="absolute left-1/2 top-1/2 h-64 w-64 rounded-full border-[8px] border-[#f5d06f]/80"
-                            style={{ animation: "resultRing 780ms ease-out forwards" }}
-                          />
-                          <div
-                            className="absolute left-[18%] top-[18%] text-4xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#061811]"
-                            style={{ animation: "sparklePop 700ms ease-out forwards" }}
-                          >
-                            ✦
-                          </div>
-                          <div
-                            className="absolute right-[18%] top-[22%] text-3xl font-black text-[#6ee7ff] drop-shadow-[3px_3px_0_#061811]"
-                            style={{ animation: "sparklePop 820ms ease-out forwards" }}
-                          >
-                            ✦
-                          </div>
-                          <div
-                            className="absolute bottom-[20%] left-[22%] text-3xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#061811]"
-                            style={{ animation: "sparklePop 900ms ease-out forwards" }}
-                          >
-                            ✦
-                          </div>
-                        </>
-                      )}
-
+                    <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
                       <div
                         className={[
-                          "absolute left-1/2 top-1/2 min-w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-[6px] px-5 py-4 text-center shadow-[9px_9px_0_#03100b]",
+                          "rounded-xl border-[4px] px-3 py-2 text-right shadow-[4px_4px_0_#03100b] backdrop-blur-[1px]",
                           resultBanner.isBreak
-                            ? "border-[#061811] bg-[#d23a2f] text-white"
-                            : `border-[#061811] bg-gradient-to-br ${resultComboTier?.tone ?? "from-[#f5d06f] to-[#f0a536]"} text-[#061811]`,
+                            ? "border-[#061811] bg-[#d23a2f]/90 text-white"
+                            : `border-[#061811] bg-[#f5d06f]/92 text-[#061811]`,
                         ].join(" ")}
-                        style={{ animation: "resultBurst 980ms ease-out forwards" }}
+                        style={{ animation: "targetBanner 160ms ease-out" }}
                       >
-                        <p className="text-[11px] font-black tracking-[0.28em] opacity-80">
+                        <p className="text-[9px] font-black tracking-[0.22em] opacity-75">
                           {resultBanner.isBreak ? "MISS" : "HAND HIT"}
                         </p>
-                        <p className="mt-1 text-3xl font-black leading-tight drop-shadow-[2px_2px_0_rgba(255,255,255,0.35)]">
+                        <p className="mt-0.5 max-w-[220px] truncate text-lg font-black leading-tight">
                           {resultBanner.text}
                         </p>
                         {!resultBanner.isBreak && (
-                          <div className="mt-2 grid gap-2">
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#f5d06f] shadow-[3px_3px_0_#03100b]">
-                                +{resultBanner.score}
-                              </span>
-                              <span className="rounded-full border-[3px] border-[#061811] bg-[#102a25] px-3 py-1 text-sm font-black text-[#6ee7ff] shadow-[3px_3px_0_#03100b]">
-                                x{resultBanner.combo}
-                              </span>
-                            </div>
+                          <div className="mt-1 flex items-center justify-end gap-1.5 text-xs font-black">
+                            <span className="rounded-md border-[2px] border-[#061811] bg-[#102a25] px-2 py-0.5 text-[#f5d06f] shadow-[2px_2px_0_#03100b]">
+                              +{resultBanner.score}
+                            </span>
+                            <span className="rounded-md border-[2px] border-[#061811] bg-[#102a25] px-2 py-0.5 text-[#6ee7ff] shadow-[2px_2px_0_#03100b]">
+                              x{resultBanner.combo}
+                            </span>
                             {resultBanner.comboNext && (
-                              <div className="mx-auto rounded-xl border-[3px] border-[#061811] bg-[#07160f] px-4 py-1 text-sm font-black text-[#ffef7a] shadow-[3px_3px_0_#03100b]">
-                                MULTIPLIER UP&nbsp; x{resultBanner.combo} → x{resultBanner.comboNext}
-                              </div>
+                              <span className="rounded-md border-[2px] border-[#061811] bg-[#07160f] px-2 py-0.5 text-[#ffef7a] shadow-[2px_2px_0_#03100b]">
+                                → x{resultBanner.comboNext}
+                              </span>
                             )}
                           </div>
                         )}
@@ -2254,15 +2225,15 @@ export default function Home() {
                               : "",
                             !cell && !canPlace ? "hover:bg-[#1c4639]" : "",
                             isHighlighted
-                              ? "z-20 bg-[#ffef7a] shadow-[0_0_0_4px_#6ee7ff,0_0_24px_rgba(255,239,122,0.85),5px_5px_0_#000]"
+                              ? "z-20 bg-[#fff4cf] shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]"
                               : "",
-                            shouldDim ? "opacity-35 grayscale" : "",
+                            shouldDim ? "opacity-70" : "",
                           ].join(" ")}
                           style={{
                             animation: isClearing
                               ? "clearShake 520ms ease-in-out forwards"
                               : isHighlighted
-                              ? "handGlow 580ms ease-in-out infinite"
+                              ? "handGlow 760ms ease-in-out 2"
                               : isPlaced
                               ? "cardPop 360ms ease-out"
                               : undefined,
@@ -2276,7 +2247,7 @@ export default function Home() {
 
                               {isHighlighted && (
                                 <div
-                                  className="pointer-events-none absolute left-1/2 top-1/2 z-30 rounded-full border-[3px] border-black bg-[#6ee7ff] px-2 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                                  className="pointer-events-none absolute right-1 top-1 z-30 rounded-md border-[2px] border-black bg-[#6ee7ff]/90 px-1.5 py-0.5 text-[9px] font-black text-black shadow-[2px_2px_0_#000]"
                                   style={{
                                     animation: "hitBadge 220ms ease-out forwards",
                                   }}
@@ -2287,10 +2258,10 @@ export default function Home() {
 
                               {isHighlighted && (
                                 <>
-                                  <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffef7a] blur-md" />
+                                  <div className="pointer-events-none absolute inset-0 z-[-1] rounded-xl bg-[#ffef7a]/25" />
                                   <span
-                                    className="pointer-events-none absolute right-2 top-2 z-30 text-xl font-black text-[#f5d06f] drop-shadow-[2px_2px_0_#061811]"
-                                    style={{ animation: "sparklePop 620ms ease-out infinite" }}
+                                    className="pointer-events-none absolute right-2 bottom-2 z-30 text-base font-black text-[#f5d06f] drop-shadow-[2px_2px_0_#061811]"
+                                    style={{ animation: "sparklePop 620ms ease-out 1" }}
                                   >
                                     ✦
                                   </span>
