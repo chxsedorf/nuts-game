@@ -446,8 +446,8 @@ function getCardColor(card: Card): string {
 
 
 const CARD_ASSET_VERSION = "v10";
-const LOGO_ASSET_VERSION = "v1";
-const NUTS_LOGO_SRC = `/logo/nuts-wordmark.svg?${LOGO_ASSET_VERSION}`;
+const LOGO_ASSET_VERSION = "v2";
+const NUTS_LOGO_SRC = `/logo/nuts-logo-sign.png?${LOGO_ASSET_VERSION}`;
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -1053,28 +1053,16 @@ function HomeScreen({
             inset 0 0 26px rgba(0,0,0,0.38);
         }
 
-        .home-wordmark-wrap {
-          background:
-            linear-gradient(180deg, rgba(12,64,45,0.92), rgba(4,26,20,0.92));
-          box-shadow:
-            6px 6px 0 #020806,
-            inset 0 0 0 2px #f2b84a,
-            inset 0 0 0 6px rgba(8,37,27,0.82);
-        }
-
-        .home-wordmark-wrap::before {
-          content: "";
-          position: absolute;
-          inset: 10px;
-          border: 2px solid rgba(242,184,74,0.36);
-          border-radius: 14px;
+        .home-logo-center {
+          max-width: min(96%, 700px);
         }
 
         .home-wordmark-img {
+          image-rendering: pixelated;
           filter:
-            drop-shadow(0 5px 0 #4b2105)
-            drop-shadow(0 9px 0 rgba(0,0,0,0.58))
-            drop-shadow(0 0 14px rgba(242,184,74,0.28));
+            drop-shadow(0 7px 0 rgba(2,8,6,0.88))
+            drop-shadow(0 14px 22px rgba(0,0,0,0.42))
+            drop-shadow(0 0 18px rgba(242,184,74,0.22));
         }
 
         .home-main-button {
@@ -1153,21 +1141,16 @@ function HomeScreen({
           <span className="home-shell-corner bottom-3 right-3 border-b-[4px] border-r-[4px]" />
 
           <div className="mx-auto max-w-[760px]">
-            <div className="home-wordmark-wrap relative mx-auto mb-5 rounded-[22px] border-[4px] border-[#06140f] px-8 py-3 text-center sm:px-12 sm:py-4">
+            <div className="home-logo-center relative mx-auto mb-5 flex justify-center">
               <img
                 src={NUTS_LOGO_SRC}
-                alt="NUTS"
+                alt="NUTS GRID POKER"
                 draggable={false}
-                className="home-wordmark-img mx-auto h-auto w-full max-w-[420px] select-none object-contain"
+                className="home-wordmark-img h-auto w-full max-w-[660px] select-none object-contain"
                 loading="eager"
                 decoding="sync"
                 fetchPriority="high"
               />
-              <div className="relative z-10 mt-1 flex items-center justify-center gap-3 text-[15px] font-black tracking-[0.28em] text-[#8ac77a] sm:text-[18px]">
-                <span>♣</span>
-                <span>GRID POKER</span>
-                <span>♦</span>
-              </div>
             </div>
 
             <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
@@ -1783,7 +1766,7 @@ export default function Home() {
             src={NUTS_LOGO_SRC}
             alt="NUTS"
             draggable={false}
-            className="nuts-logo-img h-auto w-[220px] select-none object-contain"
+            className="nuts-logo-img h-auto w-[250px] select-none object-contain"
             loading="eager"
             decoding="sync"
             fetchPriority="high"
@@ -2488,7 +2471,7 @@ export default function Home() {
                   src={NUTS_LOGO_SRC}
                   alt="NUTS"
                   draggable={false}
-                  className="nuts-logo-img h-auto max-h-[72px] w-[210px] select-none object-contain sm:max-h-[82px] sm:w-[280px] lg:w-[310px]"
+                  className="nuts-logo-img h-auto max-h-[78px] w-[230px] select-none object-contain sm:max-h-[88px] sm:w-[300px] lg:w-[340px]"
                   loading="eager"
                   decoding="sync"
                   fetchPriority="high"
@@ -3667,7 +3650,7 @@ export default function Home() {
                 src={NUTS_LOGO_SRC}
                 alt="NUTS GRID POKER"
                 draggable={false}
-                className="nuts-logo-img h-auto max-h-[72px] w-[205px] select-none object-contain sm:max-h-[82px] sm:w-[270px] lg:w-[305px]"
+                className="nuts-logo-img h-auto max-h-[78px] w-[230px] select-none object-contain sm:max-h-[88px] sm:w-[300px] lg:w-[340px]"
                 loading="eager"
                 decoding="sync"
                 fetchPriority="high"
