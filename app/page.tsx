@@ -1995,9 +1995,9 @@ export default function Home() {
             height: 100% !important;
             min-height: 0 !important;
             display: grid !important;
-            grid-template-rows: auto minmax(0, 0.88fr) minmax(0, 0.78fr) !important;
-            gap: 0.22rem !important;
-            padding: 0.28rem !important;
+            grid-template-rows: auto minmax(0, 1fr) minmax(0, 0.82fr) !important;
+            gap: 0.3rem !important;
+            padding: 0.35rem !important;
             overflow: hidden !important;
           }
 
@@ -2014,12 +2014,12 @@ export default function Home() {
             min-height: 0 !important;
             height: auto !important;
             margin-bottom: 0 !important;
-            padding: 0.25rem !important;
+            padding: 0.35rem !important;
             overflow: hidden !important;
           }
 
           .portrait-queue-panel .queue-card-well > div:first-child {
-            width: 50px !important;
+            width: 56px !important;
           }
 
           .portrait-queue-panel .queue-card-well p {
@@ -2030,10 +2030,7 @@ export default function Home() {
             min-height: 0 !important;
             height: auto !important;
             overflow: hidden !important;
-            padding: 0.25rem !important;
-            display: grid !important;
-            grid-template-rows: minmax(0, 1fr) auto !important;
-            gap: 0.22rem !important;
+            padding: 0.35rem !important;
           }
 
           .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:first-child {
@@ -2041,13 +2038,7 @@ export default function Home() {
           }
 
           .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:nth-child(2) {
-            padding: 0.25rem !important;
-            min-height: 0 !important;
-          }
-
-          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:last-child {
-            margin-top: 0 !important;
-            gap: 0.25rem !important;
+            padding: 0.35rem !important;
           }
 
           .duel-status-kicker,
@@ -2066,9 +2057,124 @@ export default function Home() {
           }
 
           .portrait-queue-panel button {
-            padding: 0.28rem 0.5rem !important;
-            font-size: 0.82rem !important;
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.9rem !important;
+  
+
+          /* Stronger compact layout for mobile landscape duel panel. */
+          .portrait-queue-panel {
+            grid-template-rows: 24px minmax(0, 1fr) 76px !important;
+            gap: 0.18rem !important;
+            padding: 0.25rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            padding: 0.2rem !important;
+            justify-content: center !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: 44px !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 76px !important;
+            height: 76px !important;
+            padding: 0.18rem !important;
+            display: grid !important;
+            grid-template-rows: minmax(0, 1fr) 24px !important;
+            gap: 0.12rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:nth-child(2) {
+            padding: 0.1rem !important;
+            border-width: 2px !important;
+            border-radius: 0.45rem !important;
+          }
+
+          .duel-status-title {
+            font-size: 1rem !important;
             line-height: 1 !important;
+          }
+
+          .duel-status-result {
+            display: none !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:last-child {
+            margin-top: 0 !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+          }
+
+          .portrait-queue-panel button {
+            display: block !important;
+            min-height: 24px !important;
+            padding: 0.15rem 0.4rem !important;
+            font-size: 0.72rem !important;
+            line-height: 1 !important;
+            border-width: 3px !important;
+            border-radius: 0.5rem !important;
+          }
+        }
+
+
+          /* Stronger compact layout for mobile landscape duel panel. */
+          .portrait-queue-panel {
+            grid-template-rows: 24px minmax(0, 1fr) 76px !important;
+            gap: 0.18rem !important;
+            padding: 0.25rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            padding: 0.2rem !important;
+            justify-content: center !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: 44px !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 76px !important;
+            height: 76px !important;
+            padding: 0.18rem !important;
+            display: grid !important;
+            grid-template-rows: minmax(0, 1fr) 24px !important;
+            gap: 0.12rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:nth-child(2) {
+            padding: 0.1rem !important;
+            border-width: 2px !important;
+            border-radius: 0.45rem !important;
+          }
+
+          .duel-status-title {
+            font-size: 1rem !important;
+            line-height: 1 !important;
+          }
+
+          .duel-status-result {
+            display: none !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:last-child {
+            margin-top: 0 !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+          }
+
+          .portrait-queue-panel button {
+            display: block !important;
+            min-height: 24px !important;
+            padding: 0.15rem 0.4rem !important;
+            font-size: 0.72rem !important;
+            line-height: 1 !important;
+            border-width: 3px !important;
+            border-radius: 0.5rem !important;
           }
         }
 
