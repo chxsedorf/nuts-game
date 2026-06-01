@@ -1910,6 +1910,158 @@ export default function Home() {
           }
 
         }
+
+        @media (orientation: landscape) and (max-height: 540px) and (max-width: 1100px) {
+          .portrait-outer {
+            height: 100svh !important;
+            min-height: 100svh !important;
+            max-height: 100svh !important;
+            padding: 0.2rem 0.25rem !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-frame {
+            height: calc(100svh - 0.4rem) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            padding: 0.3rem !important;
+          }
+
+          .portrait-frame > header {
+            margin-bottom: 0.35rem !important;
+            padding: 0.25rem 0.5rem !important;
+            min-height: 0 !important;
+            grid-template-columns: minmax(150px, 0.8fr) minmax(170px, 0.7fr) minmax(330px, 1.4fr) !important;
+            gap: 0.35rem !important;
+          }
+
+          .portrait-frame > header h1 {
+            font-size: 2.2rem !important;
+          }
+
+          .portrait-frame > header p {
+            line-height: 1 !important;
+          }
+
+          .portrait-frame > header .min-h-\[58px\] {
+            min-height: 42px !important;
+          }
+
+          .portrait-stack-layout {
+            height: calc(100svh - 68px) !important;
+            min-height: 0 !important;
+            grid-template-columns: minmax(0, 1fr) 230px !important;
+            gap: 0.45rem !important;
+            align-items: stretch !important;
+          }
+
+          .portrait-stack-layout > div:first-child,
+          .portrait-board-wrap,
+          .portrait-side {
+            height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-board-wrap {
+            padding: 0.35rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 {
+            height: 22px !important;
+            margin-bottom: 0.25rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 p {
+            padding: 0.15rem 0.55rem !important;
+            font-size: 0.62rem !important;
+          }
+
+          .portrait-board {
+            height: calc(100% - 26px) !important;
+            max-height: calc(100% - 26px) !important;
+            max-width: none !important;
+            aspect-ratio: auto !important;
+            flex: 1 1 auto !important;
+            gap: 0.25rem !important;
+            padding: 0.35rem !important;
+          }
+
+          .portrait-side {
+            gap: 0 !important;
+          }
+
+          .portrait-queue-panel {
+            height: 100% !important;
+            min-height: 0 !important;
+            display: grid !important;
+            grid-template-rows: auto minmax(0, 1fr) minmax(0, 0.82fr) !important;
+            gap: 0.3rem !important;
+            padding: 0.35rem !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-queue-panel > :first-child {
+            margin-bottom: 0 !important;
+            padding: 0.2rem 0.5rem !important;
+          }
+
+          .portrait-queue-panel > :first-child p {
+            font-size: 0.95rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            min-height: 0 !important;
+            height: auto !important;
+            margin-bottom: 0 !important;
+            padding: 0.35rem !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: 56px !important;
+          }
+
+          .portrait-queue-panel .queue-card-well p {
+            margin-top: 0.15rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 0 !important;
+            height: auto !important;
+            overflow: hidden !important;
+            padding: 0.35rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:first-child {
+            display: none !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:nth-child(2) {
+            padding: 0.35rem !important;
+          }
+
+          .duel-status-kicker,
+          .duel-status-message {
+            display: none !important;
+          }
+
+          .duel-status-title {
+            margin-top: 0 !important;
+            font-size: 1.15rem !important;
+          }
+
+          .duel-status-result {
+            margin-top: 0.15rem !important;
+            font-size: 0.85rem !important;
+          }
+
+          .portrait-queue-panel button {
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.9rem !important;
+          }
+        }
+
       `}</style>
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
@@ -2125,16 +2277,16 @@ export default function Home() {
                     </div>
 
                     <div className="flex min-h-0 flex-1 flex-col justify-center rounded-xl border-[3px] border-[#061811] bg-[#07160f] p-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.35)]">
-                      <p className="text-[10px] font-black tracking-[0.22em] text-[#f5d06f]">
+                      <p className="duel-status-kicker text-[10px] font-black tracking-[0.22em] text-[#f5d06f]">
                         {duel.isGameOver ? "RESULT" : "CURRENT TURN"}
                       </p>
-                      <p className="mt-2 text-2xl font-black text-white drop-shadow-[3px_3px_0_#03100b]">
+                      <p className="duel-status-title mt-2 text-2xl font-black text-white drop-shadow-[3px_3px_0_#03100b]">
                         {duel.isGameOver ? winnerText : `PLAYER ${duel.currentPlayer}`}
                       </p>
-                      <p className="mt-3 text-base font-black text-[#fff4cf]">
+                      <p className="duel-status-result mt-3 text-base font-black text-[#fff4cf]">
                         {duel.lastResult}
                       </p>
-                      <p className="mt-2 text-sm font-bold leading-relaxed text-[#8bd8af]">
+                      <p className="duel-status-message mt-2 text-sm font-bold leading-relaxed text-[#8bd8af]">
                         {duel.isGameOver ? `P1 ${p1Owned} - P2 ${p2Owned}` : "Make a hand to claim or steal cells."}
                       </p>
                     </div>
