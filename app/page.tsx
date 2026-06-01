@@ -444,6 +444,18 @@ function getCardColor(card: Card): string {
   return "text-blue-950";
 }
 
+
+const suitCodeMap: Record<Suit, string> = {
+  spade: "S",
+  heart: "H",
+  diamond: "D",
+  club: "C",
+};
+
+function getCardImagePath(card: Card): string {
+  return `/cards/${card.rank}${suitCodeMap[card.suit]}.png`;
+}
+
 function keyOf(row: number, col: number) {
   return `${row}-${col}`;
 }
@@ -679,146 +691,27 @@ function CardFace({
   card: Card;
   size?: "tiny" | "small" | "normal" | "large";
 }) {
-  const isRed = card.suit === "heart" || card.suit === "diamond";
-  const ink = isRed ? "#b83224" : "#1d2d4f";
-  const deepInk = isRed ? "#7c1d18" : "#111c33";
-  const suit = suitSymbols[card.suit];
-  const isFaceCard = card.rank === "J" || card.rank === "Q" || card.rank === "K";
-
-  const cornerText =
-    size === "tiny"
-      ? "text-[9px]"
+  const imageSizeClass =
+    size === "large"
+      ? "scale-[1.06]"
+      : size === "tiny"
+      ? "scale-[1.12]"
       : size === "small"
-      ? "text-[12px]"
-      : size === "large"
-      ? "text-[19px]"
-      : "text-[15px]";
-
-  const cornerSuit =
-    size === "tiny"
-      ? "text-[10px]"
-      : size === "small"
-      ? "text-[13px]"
-      : size === "large"
-      ? "text-[20px]"
-      : "text-[16px]";
-
-  const pipText =
-    size === "tiny"
-      ? "text-[12px]"
-      : size === "small"
-      ? "text-[16px]"
-      : size === "large"
-      ? "text-[33px]"
-      : "text-[24px]";
-
-  const aceText =
-    size === "tiny"
-      ? "text-[22px]"
-      : size === "small"
-      ? "text-[34px]"
-      : size === "large"
-      ? "text-[72px]"
-      : "text-[52px]";
-
-  const faceTitle = card.rank === "J" ? "JACK" : card.rank === "Q" ? "QUEEN" : "KING";
-  const faceBadge = card.rank === "J" ? "J" : card.rank === "Q" ? "Q" : "K";
-
-  const pipLayouts: Record<string, Array<[number, number]>> = {
-    A: [[50, 52]],
-    "2": [[50, 24], [50, 76]],
-    "3": [[50, 23], [50, 50], [50, 77]],
-    "4": [[32, 24], [68, 24], [32, 76], [68, 76]],
-    "5": [[32, 23], [68, 23], [50, 50], [32, 77], [68, 77]],
-    "6": [[32, 22], [68, 22], [32, 50], [68, 50], [32, 78], [68, 78]],
-    "7": [[32, 20], [68, 20], [50, 35], [32, 50], [68, 50], [32, 78], [68, 78]],
-    "8": [[32, 18], [68, 18], [32, 38], [68, 38], [32, 62], [68, 62], [32, 82], [68, 82]],
-    "9": [[32, 17], [68, 17], [32, 36], [68, 36], [50, 50], [32, 64], [68, 64], [32, 83], [68, 83]],
-    "10": [[32, 15], [68, 15], [32, 32], [68, 32], [50, 43], [50, 57], [32, 68], [68, 68], [32, 85], [68, 85]],
-  };
-
-  const pips = pipLayouts[card.rank] ?? [];
+      ? "scale-[1.08]"
+      : "scale-[1.04]";
 
   return (
-    <div
-      className="nuts-card-paper pixel-hard-sm relative h-full w-full overflow-hidden rounded-[0.62rem] border-[2px] border-[#111827] bg-[#f7f6ef] font-black shadow-[3px_3px_0_rgba(0,0,0,0.42)]"
-      style={{ color: ink }}
-    >
-      <div
-        className="absolute left-[7%] top-[6%] z-30 flex flex-col items-center leading-none"
-        style={{ color: ink, textShadow: "1px 1px 0 rgba(255,255,255,.9)" }}
-      >
-        <span className={`${cornerText} font-black leading-none tracking-[-0.04em]`}>{card.rank}</span>
-        <span className={`${cornerSuit} -mt-[1px] leading-none`}>{suit}</span>
-      </div>
-
-      {isFaceCard ? (
-        <div className="absolute inset-[16%_13%_12%_13%] z-10 overflow-hidden rounded-[0.18rem] border-[2px] bg-[#f8f4e8] shadow-[inset_0_0_0_2px_rgba(17,24,39,.14)]" style={{ borderColor: deepInk }}>
-          <div className="absolute inset-0 opacity-[0.16] [background-image:repeating-linear-gradient(0deg,#000_0_1px,transparent_1px_5px)]" />
-          <div className="absolute left-1/2 top-[4%] h-[2px] w-[70%] -translate-x-1/2" style={{ backgroundColor: ink }} />
-          <div className="absolute bottom-[4%] left-1/2 h-[2px] w-[70%] -translate-x-1/2" style={{ backgroundColor: ink }} />
-
-          <div className="absolute left-1/2 top-[7%] -translate-x-1/2 text-center text-[7px] font-black leading-none tracking-[0.16em] opacity-80 sm:text-[8px]" style={{ color: deepInk }}>
-            {faceTitle}
-          </div>
-
-          <div className="absolute left-1/2 top-[18%] h-[18%] w-[28%] -translate-x-1/2 rounded-t-[35%] border-[2px] bg-[#f1d5bf]" style={{ borderColor: deepInk }} />
-          {(card.rank === "Q" || card.rank === "K") && (
-            <div className="absolute left-1/2 top-[10%] flex -translate-x-1/2 gap-[2px]">
-              <span className="h-[8px] w-[8px] rotate-45 bg-[#e3a923]" />
-              <span className="h-[11px] w-[8px] rotate-45 bg-[#e3a923]" />
-              <span className="h-[8px] w-[8px] rotate-45 bg-[#e3a923]" />
-            </div>
-          )}
-          {card.rank === "J" && (
-            <div className="absolute left-1/2 top-[11%] h-[10%] w-[42%] -translate-x-1/2 -skew-x-12 rounded-sm bg-[#e35b4f] shadow-[0_3px_0_#23345a]" />
-          )}
-
-          <div className="absolute left-1/2 top-[34%] h-[42%] w-[54%] -translate-x-1/2 rounded-[0.2rem] border-[2px] bg-[#23345a] shadow-[inset_0_0_0_3px_rgba(255,255,255,.08)]" style={{ borderColor: deepInk }} />
-          <div className="absolute left-[23%] top-[40%] h-[31%] w-[13%] rotate-[14deg] rounded-sm bg-[#f0b342]" />
-          <div className="absolute right-[23%] top-[40%] h-[31%] w-[13%] rotate-[-14deg] rounded-sm bg-[#f0b342]" />
-          <div className="absolute left-1/2 top-[43%] h-[34%] w-[13%] -translate-x-1/2 rounded-sm bg-[#f8f4e8]" />
-          <div className="absolute left-[23%] top-[58%] h-[8%] w-[55%] rotate-[-28deg] rounded-sm bg-[#e35b4f]" />
-
-          <div className="absolute right-[11%] top-[25%] h-[48%] w-[5px] rounded-full bg-[#f0b342] shadow-[0_0_0_2px_#23345a]" />
-          <div className="absolute right-[6%] top-[20%] text-[18px] leading-none" style={{ color: ink }}>{card.rank === "K" ? "♜" : suit}</div>
-
-          <div className="absolute bottom-[7%] left-1/2 -translate-x-1/2 text-center text-[22px] font-black leading-none" style={{ color: ink, textShadow: "2px 2px 0 #f8f4e8" }}>
-            {faceBadge}
-          </div>
-        </div>
-      ) : card.rank === "A" ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <span className={`${aceText} leading-none drop-shadow-[2px_2px_0_rgba(255,255,255,.9)]`} style={{ color: ink }}>
-            {suit}
-          </span>
-        </div>
-      ) : (
-        <div className="absolute inset-[13%_10%] z-10">
-          {pips.map(([x, y], index) => (
-            <span
-              key={`${card.rank}-${index}`}
-              className={`${pipText} absolute leading-none drop-shadow-[1px_1px_0_rgba(255,255,255,.85)]`}
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                color: ink,
-                transform: `translate(-50%, -50%) ${y > 52 ? "rotate(180deg)" : ""}`,
-              }}
-            >
-              {suit}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div
-        className="absolute bottom-[6%] right-[7%] z-30 flex rotate-180 flex-col items-center leading-none"
-        style={{ color: ink, textShadow: "1px 1px 0 rgba(255,255,255,.9)" }}
-      >
-        <span className={`${cornerText} font-black leading-none tracking-[-0.04em]`}>{card.rank}</span>
-        <span className={`${cornerSuit} -mt-[1px] leading-none`}>{suit}</span>
-      </div>
+    <div className="relative h-full w-full overflow-hidden rounded-[10%] bg-white shadow-[3px_3px_0_rgba(0,0,0,0.55)]">
+      <img
+        src={getCardImagePath(card)}
+        alt={`${card.rank} of ${card.suit}`}
+        draggable={false}
+        className={[
+          "h-full w-full select-none object-cover",
+          "[image-rendering:auto]",
+          imageSizeClass,
+        ].join(" ")}
+      />
     </div>
   );
 }
