@@ -1806,6 +1806,49 @@ export default function Home() {
 
     return (
       <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#170f2c] text-white md:h-screen md:overflow-hidden">
+        <style>{`
+        @media (max-width: 767px) and (orientation: portrait) {
+          .portrait-stack-layout {
+            grid-template-columns: minmax(0, 1fr) !important;
+            align-items: start !important;
+          }
+
+          .portrait-board {
+            width: min(94vw, 560px) !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: none !important;
+            max-height: none !important;
+          }
+
+          .portrait-side {
+            width: min(94vw, 560px) !important;
+            margin-inline: auto !important;
+            min-height: auto !important;
+          }
+
+          .portrait-queue-panel {
+            display: grid !important;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+            gap: 0.5rem !important;
+            min-height: auto !important;
+          }
+
+          .portrait-queue-panel > :first-child {
+            grid-column: 1 / -1 !important;
+            margin-bottom: 0 !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            margin-bottom: 0 !important;
+            min-height: 170px !important;
+            height: 100% !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 170px !important;
+          }
+        }
+      `}</style>
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
@@ -1864,7 +1907,7 @@ export default function Home() {
               </div>
             </header>
 
-            <div className="relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
+            <div className="portrait-stack-layout relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
               <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
                 <section className="pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                   <div className="mb-2 flex h-7 items-center justify-between">
@@ -1877,7 +1920,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                  <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                     {resultBanner && (
                       <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
                         <div
@@ -1968,8 +2011,8 @@ export default function Home() {
                 </section>
               </div>
 
-              <aside className="flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
-                <div className="queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+              <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+                <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                   <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                       NOW
@@ -2030,7 +2073,7 @@ export default function Home() {
                         {duel.lastResult}
                       </p>
                       <p className="mt-2 text-sm font-bold leading-relaxed text-[#8bd8af]">
-                        {duel.isGameOver ? "Count the claimed cells." : "Make a hand to claim or steal cells."}
+                        {duel.isGameOver ? `P1 ${p1Owned} - P2 ${p2Owned}` : "Make a hand to claim or steal cells."}
                       </p>
                     </div>
 
@@ -2141,6 +2184,48 @@ export default function Home() {
         @keyframes targetBanner {
           0% { transform: scale(0.92); opacity: 0; }
           100% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 767px) and (orientation: portrait) {
+          .portrait-stack-layout {
+            grid-template-columns: minmax(0, 1fr) !important;
+            align-items: start !important;
+          }
+
+          .portrait-board {
+            width: min(94vw, 560px) !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: none !important;
+            max-height: none !important;
+          }
+
+          .portrait-side {
+            width: min(94vw, 560px) !important;
+            margin-inline: auto !important;
+            min-height: auto !important;
+          }
+
+          .portrait-queue-panel {
+            display: grid !important;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+            gap: 0.5rem !important;
+            min-height: auto !important;
+          }
+
+          .portrait-queue-panel > :first-child {
+            grid-column: 1 / -1 !important;
+            margin-bottom: 0 !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            margin-bottom: 0 !important;
+            min-height: 170px !important;
+            height: 100% !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 170px !important;
+          }
         }
 
         @keyframes boardKick {
@@ -2580,7 +2665,7 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
+          <div className="portrait-stack-layout relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
 <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
               <section className="pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                 <div className="mb-2 flex h-7 items-center justify-between">
@@ -2598,7 +2683,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                   {resultBanner && (
                     <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
                       <div
@@ -2728,8 +2813,8 @@ export default function Home() {
               
             </div>
 
-            <aside className="flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
-              <div className="queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+            <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+              <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                 <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                   <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                     NOW
