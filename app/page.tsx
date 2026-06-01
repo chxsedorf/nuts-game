@@ -453,6 +453,7 @@ const SOLO_BUTTON_SRC = `/ui/solo-play-button.png?${UI_ASSET_VERSION}`;
 const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
 const HOME_BGM_SRC = "/audio/home-bgm.mp3";
 const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
+const GAME_OVER_TITLE_SRC = "/ui/game-over-title.png";
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -4190,18 +4191,16 @@ export default function Home() {
             <div className="pointer-events-none absolute bottom-3 left-3 h-9 w-9 border-b-[5px] border-l-[5px] border-[#f0a536]" />
             <div className="pointer-events-none absolute bottom-3 right-3 h-9 w-9 border-b-[5px] border-r-[5px] border-[#f0a536]" />
 
-            <div className="relative z-10 mb-4 flex items-center justify-center gap-3 text-[#f0a536] sm:gap-5">
-              <span className="text-3xl drop-shadow-[3px_3px_0_#020806] sm:text-4xl">♠</span>
-              <h2
-                className="text-5xl font-black leading-none tracking-[0.08em] text-[#ff6b3d] sm:text-7xl lg:text-8xl"
-                style={{
-                  textShadow:
-                    "5px 5px 0 #061811, 8px 8px 0 #020806, -2px -2px 0 #ffd27a",
-                }}
-              >
-                GAME OVER
-              </h2>
-              <span className="text-3xl drop-shadow-[3px_3px_0_#020806] sm:text-4xl">♣</span>
+            <div className="relative z-10 mb-4 flex items-center justify-center">
+              <img
+                src={GAME_OVER_TITLE_SRC}
+                alt="GAME OVER"
+                draggable={false}
+                className="h-auto w-[min(92%,720px)] select-none object-contain drop-shadow-[8px_8px_0_#020806]"
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+              />
             </div>
 
             <div className="relative z-10 mx-auto mb-5 h-[3px] max-w-lg bg-[#f0a536] shadow-[0_3px_0_#3c2108]">
