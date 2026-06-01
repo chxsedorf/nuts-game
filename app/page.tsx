@@ -1833,6 +1833,10 @@ export default function Home() {
             min-height: auto !important;
           }
 
+          .solo-queue-panel {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
           .portrait-queue-panel > :first-child {
             grid-column: 1 / -1 !important;
             margin-bottom: 0 !important;
@@ -2210,6 +2214,10 @@ export default function Home() {
             grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
             gap: 0.5rem !important;
             min-height: auto !important;
+          }
+
+          .solo-queue-panel {
+            grid-template-columns: minmax(0, 1fr) !important;
           }
 
           .portrait-queue-panel > :first-child {
@@ -2814,7 +2822,7 @@ export default function Home() {
             </div>
 
             <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
-              <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+              <div className="portrait-queue-panel solo-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                 <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                   <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                     NOW
@@ -2824,7 +2832,7 @@ export default function Home() {
                 <button
                   onClick={() => selectHandCard(0)}
                   disabled={game.isGameOver || !game.hand[0]}
-                  className="queue-card-well mb-2 flex w-full shrink-0 flex-col items-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
+                  className="queue-card-well mb-0 flex w-full min-h-0 flex-1 flex-col items-center justify-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
                     className="w-16 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] sm:w-20 lg:w-24 xl:w-28"
@@ -2857,52 +2865,6 @@ export default function Home() {
                     <span className="h-3 w-3 rounded-full border-[2px] border-[#061811] bg-[#234338] shadow-[2px_2px_0_#04120d]" />
                   </div>
                 </button>
-
-                <div className="pixel-hard flex min-h-0 flex-1 flex-col border-[4px] border-[#061811] bg-[#081b18] p-2 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
-                  <div className="mb-2 shrink-0 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
-                    <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
-                      DECK
-                    </p>
-                    <p className="mt-1 text-[9px] font-black tracking-[0.18em] text-[#7fd0a4]">
-                      UNKNOWN
-                    </p>
-                  </div>
-
-                  <div className="flex min-h-0 flex-1 items-center justify-center">
-                    <div className="relative flex w-full max-w-[9rem] items-center justify-center py-1">
-                      <div
-                        className="absolute translate-x-3 translate-y-3 border-[5px] border-[#061811] bg-[#123f32] shadow-[5px_5px_0_#04120d]"
-                        style={{ width: "4.6rem", aspectRatio: "5 / 7" }}
-                      />
-                      <div
-                        className="absolute translate-x-1.5 translate-y-1.5 border-[5px] border-[#061811] bg-[#0f382d] shadow-[5px_5px_0_#04120d]"
-                        style={{ width: "4.6rem", aspectRatio: "5 / 7" }}
-                      />
-                      <div
-                        className="relative border-[5px] border-[#061811] bg-[#102a25] p-1.5 shadow-[5px_5px_0_#04120d]"
-                        style={{ width: "4.6rem", aspectRatio: "5 / 7" }}
-                      >
-                        <div className="flex h-full w-full items-center justify-center border-[3px] border-[#061811] bg-[radial-gradient(circle_at_center,rgba(245,208,111,0.18),transparent_28%),repeating-linear-gradient(45deg,#123f32_0px,#123f32_6px,#0b2f27_6px,#0b2f27_12px)] shadow-[inset_0_0_0_3px_rgba(245,181,68,0.18),inset_0_0_18px_rgba(0,0,0,0.35)]">
-                          <span className="text-4xl font-black text-[#f5d06f] drop-shadow-[3px_3px_0_#03100b]">
-                            ?
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 shrink-0 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
-                    <p className="text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
-                      REMAINING
-                    </p>
-                    <p
-                      className="mt-1 text-3xl font-black leading-none text-[#f5d06f]"
-                      style={{ textShadow: "3px 3px 0 #03100b" }}
-                    >
-                      {game.deck.length}
-                    </p>
-                  </div>
-                </div>
               </div>
 
               <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:gap-2">
