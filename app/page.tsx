@@ -458,6 +458,28 @@ function getCardImagePath(card: Card): string {
   return `/cards/${card.rank}${suitCodeMap[card.suit]}.png?${CARD_ASSET_VERSION}`;
 }
 
+function getAllCardImagePaths(): string[] {
+  return suits.flatMap((suit) =>
+    ranks.map(({ rank }) =>
+      `/cards/${rank}${suitCodeMap[suit]}.png?${CARD_ASSET_VERSION}`
+    )
+  );
+}
+
+let didPreloadCardImages = false;
+
+function preloadCardImages() {
+  if (typeof window === "undefined" || didPreloadCardImages) return;
+
+  didPreloadCardImages = true;
+
+  for (const src of getAllCardImagePaths()) {
+    const image = new Image();
+    image.decoding = "sync";
+    image.src = src;
+  }
+}
+
 function keyOf(row: number, col: number) {
   return `${row}-${col}`;
 }
@@ -711,9 +733,13 @@ function CardFace({
       ].join(" ")}
     >
       <img
+        key={`${card.id}-${CARD_ASSET_VERSION}`}
         src={getCardImagePath(card)}
         alt={`${card.rank} of ${card.suit}`}
         draggable={false}
+        loading="eager"
+        decoding="sync"
+        fetchPriority="high"
         className="card-image-direct block h-full w-full select-none object-contain"
         onError={(event) => {
           event.currentTarget.style.display = "none";
@@ -1273,6 +1299,8 @@ export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
+    preloadCardImages();
+
     const savedHighScore = getSavedHighScore();
 
     setGame((prev) => ({
