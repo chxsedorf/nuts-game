@@ -1067,28 +1067,118 @@ function HomeScreen({
 
         .home-main-button {
           position: relative;
-          overflow: hidden;
-          border: 5px solid #06140f;
-          box-shadow: 7px 7px 0 #020806, inset 0 0 0 3px rgba(255,255,255,0.18);
+          overflow: visible;
+          min-height: 92px;
+          border: 4px solid #06140f;
+          clip-path: polygon(
+            18px 0,
+            calc(100% - 18px) 0,
+            100% 18px,
+            100% calc(100% - 18px),
+            calc(100% - 18px) 100%,
+            18px 100%,
+            0 calc(100% - 18px),
+            0 18px
+          );
+          box-shadow:
+            8px 8px 0 #020806,
+            inset 0 0 0 3px rgba(255,255,255,0.16),
+            inset 0 0 0 7px rgba(6,20,15,0.55),
+            inset 0 -14px 0 rgba(0,0,0,0.16);
           transition: transform 120ms ease, filter 120ms ease;
         }
 
-        .home-main-button:hover { transform: translateY(-3px); filter: brightness(1.08); }
-        .home-main-button:active { transform: translateY(0); }
+        .home-main-button:hover {
+          transform: translateY(-3px);
+          filter: brightness(1.08) saturate(1.08);
+        }
+
+        .home-main-button:active {
+          transform: translateY(0);
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 3px rgba(255,255,255,0.12),
+            inset 0 0 0 7px rgba(6,20,15,0.65),
+            inset 0 12px 0 rgba(0,0,0,0.18);
+        }
+
+        .home-main-button::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 7px;
+          clip-path: polygon(
+            12px 0,
+            calc(100% - 12px) 0,
+            100% 12px,
+            100% calc(100% - 12px),
+            calc(100% - 12px) 100%,
+            12px 100%,
+            0 calc(100% - 12px),
+            0 12px
+          );
+          border: 2px solid rgba(255, 222, 130, 0.72);
+          box-shadow:
+            inset 0 0 0 2px rgba(40, 16, 4, 0.42),
+            0 0 12px rgba(242,184,74,0.26);
+        }
 
         .home-main-button::after {
           content: "";
           pointer-events: none;
           position: absolute;
           inset: 0;
-          background: linear-gradient(110deg, transparent 0 38%, rgba(255,255,255,0.24) 39% 52%, transparent 53% 100%);
-          transform: translateX(-110%);
-          animation: homeButtonShine 3.2s ease-in-out infinite;
+          clip-path: inherit;
+          background:
+            radial-gradient(circle at 9% 18%, rgba(255,255,255,0.25) 0 2px, transparent 3px),
+            radial-gradient(circle at 91% 18%, rgba(255,255,255,0.22) 0 2px, transparent 3px),
+            radial-gradient(circle at 9% 82%, rgba(0,0,0,0.20) 0 2px, transparent 3px),
+            linear-gradient(110deg, transparent 0 40%, rgba(255,255,255,0.24) 41% 53%, transparent 54% 100%);
+          transform: translateX(-115%);
+          animation: homeButtonShine 3.4s ease-in-out infinite;
+        }
+
+        .home-button-label {
+          position: relative;
+          z-index: 1;
+          display: inline-block;
+          font-size: clamp(2.05rem, 4.4vw, 3.3rem);
+          line-height: 0.95;
+          letter-spacing: 0.055em;
+          text-shadow:
+            3px 3px 0 rgba(0,0,0,0.72),
+            0 0 8px rgba(255,255,255,0.16);
+        }
+
+        .home-button-label.duel {
+          font-size: clamp(1.85rem, 3.8vw, 2.95rem);
+        }
+
+        .home-solo-button {
+          color: #fff3cf;
+          background:
+            linear-gradient(180deg, #ffe39a 0%, #f6b845 33%, #c36b14 100%);
+          border-color: #1a0d04;
+        }
+
+        .home-duel-button {
+          color: #d8fff4;
+          background:
+            linear-gradient(180deg, #38f0d2 0%, #13b99e 42%, #086b5e 100%);
+          border-color: #04140f;
+        }
+
+        .home-solo-button .home-button-label {
+          color: #fff1c7;
+        }
+
+        .home-duel-button .home-button-label {
+          color: #d6fff3;
         }
 
         @keyframes homeButtonShine {
-          0%, 38% { transform: translateX(-110%); }
-          58%, 100% { transform: translateX(110%); }
+          0%, 44% { transform: translateX(-115%); }
+          64%, 100% { transform: translateX(115%); }
         }
 
         .home-info-box {
@@ -1195,19 +1285,19 @@ function HomeScreen({
               </div>
 
               <div className="grid gap-4">
-                <div className="grid gap-3">
+                <div className="grid gap-4">
                   <button
                     onClick={onStart}
-                    className="home-main-button rounded-xl bg-gradient-to-b from-[#ffc35b] to-[#e58d25] px-7 py-5 text-3xl font-black tracking-[0.05em] text-[#2b1503] sm:text-4xl"
+                    className="home-main-button home-solo-button px-7 py-5 font-black"
                   >
-                    <span className="relative z-10">SOLO PLAY</span>
+                    <span className="home-button-label">SOLO PLAY</span>
                   </button>
 
                   <button
                     onClick={onStartDuel}
-                    className="home-main-button rounded-xl bg-gradient-to-b from-[#28d6bd] to-[#0f9b84] px-7 py-4 text-2xl font-black tracking-[0.05em] text-[#03140f] sm:text-3xl"
+                    className="home-main-button home-duel-button px-7 py-4 font-black"
                   >
-                    <span className="relative z-10">DUEL MODE</span>
+                    <span className="home-button-label duel">DUEL MODE</span>
                   </button>
                 </div>
 
