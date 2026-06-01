@@ -1809,28 +1809,49 @@ export default function Home() {
         <style>{`
         @media (max-width: 767px) and (orientation: portrait) {
           .portrait-stack-layout {
-            grid-template-columns: minmax(0, 1fr) !important;
-            align-items: start !important;
+            display: flex !important;
+            flex-direction: column !important;
+            grid-template-columns: none !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 0.5rem !important;
+            min-height: auto !important;
+            flex: none !important;
+          }
+
+          .portrait-stack-layout > .flex {
+            order: 1 !important;
+            width: min(94vw, 560px) !important;
+            min-height: auto !important;
+            flex: none !important;
           }
 
           .portrait-board {
-            width: min(94vw, 560px) !important;
+            order: 1 !important;
+            width: min(92vw, 520px) !important;
+            height: auto !important;
             aspect-ratio: 1 / 1 !important;
             flex: none !important;
+            max-width: min(92vw, 520px) !important;
             max-height: none !important;
           }
 
           .portrait-side {
+            order: 2 !important;
             width: min(94vw, 560px) !important;
             margin-inline: auto !important;
             min-height: auto !important;
+            flex: none !important;
+            overflow: visible !important;
           }
 
           .portrait-queue-panel {
             display: grid !important;
             grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+            align-items: stretch !important;
             gap: 0.5rem !important;
             min-height: auto !important;
+            flex: none !important;
           }
 
           .solo-queue-panel {
@@ -1844,12 +1865,12 @@ export default function Home() {
 
           .portrait-queue-panel .queue-card-well {
             margin-bottom: 0 !important;
-            min-height: 170px !important;
+            min-height: 150px !important;
             height: 100% !important;
           }
 
           .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
-            min-height: 170px !important;
+            min-height: 150px !important;
           }
         }
       `}</style>
@@ -2192,28 +2213,49 @@ export default function Home() {
 
         @media (max-width: 767px) and (orientation: portrait) {
           .portrait-stack-layout {
-            grid-template-columns: minmax(0, 1fr) !important;
-            align-items: start !important;
+            display: flex !important;
+            flex-direction: column !important;
+            grid-template-columns: none !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 0.5rem !important;
+            min-height: auto !important;
+            flex: none !important;
+          }
+
+          .portrait-stack-layout > .flex {
+            order: 1 !important;
+            width: min(94vw, 560px) !important;
+            min-height: auto !important;
+            flex: none !important;
           }
 
           .portrait-board {
-            width: min(94vw, 560px) !important;
+            order: 1 !important;
+            width: min(92vw, 520px) !important;
+            height: auto !important;
             aspect-ratio: 1 / 1 !important;
             flex: none !important;
+            max-width: min(92vw, 520px) !important;
             max-height: none !important;
           }
 
           .portrait-side {
+            order: 2 !important;
             width: min(94vw, 560px) !important;
             margin-inline: auto !important;
             min-height: auto !important;
+            flex: none !important;
+            overflow: visible !important;
           }
 
           .portrait-queue-panel {
             display: grid !important;
             grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+            align-items: stretch !important;
             gap: 0.5rem !important;
             min-height: auto !important;
+            flex: none !important;
           }
 
           .solo-queue-panel {
@@ -2227,12 +2269,12 @@ export default function Home() {
 
           .portrait-queue-panel .queue-card-well {
             margin-bottom: 0 !important;
-            min-height: 170px !important;
+            min-height: 150px !important;
             height: 100% !important;
           }
 
           .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
-            min-height: 170px !important;
+            min-height: 150px !important;
           }
         }
 
