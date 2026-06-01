@@ -445,9 +445,9 @@ function getCardColor(card: Card): string {
 }
 
 
-const CARD_ASSET_VERSION = "v10";
+const CARD_ASSET_VERSION = "v11";
 const LOGO_ASSET_VERSION = "v2";
-const UI_ASSET_VERSION = "v1";
+const UI_ASSET_VERSION = "v2";
 const NUTS_LOGO_SRC = `/logo/nuts-logo-sign.png?${LOGO_ASSET_VERSION}`;
 const SOLO_BUTTON_SRC = `/ui/solo-play-button.png?${UI_ASSET_VERSION}`;
 const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
