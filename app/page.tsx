@@ -1807,7 +1807,14 @@ export default function Home() {
     return (
       <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#170f2c] text-white md:h-screen md:overflow-hidden">
         <style>{`
-        @media (max-width: 767px) and (orientation: portrait) {
+        @media (max-width: 1024px) and (orientation: portrait) {
+          main {
+            height: auto !important;
+            min-height: 100svh !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+          }
+
           .portrait-stack-layout {
             display: flex !important;
             flex-direction: column !important;
@@ -1823,17 +1830,23 @@ export default function Home() {
             order: 1 !important;
             width: min(94vw, 560px) !important;
             min-height: auto !important;
+            height: auto !important;
             flex: none !important;
+            overflow: visible !important;
+          }
+
+          .portrait-stack-layout > aside.portrait-side {
+            order: 2 !important;
           }
 
           .portrait-board {
             order: 1 !important;
             width: min(92vw, 520px) !important;
-            height: auto !important;
+            height: min(92vw, 520px) !important;
             aspect-ratio: 1 / 1 !important;
             flex: none !important;
             max-width: min(92vw, 520px) !important;
-            max-height: none !important;
+            max-height: min(92vw, 520px) !important;
           }
 
           .portrait-side {
@@ -1841,6 +1854,7 @@ export default function Home() {
             width: min(94vw, 560px) !important;
             margin-inline: auto !important;
             min-height: auto !important;
+            height: auto !important;
             flex: none !important;
             overflow: visible !important;
           }
@@ -2211,7 +2225,14 @@ export default function Home() {
           100% { transform: scale(1); opacity: 1; }
         }
 
-        @media (max-width: 767px) and (orientation: portrait) {
+        @media (max-width: 1024px) and (orientation: portrait) {
+          main {
+            height: auto !important;
+            min-height: 100svh !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+          }
+
           .portrait-stack-layout {
             display: flex !important;
             flex-direction: column !important;
@@ -2227,17 +2248,23 @@ export default function Home() {
             order: 1 !important;
             width: min(94vw, 560px) !important;
             min-height: auto !important;
+            height: auto !important;
             flex: none !important;
+            overflow: visible !important;
+          }
+
+          .portrait-stack-layout > aside.portrait-side {
+            order: 2 !important;
           }
 
           .portrait-board {
             order: 1 !important;
             width: min(92vw, 520px) !important;
-            height: auto !important;
+            height: min(92vw, 520px) !important;
             aspect-ratio: 1 / 1 !important;
             flex: none !important;
             max-width: min(92vw, 520px) !important;
-            max-height: none !important;
+            max-height: min(92vw, 520px) !important;
           }
 
           .portrait-side {
@@ -2245,6 +2272,7 @@ export default function Home() {
             width: min(94vw, 560px) !important;
             margin-inline: auto !important;
             min-height: auto !important;
+            height: auto !important;
             flex: none !important;
             overflow: visible !important;
           }
