@@ -717,22 +717,9 @@ function CardFace({
   card: Card;
   size?: "tiny" | "small" | "normal" | "large";
 }) {
-  const paddingClass =
-    size === "large"
-      ? "p-[3px]"
-      : size === "tiny"
-      ? "p-[1px]"
-      : size === "small"
-      ? "p-[2px]"
-      : "p-[2px]";
-
   return (
     <div
-      className={[
-        "card-image-shell relative grid h-full w-full place-items-center overflow-hidden rounded-[10%] bg-white",
-        "shadow-[3px_3px_0_rgba(0,0,0,0.55)]",
-        paddingClass,
-      ].join(" ")}
+      className="card-image-shell relative grid h-full w-full place-items-center overflow-visible rounded-[10%] bg-transparent p-0 shadow-none"
     >
       <img
         key={`${card.id}-${CARD_ASSET_VERSION}`}
@@ -2843,12 +2830,12 @@ export default function Home() {
                             className={[
                               "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                               cell
-                                ? "border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
+                                ? "border-[#061811] bg-transparent p-0 shadow-[4px_4px_0_#04120d]"
                                 : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
                               canPlace ? "cursor-pointer hover:-translate-y-1 hover:brightness-125" : "",
                               ownerGlow,
                               isPlaced ? "scale-[1.03]" : "",
-                              isHit ? "z-20 bg-[#fff4cf] shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]" : "",
+                              isHit ? "z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]" : "",
                               isClearing ? "opacity-80" : "",
                             ].join(" ")}
                             style={{
@@ -2872,7 +2859,7 @@ export default function Home() {
 
                             {cell ? (
                               <>
-                                <div className="board-card-inner mx-auto grid h-full max-h-full aspect-[5/7] w-full max-w-[86%] place-items-center">
+                                <div className="board-card-inner mx-auto grid h-full max-h-full aspect-[5/7] w-full max-w-[90%] place-items-center bg-transparent">
                                   <CardFace card={cell} size="normal" />
                                 </div>
 
@@ -2908,13 +2895,13 @@ export default function Home() {
 
                   <div className="queue-card-well mb-2 flex w-full shrink-0 flex-col items-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
                     <div
-                      className="w-20 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] sm:w-24 lg:w-28 xl:w-32"
+                      className="w-20 shrink-0 rotate-[-2deg] bg-transparent p-0 sm:w-24 lg:w-28 xl:w-32"
                       style={{ aspectRatio: "5 / 7" }}
                     >
                       {duel.currentCard ? (
                         <CardFace card={duel.currentCard} size="small" />
                       ) : (
-                        <div className="flex h-full items-center justify-center rounded-lg bg-[#fff8e4] text-center text-xs font-black text-black/50">
+                        <div className="flex h-full items-center justify-center rounded-lg bg-transparent text-center text-xs font-black text-white/50">
                           EMPTY
                         </div>
                       )}
@@ -3439,18 +3426,23 @@ export default function Home() {
         .card-image-shell {
           transform: none !important;
           line-height: 0;
+          background: transparent !important;
+          box-shadow: none !important;
         }
 
         .card-image-direct {
           transform: none !important;
           position: static !important;
           object-position: center center;
+          object-fit: contain;
+          background: transparent !important;
           image-rendering: auto;
         }
 
         .board-card-inner {
           transform: none !important;
-          overflow: hidden;
+          overflow: visible;
+          background: transparent !important;
         }
 
         .pixel-shadow {
@@ -3998,14 +3990,14 @@ export default function Home() {
                           className={[
                             "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                             cell
-                              ? "border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
+                              ? "border-[#061811] bg-transparent p-0 shadow-[4px_4px_0_#04120d]"
                               : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
                             canPlace
                               ? "cursor-pointer shadow-[0_0_0_3px_#f5d06f,4px_4px_0_#04120d] hover:-translate-y-1 hover:brightness-125"
                               : "",
                             !cell && !canPlace ? "hover:bg-[#1c4639]" : "",
                             isHighlighted
-                              ? "z-20 bg-[#fff4cf] shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]"
+                              ? "z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]"
                               : "",
                             shouldDim ? "opacity-70" : "",
                           ].join(" ")}
@@ -4021,7 +4013,7 @@ export default function Home() {
                         >
                           {cell ? (
                             <>
-                              <div className="board-card-inner mx-auto grid h-full max-h-full aspect-[5/7] w-full max-w-[86%] place-items-center">
+                              <div className="board-card-inner mx-auto grid h-full max-h-full aspect-[5/7] w-full max-w-[90%] place-items-center bg-transparent">
                                 <CardFace card={cell} size="normal" />
                               </div>
 
@@ -4082,13 +4074,13 @@ export default function Home() {
                   className="queue-card-well mb-0 flex w-full min-h-0 flex-1 flex-col items-center justify-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
-                    className="w-16 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] sm:w-20 lg:w-24 xl:w-28"
+                    className="w-16 shrink-0 rotate-[-2deg] bg-transparent p-0 sm:w-20 lg:w-24 xl:w-28"
                     style={{ aspectRatio: "5 / 7" }}
                   >
                     {game.hand[0] ? (
                       <CardFace card={game.hand[0]} size="small" />
                     ) : (
-                      <div className="flex h-full items-center justify-center rounded-lg bg-[#fff8e4] text-center text-xs font-black text-black/50">
+                      <div className="flex h-full items-center justify-center rounded-lg bg-transparent text-center text-xs font-black text-white/50">
                         EMPTY
                       </div>
                     )}
