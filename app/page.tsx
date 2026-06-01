@@ -2083,21 +2083,35 @@ export default function Home() {
       }, 900);
     }
 
-    window.setTimeout(() => {
-      setGame({
-        board: newBoard,
-        deck: drawResult.rest,
-        hand: newHand,
-        score: nextScore,
-        highScore: nextHighScore,
-        combo: nextCombo,
-        comboWindow: nextComboWindow,
-        selectedHandIndex: nextGameOver ? null : 0,
-        lastResult: nextGameOver ? "GAME OVER" : lastResultText,
-        lastScore: gainedScore,
-        isGameOver: nextGameOver,
-      });
-    }, clearTargets.size > 0 ? 320 : 120);
+    const nextGameState: GameState = {
+      board: newBoard,
+      deck: drawResult.rest,
+      hand: newHand,
+      score: nextScore,
+      highScore: nextHighScore,
+      combo: nextCombo,
+      comboWindow: nextComboWindow,
+      selectedHandIndex: nextGameOver ? null : 0,
+      lastResult: nextGameOver ? "GAME OVER" : lastResultText,
+      lastScore: gainedScore,
+      isGameOver: nextGameOver,
+    };
+
+    if (clearTargets.size > 0) {
+      setGame((prev) => ({
+        ...prev,
+        board: boardBeforeClear,
+        selectedHandIndex: 0,
+      }));
+
+      window.setTimeout(() => {
+        setGame(nextGameState);
+      }, 320);
+    } else {
+      // Pair is a valid hand but does not clear.
+      // Update immediately so Pair highlights, score, combo, and banner all appear reliably.
+      setGame(nextGameState);
+    }
 
     window.setTimeout(() => {
       setPlacedCell(null);
@@ -2107,14 +2121,6 @@ export default function Home() {
       setComboPulse(false);
       setResultPulse(false);
     }, 760);
-
-    if (clearTargets.size > 0) {
-      setGame((prev) => ({
-        ...prev,
-        board: boardBeforeClear,
-        selectedHandIndex: 0,
-      }));
-    }
   }
 
   if (!isLoaded) {
