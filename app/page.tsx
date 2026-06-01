@@ -691,30 +691,36 @@ function CardFace({
   card: Card;
   size?: "tiny" | "small" | "normal" | "large";
 }) {
-  const imageSizeClass =
+  const paddingClass =
     size === "large"
-      ? "scale-[1.06]"
+      ? "p-[3px]"
       : size === "tiny"
-      ? "scale-[1.12]"
+      ? "p-[1px]"
       : size === "small"
-      ? "scale-[1.08]"
-      : "scale-[1.04]";
+      ? "p-[2px]"
+      : "p-[2px]";
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-[10%] bg-white shadow-[3px_3px_0_rgba(0,0,0,0.55)]">
+    <div
+      className={[
+        "card-image-shell relative grid h-full w-full place-items-center overflow-hidden rounded-[10%] bg-white",
+        "shadow-[3px_3px_0_rgba(0,0,0,0.55)]",
+        paddingClass,
+      ].join(" ")}
+    >
       <img
         src={getCardImagePath(card)}
         alt={`${card.rank} of ${card.suit}`}
         draggable={false}
-        className={[
-          "h-full w-full select-none object-cover",
-          "[image-rendering:auto]",
-          imageSizeClass,
-        ].join(" ")}
+        className="card-image-direct block h-full w-full select-none object-contain"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+        }}
       />
     </div>
   );
 }
+
 
 function StatBox({
   label,
@@ -2264,7 +2270,7 @@ export default function Home() {
                             className={[
                               "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                               cell
-                                ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
+                                ? "border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
                                 : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
                               canPlace ? "cursor-pointer hover:-translate-y-1 hover:brightness-125" : "",
                               ownerGlow,
@@ -2293,7 +2299,7 @@ export default function Home() {
 
                             {cell ? (
                               <>
-                                <div className="mx-auto h-full max-h-full aspect-[5/7] max-w-[82%]">
+                                <div className="board-card-inner mx-auto grid h-full max-h-full aspect-[5/7] w-full max-w-[86%] place-items-center">
                                   <CardFace card={cell} size="normal" />
                                 </div>
 
@@ -2799,6 +2805,23 @@ export default function Home() {
           image-rendering: pixelated;
         }
 
+        .card-image-shell {
+          transform: none !important;
+          line-height: 0;
+        }
+
+        .card-image-direct {
+          transform: none !important;
+          position: static !important;
+          object-position: center center;
+          image-rendering: auto;
+        }
+
+        .board-card-inner {
+          transform: none !important;
+          overflow: hidden;
+        }
+
         .pixel-shadow {
           box-shadow:
             6px 0 0 #03100b,
@@ -3109,7 +3132,7 @@ export default function Home() {
                           className={[
                             "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                             cell
-                              ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
+                              ? "border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
                               : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
                             canPlace
                               ? "cursor-pointer shadow-[0_0_0_3px_#f5d06f,4px_4px_0_#04120d] hover:-translate-y-1 hover:brightness-125"
@@ -3132,7 +3155,7 @@ export default function Home() {
                         >
                           {cell ? (
                             <>
-                              <div className="mx-auto h-full max-h-full aspect-[5/7] max-w-[82%]">
+                              <div className="board-card-inner mx-auto grid h-full max-h-full aspect-[5/7] w-full max-w-[86%] place-items-center">
                                 <CardFace card={cell} size="normal" />
                               </div>
 
