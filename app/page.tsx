@@ -935,111 +935,191 @@ function HomeScreen({
 }) {
   const [showHands, setShowHands] = useState(false);
 
-  const titleCards: { rank: string; suit: Suit; tilt: string }[] = [
-    { rank: "A", suit: "spade", tilt: "rotate-[-8deg] translate-y-3" },
-    { rank: "K", suit: "heart", tilt: "rotate-[-3deg] translate-y-0" },
-    { rank: "Q", suit: "club", tilt: "rotate-[4deg] translate-y-4" },
-    { rank: "J", suit: "diamond", tilt: "rotate-[9deg] translate-y-1" },
-  ];
-
   const previewCells = [
-    "", "", "", "", "",
-    "", "7♠", "8♠", "9♠", "",
-    "", "", "", "", "",
-    "", "Q♥", "Q♣", "", "",
+    "", "", "K♥", "", "",
+    "", "10♣", "", "", "",
+    "", "", "8♦", "", "",
+    "", "A♠", "", "", "",
     "", "", "", "", "",
   ];
 
-  function GuideMiniCard({ rank, suit }: { rank: string; suit: Suit }) {
-    const isRed = suit === "heart" || suit === "diamond";
-
-    return (
-      <div
-        className={[
-          "relative flex h-12 w-9 shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg border-[3px] border-[#1c1208] bg-[#fff4cf] text-[12px] font-black leading-none shadow-[3px_3px_0_#06110c]",
-          isRed ? "text-[#b83224]" : "text-[#10271f]",
-        ].join(" ")}
-      >
-        <div className="absolute inset-0 opacity-30 [background-image:repeating-linear-gradient(0deg,transparent_0,transparent_5px,rgba(83,59,30,0.12)_6px)]" />
-        <span className="relative z-10">{rank}</span>
-        <span className="relative z-10 text-xl">{suitSymbols[suit]}</span>
-      </div>
-    );
-  }
+  const menuCards: Card[] = [
+    { id: "menu-ah", rank: "A", suit: "heart", value: 14 },
+    { id: "menu-qs", rank: "Q", suit: "spade", value: 12 },
+    { id: "menu-jd", rank: "J", suit: "diamond", value: 11 },
+  ];
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white lg:h-screen lg:overflow-hidden">
+    <main className="nuts-pixel home-simple-screen relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#061711] text-white">
       <style>{`
-        @keyframes logoRise {
-          0% { transform: translateY(16px) scale(0.96); opacity: 0; }
+        @keyframes menuPop {
+          0% { transform: translateY(18px) scale(0.985); opacity: 0; }
           100% { transform: translateY(0) scale(1); opacity: 1; }
         }
 
-        @keyframes menuRise {
-          0% { transform: translateY(18px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
+        @keyframes softGlow {
+          0%, 100% { opacity: 0.54; transform: scale(1); }
+          50% { opacity: 0.88; transform: scale(1.03); }
         }
 
-        @keyframes titleGlow {
-          0%, 100% { filter: drop-shadow(5px 5px 0 #3b1604) drop-shadow(0 0 10px rgba(242,149,48,0.35)); }
-          50% { filter: drop-shadow(6px 6px 0 #3b1604) drop-shadow(0 0 22px rgba(255,202,91,0.75)); }
+        @keyframes cardHoverHome {
+          0%, 100% { transform: translateY(0) rotate(var(--rot)); }
+          50% { transform: translateY(-8px) rotate(calc(var(--rot) + 1deg)); }
         }
 
-        @keyframes cardFloatSoft {
-          0%, 100% { transform: translateY(0) rotate(var(--tilt)); }
-          50% { transform: translateY(-10px) rotate(calc(var(--tilt) + 2deg)); }
-        }
-
-        @keyframes shineSweep {
-          0% { transform: translateX(-120%) skewX(-18deg); }
-          45%, 100% { transform: translateX(180%) skewX(-18deg); }
-        }
-
-        @keyframes buttonPulseGold {
-          0%, 100% { box-shadow: 5px 5px 0 #03100b, 0 0 0 2px #ffcf63 inset, 0 0 12px rgba(242,149,48,0.25); }
-          50% { box-shadow: 7px 7px 0 #03100b, 0 0 0 2px #fff0a1 inset, 0 0 28px rgba(255,207,99,0.72); }
-        }
-
-
-        .balatro-inspired-bg {
+        .home-simple-screen {
           background:
-            radial-gradient(circle at 18% 16%, rgba(245, 181, 68, 0.16), transparent 26%),
-            radial-gradient(circle at 82% 18%, rgba(82, 210, 159, 0.12), transparent 30%),
-            radial-gradient(circle at 50% 96%, rgba(0, 0, 0, 0.50), transparent 56%),
-            linear-gradient(135deg, rgba(255, 220, 120, 0.055) 0 8%, transparent 8% 16%, rgba(0, 0, 0, 0.08) 16% 24%, transparent 24% 32%),
-            #08291f;
-          background-size: auto, auto, auto, 56px 56px, auto;
+            radial-gradient(circle at 50% 38%, rgba(240, 165, 54, 0.14), transparent 32%),
+            radial-gradient(circle at 22% 18%, rgba(44, 165, 105, 0.20), transparent 34%),
+            radial-gradient(circle at 78% 72%, rgba(14, 90, 74, 0.24), transparent 35%),
+            linear-gradient(180deg, #0b2a20 0%, #061811 54%, #030907 100%);
         }
 
-        .balatro-inspired-bg::before {
+        .home-simple-screen::before {
           content: "";
           pointer-events: none;
           position: fixed;
           inset: 0;
           z-index: 0;
           background:
-            radial-gradient(circle, rgba(255, 230, 140, 0.10) 1px, transparent 1.6px),
-            radial-gradient(circle, rgba(0, 0, 0, 0.22) 1px, transparent 1.7px),
-            repeating-linear-gradient(45deg, rgba(255, 219, 115, 0.045) 0px, rgba(255, 219, 115, 0.045) 2px, transparent 2px, transparent 16px),
-            repeating-linear-gradient(-45deg, rgba(95, 255, 190, 0.035) 0px, rgba(95, 255, 190, 0.035) 2px, transparent 2px, transparent 18px);
-          background-position: 0 0, 5px 5px, 0 0, 0 0;
-          background-size: 10px 10px, 10px 10px, 42px 42px, 46px 46px;
-          opacity: 0.78;
-          mix-blend-mode: screen;
+            radial-gradient(circle, rgba(245, 198, 93, 0.13) 1px, transparent 1.7px),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.032) 0 1px, transparent 1px 14px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,0.026) 0 1px, transparent 1px 14px),
+            repeating-linear-gradient(45deg, rgba(240,165,54,0.04) 0 2px, transparent 2px 24px);
+          background-size: 10px 10px, 14px 14px, 14px 14px, 48px 48px;
+          opacity: 0.95;
+          image-rendering: pixelated;
         }
 
-        .balatro-inspired-bg::after {
+        .home-simple-screen::after {
           content: "";
           pointer-events: none;
           position: fixed;
           inset: 0;
           z-index: 0;
           background:
-            linear-gradient(90deg, rgba(0,0,0,0.32), transparent 18%, transparent 82%, rgba(0,0,0,0.32)),
-            linear-gradient(180deg, rgba(0,0,0,0.28), transparent 18%, transparent 78%, rgba(0,0,0,0.42));
+            linear-gradient(90deg, rgba(0,0,0,0.55), transparent 18%, transparent 82%, rgba(0,0,0,0.55)),
+            linear-gradient(180deg, rgba(0,0,0,0.24), transparent 25%, rgba(0,0,0,0.56));
         }
 
-        .bg-felt-symbols {
+        .home-shell {
+          animation: menuPop 520ms ease-out both;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(245, 198, 93, 0.13), transparent 32%),
+            linear-gradient(180deg, rgba(12, 66, 48, 0.96), rgba(5, 29, 23, 0.98));
+          box-shadow:
+            12px 12px 0 #020806,
+            0 0 0 4px #06140f,
+            0 0 0 7px #d9912c,
+            inset 0 0 0 3px rgba(255,220,116,0.20),
+            inset 0 0 60px rgba(0,0,0,0.42);
+        }
+
+        .home-shell::before {
+          content: "♠";
+          position: absolute;
+          top: -30px;
+          left: 50%;
+          width: 74px;
+          height: 56px;
+          transform: translateX(-50%);
+          display: grid;
+          place-items: center;
+          border: 4px solid #d9912c;
+          border-bottom: 0;
+          border-radius: 36px 36px 0 0;
+          background: #0c3b2b;
+          color: #f2b84a;
+          font-size: 26px;
+          text-shadow: 3px 3px 0 #2f1705;
+          box-shadow: 0 -3px 0 #07140f inset;
+        }
+
+        .home-shell-corner {
+          position: absolute;
+          width: 24px;
+          height: 24px;
+          border-color: #f2b84a;
+          opacity: 0.9;
+        }
+
+        .home-card-panel {
+          background:
+            radial-gradient(circle at 50% 20%, rgba(245, 198, 93, 0.10), transparent 28%),
+            linear-gradient(180deg, #0c3a2b, #061b15);
+          box-shadow:
+            7px 7px 0 #020806,
+            inset 0 0 0 3px rgba(20, 94, 68, 0.92),
+            inset 0 0 26px rgba(0,0,0,0.38);
+        }
+
+        .home-wordmark-wrap {
+          background:
+            linear-gradient(180deg, rgba(12,64,45,0.92), rgba(4,26,20,0.92));
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 2px #f2b84a,
+            inset 0 0 0 6px rgba(8,37,27,0.82);
+        }
+
+        .home-wordmark-wrap::before {
+          content: "";
+          position: absolute;
+          inset: 10px;
+          border: 2px solid rgba(242,184,74,0.36);
+          border-radius: 14px;
+        }
+
+        .home-wordmark-img {
+          filter:
+            drop-shadow(0 5px 0 #4b2105)
+            drop-shadow(0 9px 0 rgba(0,0,0,0.58))
+            drop-shadow(0 0 14px rgba(242,184,74,0.28));
+        }
+
+        .home-main-button {
+          position: relative;
+          overflow: hidden;
+          border: 5px solid #06140f;
+          box-shadow: 7px 7px 0 #020806, inset 0 0 0 3px rgba(255,255,255,0.18);
+          transition: transform 120ms ease, filter 120ms ease;
+        }
+
+        .home-main-button:hover { transform: translateY(-3px); filter: brightness(1.08); }
+        .home-main-button:active { transform: translateY(0); }
+
+        .home-main-button::after {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(110deg, transparent 0 38%, rgba(255,255,255,0.24) 39% 52%, transparent 53% 100%);
+          transform: translateX(-110%);
+          animation: homeButtonShine 3.2s ease-in-out infinite;
+        }
+
+        @keyframes homeButtonShine {
+          0%, 38% { transform: translateX(-110%); }
+          58%, 100% { transform: translateX(110%); }
+        }
+
+        .home-info-box {
+          background: linear-gradient(180deg, #0c392b, #061b15);
+          box-shadow: 5px 5px 0 #020806, inset 0 0 0 2px rgba(242,184,74,0.16);
+        }
+
+        .home-preview-cell {
+          background: linear-gradient(180deg, #0b3327, #071d16);
+          box-shadow: inset 0 0 0 2px #05140f, 2px 2px 0 #020806;
+        }
+
+        .home-preview-cell.hit {
+          background: linear-gradient(180deg, #ffc35b, #e68e27);
+          color: #2a1504;
+          box-shadow: inset 0 0 0 2px #5a2b08, 0 0 18px rgba(242,184,74,0.55), 2px 2px 0 #020806;
+        }
+
+        .home-bg-suits {
           pointer-events: none;
           position: fixed;
           inset: 0;
@@ -1048,563 +1128,179 @@ function HomeScreen({
           opacity: 0.18;
         }
 
-        .bg-felt-symbols span {
+        .home-bg-suits span {
           position: absolute;
-          color: rgba(255, 238, 180, 0.34);
+          color: rgba(133, 203, 123, 0.42);
           font-weight: 900;
-          line-height: 1;
           text-shadow: 4px 4px 0 rgba(0,0,0,0.22);
           transform: rotate(var(--r));
         }
-
-        /* === NUTS LOGO MATCH THEME ===================================== */
-        .nuts-logo-img {
-          image-rendering: auto;
-          filter:
-            drop-shadow(0 4px 0 #4a2307)
-            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
-            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
-          mix-blend-mode: normal;
-        }
-
-        .nuts-wordmark-stack {
-          display: inline-flex;
-          flex-direction: column;
-          align-items: flex-start;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        .nuts-wordmark-sub {
-          margin-top: -4px;
-          margin-left: 8px;
-          color: #87c77b;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 0.33em;
-          text-shadow: 3px 3px 0 #020806;
-        }
-
-        .nuts-pixel .table-frame {
-          background:
-            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
-            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
-            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
-            #062b22 !important;
-          box-shadow:
-            9px 9px 0 #020806,
-            0 0 0 2px rgba(255, 213, 95, 0.14),
-            inset 0 0 46px rgba(0,0,0,0.42) !important;
-        }
-
-        .nuts-pixel .table-frame::before {
-          border-color: rgba(241, 181, 59, 0.86) !important;
-          box-shadow:
-            0 2px 0 #3b2107,
-            0 0 18px rgba(241, 181, 59, 0.18),
-            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
-        }
-
-        .nuts-pixel header.pixel-inner {
-          background:
-            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
-            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
-          border-color: #05150f !important;
-          box-shadow:
-            6px 6px 0 #020806,
-            inset 0 0 0 3px #05150f,
-            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
-            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
-        }
-
-        .nuts-pixel header.pixel-inner::after {
-          content: "♣  ♠   ♦  ♠   ♣";
-          pointer-events: none;
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding-right: 2.4rem;
-          color: rgba(99, 178, 104, 0.16);
-          font-size: clamp(26px, 3.8vw, 58px);
-          font-weight: 900;
-          letter-spacing: 0.22em;
-          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
-          z-index: 0;
-        }
-
-        .nuts-pixel .portrait-board-wrap,
-        .nuts-pixel .queue-panel,
-        .nuts-pixel .queue-card-well,
-        .nuts-pixel .slot-surface {
-          background:
-            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
-            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
-            #06261f !important;
-          border-color: #05150f !important;
-          box-shadow:
-            6px 6px 0 #020806,
-            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
-            0 0 28px rgba(0,0,0,0.38) inset !important;
-        }
-
-        .nuts-pixel .balatro-inspired-bg,
-        .nuts-pixel.felt-bg,
-        .balatro-inspired-bg {
-          background:
-            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
-            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
-            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
-            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
-            #041b17 !important;
-          background-size: auto, auto, auto, 64px 64px, auto !important;
-        }
-
-        .nuts-pixel .bg-felt-symbols {
-          opacity: 0.24 !important;
-        }
-
-        .nuts-pixel .bg-felt-symbols span {
-          color: rgba(102, 177, 101, 0.42) !important;
-          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
-        }
-
-        .nuts-pixel button {
-          border-color: #05150f !important;
-          box-shadow:
-            5px 5px 0 #020806,
-            inset 0 0 0 2px rgba(255,255,255,0.18),
-            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
-        }
-
-        .nuts-pixel .pixel-hard-sm,
-        .nuts-pixel .pixel-hard {
-          image-rendering: pixelated;
-        }
-
-        .nuts-pixel .card-image-shell {
-          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
-        }
-
-        @media (max-width: 640px) {
-          .nuts-logo-img {
-            max-width: min(44vw, 210px) !important;
-          }
-        }
-
-
-        /* === NUTS LOGO MATCH THEME ===================================== */
-        .nuts-logo-img {
-          image-rendering: auto;
-          filter:
-            drop-shadow(0 4px 0 #4a2307)
-            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
-            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
-          mix-blend-mode: normal;
-        }
-
-        .nuts-wordmark-stack {
-          display: inline-flex;
-          flex-direction: column;
-          align-items: flex-start;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        .nuts-wordmark-sub {
-          margin-top: -4px;
-          margin-left: 8px;
-          color: #87c77b;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 0.33em;
-          text-shadow: 3px 3px 0 #020806;
-        }
-
-        .nuts-pixel .table-frame {
-          background:
-            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
-            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
-            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
-            #062b22 !important;
-          box-shadow:
-            9px 9px 0 #020806,
-            0 0 0 2px rgba(255, 213, 95, 0.14),
-            inset 0 0 46px rgba(0,0,0,0.42) !important;
-        }
-
-        .nuts-pixel .table-frame::before {
-          border-color: rgba(241, 181, 59, 0.86) !important;
-          box-shadow:
-            0 2px 0 #3b2107,
-            0 0 18px rgba(241, 181, 59, 0.18),
-            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
-        }
-
-        .nuts-pixel header.pixel-inner {
-          background:
-            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
-            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
-          border-color: #05150f !important;
-          box-shadow:
-            6px 6px 0 #020806,
-            inset 0 0 0 3px #05150f,
-            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
-            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
-        }
-
-        .nuts-pixel header.pixel-inner::after {
-          content: "♣  ♠   ♦  ♠   ♣";
-          pointer-events: none;
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding-right: 2.4rem;
-          color: rgba(99, 178, 104, 0.16);
-          font-size: clamp(26px, 3.8vw, 58px);
-          font-weight: 900;
-          letter-spacing: 0.22em;
-          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
-          z-index: 0;
-        }
-
-        .nuts-pixel .portrait-board-wrap,
-        .nuts-pixel .queue-panel,
-        .nuts-pixel .queue-card-well,
-        .nuts-pixel .slot-surface {
-          background:
-            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
-            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
-            #06261f !important;
-          border-color: #05150f !important;
-          box-shadow:
-            6px 6px 0 #020806,
-            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
-            0 0 28px rgba(0,0,0,0.38) inset !important;
-        }
-
-        .nuts-pixel .balatro-inspired-bg,
-        .nuts-pixel.felt-bg,
-        .balatro-inspired-bg {
-          background:
-            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
-            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
-            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
-            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
-            #041b17 !important;
-          background-size: auto, auto, auto, 64px 64px, auto !important;
-        }
-
-        .nuts-pixel .bg-felt-symbols {
-          opacity: 0.24 !important;
-        }
-
-        .nuts-pixel .bg-felt-symbols span {
-          color: rgba(102, 177, 101, 0.42) !important;
-          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
-        }
-
-        .nuts-pixel button {
-          border-color: #05150f !important;
-          box-shadow:
-            5px 5px 0 #020806,
-            inset 0 0 0 2px rgba(255,255,255,0.18),
-            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
-        }
-
-        .nuts-pixel .pixel-hard-sm,
-        .nuts-pixel .pixel-hard {
-          image-rendering: pixelated;
-        }
-
-        .nuts-pixel .card-image-shell {
-          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
-        }
-
-        @media (max-width: 640px) {
-          .nuts-logo-img {
-            max-width: min(44vw, 210px) !important;
-          }
-        }
-
       `}</style>
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(240,165,54,0.22),transparent_25%),radial-gradient(circle_at_82%_24%,rgba(28,91,68,0.42),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(7,26,21,0.9),transparent_42%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#f5c247_1px,transparent_1px),linear-gradient(90deg,#f5c247_1px,transparent_1px)] [background-size:22px_22px]" />
-      <div className="bg-felt-symbols" aria-hidden="true">
-        <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
-        <span style={{ left: "86%", top: "15%", fontSize: "38px", ["--r" as string]: "16deg" }}>♦</span>
-        <span style={{ left: "14%", top: "78%", fontSize: "36px", ["--r" as string]: "14deg" }}>♣</span>
-        <span style={{ left: "78%", top: "80%", fontSize: "46px", ["--r" as string]: "-10deg" }}>♥</span>
-        <span style={{ left: "48%", top: "8%", fontSize: "28px", ["--r" as string]: "8deg" }}>A</span>
-        <span style={{ left: "54%", top: "86%", fontSize: "30px", ["--r" as string]: "-8deg" }}>K</span>
+      <div className="home-bg-suits" aria-hidden="true">
+        <span style={{ left: "9%", top: "18%", fontSize: 72, "--r": "-12deg" } as Record<string, string | number>}>♣</span>
+        <span style={{ left: "82%", top: "20%", fontSize: 86, "--r": "9deg" } as Record<string, string | number>}>♦</span>
+        <span style={{ left: "17%", top: "66%", fontSize: 54, "--r": "18deg" } as Record<string, string | number>}>♠</span>
+        <span style={{ left: "78%", top: "67%", fontSize: 64, "--r": "-18deg" } as Record<string, string | number>}>♣</span>
+        <span style={{ left: "50%", top: "10%", fontSize: 36, "--r": "4deg" } as Record<string, string | number>}>♠</span>
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#2b1743]/80 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 to-transparent" />
 
-      {showHands && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 sm:px-4">
-          <div className="pixel-hard relative max-h-[88vh] w-full max-w-3xl overflow-hidden border-[5px] border-[#07160f] bg-[#08241b] p-4 shadow-[10px_10px_0_#020806,0_0_0_2px_#f0a536_inset]">
-            <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#f0a536]/70" />
+      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-14 sm:px-6 lg:px-10">
+        <section className="home-shell pixel-hard relative w-full max-w-[980px] rounded-[28px] border-[5px] border-[#d9912c] px-4 pb-5 pt-7 sm:px-7 sm:pb-7 sm:pt-9 lg:px-8">
+          <span className="home-shell-corner left-3 top-3 border-l-[4px] border-t-[4px]" />
+          <span className="home-shell-corner right-3 top-3 border-r-[4px] border-t-[4px]" />
+          <span className="home-shell-corner bottom-3 left-3 border-b-[4px] border-l-[4px]" />
+          <span className="home-shell-corner bottom-3 right-3 border-b-[4px] border-r-[4px]" />
 
-            <div className="relative z-10 mb-4 flex items-center justify-between gap-3 border-b-[3px] border-[#144431] pb-3">
-              <div>
-                <p className="text-[10px] font-black tracking-[0.42em] text-[#f0a536]">
-                  NUTS GUIDE
+          <div className="mx-auto max-w-[760px]">
+            <div className="home-wordmark-wrap relative mx-auto mb-7 rounded-[22px] border-[4px] border-[#06140f] px-8 py-4 text-center sm:px-12 sm:py-5">
+              <img
+                src={NUTS_LOGO_SRC}
+                alt="NUTS"
+                draggable={false}
+                className="home-wordmark-img mx-auto h-auto w-full max-w-[460px] select-none object-contain"
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+              />
+              <div className="relative z-10 mt-1 flex items-center justify-center gap-3 text-[15px] font-black tracking-[0.28em] text-[#8ac77a] sm:text-[18px]">
+                <span>♣</span>
+                <span>GRID POKER</span>
+                <span>♦</span>
+              </div>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[1fr_0.92fr]">
+              <div className="home-card-panel relative rounded-[22px] border-[4px] border-[#06140f] p-4 sm:p-5">
+                <p className="mb-4 text-center text-[12px] font-black tracking-[0.42em] text-[#f2b84a] sm:text-sm">
+                  BUILD HANDS. BREAK THE GRID.
                 </p>
-                <h2 className="text-3xl font-black text-[#fff4cf] drop-shadow-[3px_3px_0_#06100c]">
-                  HANDS
-                </h2>
-              </div>
 
-              <button
-                onClick={() => setShowHands(false)}
-                className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#f0a536] px-4 py-2 text-sm font-black text-[#2a1603] shadow-[4px_4px_0_#020806] transition hover:-translate-y-1"
-              >
-                CLOSE
-              </button>
-            </div>
-
-            <div className="relative z-10 grid max-h-[65vh] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
-              {roleExamples.map((role) => (
-                <div
-                  key={role.name}
-                  className="rounded-2xl border-[3px] border-[#06160f] bg-[#0c3628] p-3 shadow-[4px_4px_0_#020806,0_0_0_2px_#1e5f47_inset]"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-lg font-black text-[#f5c247]">
-                      {role.name}
-                    </p>
-                    <p className="text-[10px] font-black tracking-[0.18em] text-[#8bd8af]">
-                      LINE HIT
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    {role.cards.map((card, index) => (
-                      <GuideMiniCard
-                        key={`${role.name}-${card.rank}-${card.suit}-${index}`}
-                        rank={card.rank}
-                        suit={card.suit}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#07120f] px-6 text-center text-white md:hidden landscape:hidden">
-        <div className="rounded-2xl border-[5px] border-black bg-[#0b3a2b] p-6 shadow-[8px_8px_0_#000]">
-          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#f0a536]">
-            NUTS
-          </p>
-          <p className="text-2xl font-black leading-tight">
-            Rotate your phone
-          </p>
-          <p className="mt-3 text-xs font-bold leading-5 text-[#d8eadc]">
-            This game is designed for landscape play.
-          </p>
-        </div>
-      </div>
-
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1180px] items-center justify-center px-3 py-4 sm:px-4 md:px-6 lg:h-screen">
-        <section className="grid w-full max-w-[1100px] gap-3 sm:gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-          <div
-            className="pixel-hard relative min-h-[480px] overflow-hidden border-[5px] border-[#06160f] bg-[#08241b] p-4 shadow-[8px_8px_0_#020806,0_0_0_3px_#f0a536_inset] sm:min-h-[540px] sm:border-[6px] sm:p-5 md:p-7 lg:min-h-[560px] lg:shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset]"
-            style={{ animation: "logoRise 520ms ease-out both" }}
-          >
-            <div className="pointer-events-none absolute inset-[12px] border-[2px] border-[#f0a536]/70" />
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#145238]/80 to-transparent" />
-            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#f0a536]/15 blur-2xl" />
-
-            <div className="relative z-10 flex h-full flex-col justify-between">
-              <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border-[3px] border-[#06160f] bg-[#0d3a2b] px-4 py-2 shadow-[4px_4px_0_#020806]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#f0a536] shadow-[0_0_12px_#f0a536]" />
-                  <p className="text-[11px] font-black tracking-[0.32em] text-[#e7d79e]">
-                    GRID POKER
-                  </p>
-                </div>
-
-                <div className="relative overflow-hidden rounded-[1.25rem] border-[4px] border-[#06160f] bg-[#0b3025] px-5 py-5 shadow-[7px_7px_0_#020806,0_0_0_2px_#1f6a4e_inset]">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-white/10" style={{ animation: "shineSweep 3.6s ease-in-out infinite" }} />
-                  <p className="relative z-10 mb-1 text-[12px] font-black tracking-[0.48em] text-[#f0a536]">
-                    CASINO PUZZLE
-                  </p>
-                  <div className="relative z-10 mx-auto w-full max-w-[640px]">
-                    <img
-                      src={NUTS_LOGO_SRC}
-                      alt="NUTS GRID POKER"
-                      draggable={false}
-                      className="nuts-logo-img h-auto w-full select-none object-contain"
-                      loading="eager"
-                      decoding="sync"
-                      fetchPriority="high"
-                    />
-                  </div>
-                  <p className="relative z-10 mt-3 text-sm font-black tracking-[0.38em] text-[#e7d79e] md:text-base">
-                    BUILD HANDS. BREAK THE GRID.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative z-10 mt-5 flex items-end justify-center gap-1.5 sm:mt-6 sm:gap-2 md:gap-3">
-                {titleCards.map((card, index) => {
-                  const isRed = card.suit === "heart" || card.suit === "diamond";
-
-                  return (
-                    <div
-                      key={`${card.rank}-${card.suit}`}
-                      className={`h-24 w-16 rounded-xl border-[4px] border-[#1c1208] bg-[#fff4cf] p-1.5 text-center shadow-[5px_5px_0_#020806] sm:h-32 sm:w-24 sm:p-2 md:h-40 md:w-28 md:shadow-[6px_6px_0_#020806] ${card.tilt}`}
-                      style={{
-                        "--tilt": `${index * 5 - 8}deg`,
-                        animation: `cardFloatSoft ${3 + index * 0.25}s ease-in-out infinite`,
-                      } as Record<string, string>}
-                    >
-                      <div className={["flex h-full flex-col items-center justify-center font-black", isRed ? "text-[#b83224]" : "text-[#10271f]"].join(" ")}>
-                        <p className="text-2xl sm:text-3xl md:text-4xl">{card.rank}</p>
-                        <p className="text-4xl sm:text-5xl md:text-6xl">{suitSymbols[card.suit]}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="relative z-10 mt-5 grid grid-cols-3 gap-1.5 text-center sm:mt-6 sm:gap-2">
-                <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
-                  <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">MODE</p>
-                  <p className="mt-1 text-sm font-black text-[#fff4cf]">ENDLESS</p>
-                </div>
-                <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
-                  <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">BOARD</p>
-                  <p className="mt-1 text-sm font-black text-[#fff4cf]">5 x 5</p>
-                </div>
-                <div className="rounded-xl border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 shadow-[4px_4px_0_#020806]">
-                  <p className="text-[10px] font-black tracking-[0.24em] text-[#8bd8af]">CLEAR</p>
-                  <p className="mt-1 text-sm font-black text-[#fff4cf]">LINE</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="grid min-h-0 gap-4 lg:min-h-[560px]"
-            style={{ animation: "menuRise 640ms 120ms ease-out both" }}
-          >
-            <div className="pixel-hard relative overflow-hidden border-[6px] border-[#06160f] bg-[#0a2119] p-4 shadow-[12px_12px_0_#020806,0_0_0_3px_#f0a536_inset]">
-              <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#18533c]" />
-
-              <div className="relative z-10 grid gap-3">
-                <button
-                  onClick={onStart}
-                  className="pixel-hard-sm relative overflow-hidden border-[5px] border-[#06160f] bg-[#f0a536] px-6 py-5 text-3xl font-black text-[#2a1603] shadow-[5px_5px_0_#03100b] transition hover:-translate-y-1 active:translate-y-0"
-                  style={{ animation: "buttonPulseGold 1.7s ease-in-out infinite" }}
-                >
-                  <span className="relative z-10">SOLO PLAY</span>
-                  <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-white/25" style={{ animation: "shineSweep 2.7s ease-in-out infinite" }} />
-                </button>
-
-                <button
-                  onClick={onStartDuel}
-                  className="pixel-hard-sm relative overflow-hidden border-[5px] border-[#06160f] bg-[#6ee7ff] px-6 py-4 text-2xl font-black text-[#06160f] shadow-[5px_5px_0_#03100b] transition hover:-translate-y-1 active:translate-y-0"
-                >
-                  DUEL MODE
-                </button>
-
-                <div className="grid grid-cols-[1fr_0.85fr] gap-3">
-                  <button
-                    onClick={() => setShowHands(true)}
-                    className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#124733] px-4 py-4 text-xl font-black text-[#fff4cf] shadow-[5px_5px_0_#020806] transition hover:-translate-y-1"
-                  >
-                    HANDS
-                  </button>
-
-                  <div className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#07160f] px-4 py-3 text-left shadow-[5px_5px_0_#020806]">
-                    <p className="text-[10px] font-black tracking-[0.28em] text-[#f0a536]">
-                      BEST
-                    </p>
-                    <p className="mt-1 text-3xl font-black leading-none text-[#fff4cf] drop-shadow-[3px_3px_0_#020806]">
-                      {highScore}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pixel-hard relative grid gap-4 overflow-hidden border-[6px] border-[#06160f] bg-[#08241b] p-4 shadow-[12px_12px_0_#020806,0_0_0_3px_#1c5b44_inset] md:grid-cols-[0.95fr_1.05fr]">
-              <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#18533c]" />
-
-              <div className="relative z-10">
-                <div className="mb-3 rounded-lg border-[3px] border-[#06160f] bg-[#0d3a2b] px-3 py-2 shadow-[3px_3px_0_#020806]">
-                  <p className="text-[11px] font-black tracking-[0.34em] text-[#f0a536]">
-                    HOW TO PLAY
-                  </p>
-                </div>
-
-                <div className="space-y-2 text-sm font-bold leading-6 text-[#d8eadc]">
-                  <p>
-                    <span className="text-[#f5c247]">01</span> Place the visible card on the grid.
-                  </p>
-                  <p>
-                    <span className="text-[#f5c247]">02</span> Make hands vertically or horizontally.
-                  </p>
-                  <p>
-                    <span className="text-[#f5c247]">03</span> Hit cards vanish. Every hit raises the multiplier forever.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative z-10 rounded-2xl border-[4px] border-[#06160f] bg-[#051610] p-3 shadow-[4px_4px_0_#020806,0_0_0_2px_#123e2e_inset]">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[10px] font-black tracking-[0.3em] text-[#8bd8af]">
-                    PREVIEW
-                  </p>
-                  <p className="text-[10px] font-black tracking-[0.18em] text-[#f0a536]">
-                    STRAIGHT HIT
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-5 gap-1.5">
-                  {previewCells.map((cell, index) => {
-                    const hit = cell === "7♠" || cell === "8♠" || cell === "9♠";
-
+                <div className="relative mx-auto flex h-[170px] max-w-[420px] items-center justify-center sm:h-[210px]">
+                  <div className="absolute inset-x-10 bottom-2 h-12 rounded-full bg-black/35 blur-xl" />
+                  {menuCards.map((card, index) => {
+                    const transforms = ["-rotate-[10deg] -translate-x-16 translate-y-3", "rotate-[2deg] translate-y-0", "rotate-[10deg] translate-x-16 translate-y-4"];
                     return (
                       <div
-                        key={`${cell}-${index}`}
-                        className={[
-                          "flex aspect-square items-center justify-center rounded-md border-[2px] border-[#0d3a2b] bg-[#09251c] text-[12px] font-black shadow-[0_0_0_1px_#06160f_inset]",
-                          hit ? "bg-[#f0a536] text-[#2a1603] shadow-[0_0_14px_rgba(240,165,54,0.75)]" : "text-[#366653]",
-                        ].join(" ")}
+                        key={card.id}
+                        className={`absolute h-36 w-24 sm:h-44 sm:w-28 ${transforms[index]}`}
+                        style={{
+                          "--rot": `${index === 0 ? -10 : index === 1 ? 2 : 10}deg`,
+                          animation: `cardHoverHome ${3.2 + index * 0.2}s ease-in-out infinite`,
+                        } as Record<string, string>}
                       >
-                        {cell || "♠"}
+                        <CardFace card={card} />
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {["PAIR", "THREE", "STRAIGHT"].map((label) => (
-                <div
-                  key={label}
-                  className="pixel-hard-sm border-[4px] border-[#06160f] bg-[#0d3a2b] px-3 py-3 text-center shadow-[5px_5px_0_#020806]"
-                >
-                  <p className="text-[11px] font-black tracking-[0.2em] text-[#f5c247]">
-                    {label}
-                  </p>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-3 shadow-[4px_4px_0_#020806]">
+                    <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">MODE</p>
+                    <p className="mt-1 text-sm font-black text-[#fff4cf]">ENDLESS</p>
+                  </div>
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-3 shadow-[4px_4px_0_#020806]">
+                    <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">BOARD</p>
+                    <p className="mt-1 text-sm font-black text-[#fff4cf]">5 × 5</p>
+                  </div>
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-3 shadow-[4px_4px_0_#020806]">
+                    <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">CLEAR</p>
+                    <p className="mt-1 text-sm font-black text-[#fff4cf]">LINE</p>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="grid gap-4">
+                <div className="grid gap-3">
+                  <button
+                    onClick={onStart}
+                    className="home-main-button rounded-xl bg-gradient-to-b from-[#ffc35b] to-[#e58d25] px-7 py-5 text-3xl font-black tracking-[0.05em] text-[#2b1503] sm:text-4xl"
+                  >
+                    <span className="relative z-10">SOLO PLAY</span>
+                  </button>
+
+                  <button
+                    onClick={onStartDuel}
+                    className="home-main-button rounded-xl bg-gradient-to-b from-[#28d6bd] to-[#0f9b84] px-7 py-4 text-2xl font-black tracking-[0.05em] text-[#03140f] sm:text-3xl"
+                  >
+                    <span className="relative z-10">DUEL MODE</span>
+                  </button>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-[0.85fr_1.15fr] lg:grid-cols-1 xl:grid-cols-[0.85fr_1.15fr]">
+                  <div className="home-info-box rounded-2xl border-[4px] border-[#06140f] p-4">
+                    <p className="mb-3 text-center text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">
+                      BEST SCORE
+                    </p>
+                    <div className="rounded-xl border-[3px] border-[#06140f] bg-[#071812] px-4 py-4 text-center shadow-[3px_3px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.12)]">
+                      <p className="text-4xl font-black text-[#fff4cf] drop-shadow-[4px_4px_0_#020806]">
+                        {highScore}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex justify-center gap-3 text-2xl text-[#6ea764] opacity-80">
+                      <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
+                    </div>
+                  </div>
+
+                  <div className="home-info-box rounded-2xl border-[4px] border-[#06140f] p-4">
+                    <p className="mb-3 text-center text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">
+                      HOW TO PLAY
+                    </p>
+                    <div className="space-y-2 text-sm font-black leading-5 text-[#d9eadf]">
+                      <p><span className="text-[#ffc35b]">01</span> Place cards on the grid.</p>
+                      <p><span className="text-[#ffc35b]">02</span> Make hands vertically or horizontally.</p>
+                      <p><span className="text-[#ffc35b]">03</span> Hit cards vanish. Multipliers grow.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="home-info-box rounded-2xl border-[4px] border-[#06140f] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">PREVIEW</p>
+                    <button
+                      onClick={() => setShowHands(true)}
+                      className="rounded-lg border-[3px] border-[#06140f] bg-[#114632] px-3 py-2 text-xs font-black tracking-[0.18em] text-[#fff4cf] shadow-[3px_3px_0_#020806] transition hover:-translate-y-0.5"
+                    >
+                      HANDS
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {previewCells.map((cell, index) => {
+                      const hit = cell === "K♥" || cell === "10♣" || cell === "8♦" || cell === "A♠";
+                      return (
+                        <div
+                          key={`${cell}-${index}`}
+                          className={["home-preview-cell flex aspect-square items-center justify-center rounded-md border-[2px] border-[#06140f] text-[12px] font-black", hit ? "hit" : "text-[#426c55]"].join(" ")}
+                        >
+                          {cell || "♠"}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </div>
+
+      {showHands && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="max-h-[88svh] w-full max-w-4xl overflow-y-auto rounded-3xl border-[6px] border-[#f0a536] bg-[#061811] p-4 shadow-[12px_12px_0_#020806]">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-black tracking-[0.12em] text-[#fff4cf]">HANDS</h2>
+              <button
+                onClick={() => setShowHands(false)}
+                className="rounded-xl border-[3px] border-black bg-[#d83b32] px-4 py-2 text-lg font-black text-white shadow-[4px_4px_0_#020806]"
+              >
+                CLOSE
+              </button>
+            </div>
+            <RoleListPanel />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
