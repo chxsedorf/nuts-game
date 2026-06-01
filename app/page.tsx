@@ -1646,7 +1646,7 @@ export default function Home() {
                 <label className="block">
                   <div className="mb-2 flex items-center justify-between text-sm font-black tracking-[0.12em] text-[#f7d17a]">
                     <span>BGM VOLUME</span>
-                    <span>{Math.round(bgmVolume * 100)}%</span>
+                    <span>{bgmVolume <= 0 ? "OFF" : `${Math.round(bgmVolume * 100)}%`}</span>
                   </div>
                   <input
                     type="range"
@@ -1654,18 +1654,14 @@ export default function Home() {
                     max="1"
                     step="0.01"
                     value={bgmVolume}
-                    onInput={(event) => setBgmVolume(Number(event.currentTarget.value))}
+                    onInput={(event) => {
+                      const nextVolume = Number(event.currentTarget.value);
+                      setBgmVolume(nextVolume);
+                      setBgmEnabled(nextVolume > 0);
+                    }}
                     className="w-full touch-pan-x accent-[#20d0b5]"
                   />
                 </label>
-
-                <button
-                  type="button"
-                  onClick={() => setBgmEnabled((prev) => !prev)}
-                  className="w-full rounded-xl border-[3px] border-[#06140f] bg-[#0f5a49] px-4 py-3 text-sm font-black tracking-[0.16em] text-[#d8fff4] shadow-[4px_4px_0_#020806]"
-                >
-                  BGM {bgmEnabled ? "ON" : "OFF"}
-                </button>
 
                 <button
                   type="button"
