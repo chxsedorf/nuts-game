@@ -937,6 +937,7 @@ function HomeScreen({
   onStartDuel: () => void;
 }) {
   const [showHands, setShowHands] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const previewCells = [
     "", "", "K♥", "", "",
@@ -1115,6 +1116,33 @@ function HomeScreen({
           box-shadow: 5px 5px 0 #020806, inset 0 0 0 2px rgba(242,184,74,0.16);
         }
 
+        .home-privacy-button {
+          position: relative;
+          overflow: hidden;
+          border: 3px solid #06140f;
+          background: linear-gradient(180deg, #125442, #0a3027);
+          color: #f7d17a;
+          box-shadow:
+            4px 4px 0 #020806,
+            inset 0 0 0 2px rgba(242,184,74,0.18);
+          transition: transform 120ms ease, filter 120ms ease;
+        }
+
+        .home-privacy-button:hover {
+          transform: translateY(-2px);
+          filter: brightness(1.08);
+        }
+
+        .privacy-modal-panel {
+          background:
+            radial-gradient(circle at 50% 0%, rgba(242,184,74,0.12), transparent 34%),
+            linear-gradient(180deg, #0d3e30, #061b15);
+          box-shadow:
+            10px 10px 0 #020806,
+            inset 0 0 0 3px rgba(242,184,74,0.18),
+            inset 0 0 38px rgba(0,0,0,0.40);
+        }
+
         .home-preview-cell {
           background: linear-gradient(180deg, #0b3327, #071d16);
           box-shadow: inset 0 0 0 2px #05140f, 2px 2px 0 #020806;
@@ -1174,18 +1202,14 @@ function HomeScreen({
 
             <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
               <div className="home-card-panel relative rounded-[22px] border-[4px] border-[#06140f] p-4 sm:p-5">
-                <p className="mb-3 text-center text-[12px] font-black tracking-[0.42em] text-[#f2b84a] sm:text-sm">
-                  BUILD HANDS. BREAK THE GRID.
-                </p>
-
-                <div className="relative mx-auto flex h-[145px] max-w-[390px] items-center justify-center sm:h-[175px] lg:h-[190px]">
-                  <div className="absolute inset-x-10 bottom-2 h-12 rounded-full bg-black/35 blur-xl" />
+                <div className="relative mx-auto flex h-[220px] max-w-[390px] items-center justify-center sm:h-[245px] lg:h-[275px]">
+                  <div className="absolute inset-x-8 bottom-4 h-16 rounded-full bg-black/40 blur-xl" />
                   {menuCards.map((card, index) => {
-                    const transforms = ["-rotate-[10deg] -translate-x-16 translate-y-3", "rotate-[2deg] translate-y-0", "rotate-[10deg] translate-x-16 translate-y-4"];
+                    const transforms = ["-rotate-[10deg] -translate-x-20 translate-y-3", "rotate-[2deg] translate-y-0", "rotate-[10deg] translate-x-20 translate-y-4"];
                     return (
                       <div
                         key={card.id}
-                        className={`absolute h-32 w-[5.15rem] sm:h-40 sm:w-[6.4rem] ${transforms[index]}`}
+                        className={`absolute h-40 w-[6.35rem] sm:h-48 sm:w-[7.6rem] ${transforms[index]}`}
                         style={{
                           "--rot": `${index === 0 ? -10 : index === 1 ? 2 : 10}deg`,
                           animation: `cardHoverHome ${3.2 + index * 0.2}s ease-in-out infinite`,
@@ -1195,21 +1219,6 @@ function HomeScreen({
                       </div>
                     );
                   })}
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-2.5 shadow-[4px_4px_0_#020806]">
-                    <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">MODE</p>
-                    <p className="mt-1 text-sm font-black text-[#fff4cf]">ENDLESS</p>
-                  </div>
-                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-2.5 shadow-[4px_4px_0_#020806]">
-                    <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">BOARD</p>
-                    <p className="mt-1 text-sm font-black text-[#fff4cf]">5 × 5</p>
-                  </div>
-                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-2.5 shadow-[4px_4px_0_#020806]">
-                    <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">CLEAR</p>
-                    <p className="mt-1 text-sm font-black text-[#fff4cf]">LINE</p>
-                  </div>
                 </div>
               </div>
 
@@ -1261,12 +1270,69 @@ function HomeScreen({
                     <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacy(true)}
+                  className="home-privacy-button rounded-xl px-4 py-3 text-center text-[12px] font-black tracking-[0.22em] sm:text-sm"
+                >
+                  PRIVACY POLICY
+                </button>
               </div>
             </div>
 
           </div>
         </section>
       </div>
+
+      {showPrivacy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/72 p-4">
+          <div className="privacy-modal-panel max-h-[88svh] w-full max-w-2xl overflow-y-auto rounded-3xl border-[5px] border-[#d9912c] p-5 text-[#fff4cf] sm:p-7">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a] sm:text-2xl">
+                PRIVACY POLICY
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowPrivacy(false)}
+                className="rounded-xl border-[3px] border-[#06140f] bg-[#f0a536] px-4 py-2 text-sm font-black text-[#2b1503] shadow-[4px_4px_0_#020806]"
+              >
+                CLOSE
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm leading-7 text-[#d9efe4] sm:text-base">
+              <section>
+                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">1. DATA COLLECTION</h3>
+                <p>
+                  NUTS stores gameplay data such as score, best score, sound setting, and game progress in your browser when needed for gameplay.
+                </p>
+              </section>
+
+              <section>
+                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">2. LOCAL STORAGE</h3>
+                <p>
+                  Best score and settings may be saved using browser local storage. This data is kept on your device and is used only to improve the game experience.
+                </p>
+              </section>
+
+              <section>
+                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">3. PERSONAL INFORMATION</h3>
+                <p>
+                  This game does not require account registration and does not intentionally collect names, email addresses, or other directly identifying information.
+                </p>
+              </section>
+
+              <section>
+                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">4. CONTACT</h3>
+                <p>
+                  If this policy is updated, the latest version will be shown on this title screen.
+                </p>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showHands && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
