@@ -1815,20 +1815,62 @@ export default function Home() {
             overflow-y: auto !important;
           }
 
+          .duel-shell {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            padding: 0 !important;
+          }
+
+          .duel-frame {
+            border-width: 3px !important;
+            border-radius: 0 !important;
+            min-height: 100svh !important;
+            padding: 0.25rem !important;
+            box-shadow: none !important;
+          }
+
+          .duel-header {
+            margin-bottom: 0.25rem !important;
+            gap: 0.25rem !important;
+            padding: 0.35rem !important;
+            border-width: 3px !important;
+            box-shadow: 3px 3px 0 #03100b !important;
+          }
+
+          .duel-brand {
+            min-height: 44px !important;
+            padding-inline: 0.2rem !important;
+          }
+
+          .duel-brand h1 {
+            font-size: 2.15rem !important;
+          }
+
+          .duel-brand p {
+            margin-top: 0.25rem !important;
+            font-size: 0.58rem !important;
+            letter-spacing: 0.26em !important;
+          }
+
+          .duel-header .pixel-hard-sm {
+            min-height: 46px !important;
+            padding: 0.35rem 0.55rem !important;
+          }
+
           .portrait-stack-layout {
             display: flex !important;
             flex-direction: column !important;
             grid-template-columns: none !important;
             align-items: center !important;
             justify-content: flex-start !important;
-            gap: 0.5rem !important;
+            gap: 0.25rem !important;
             min-height: auto !important;
             flex: none !important;
           }
 
           .portrait-stack-layout > .flex {
             order: 1 !important;
-            width: min(94vw, 560px) !important;
+            width: min(98vw, 600px) !important;
             min-height: auto !important;
             height: auto !important;
             flex: none !important;
@@ -1841,17 +1883,17 @@ export default function Home() {
 
           .portrait-board {
             order: 1 !important;
-            width: min(92vw, 520px) !important;
-            height: min(92vw, 520px) !important;
+            width: min(98vw, 590px) !important;
+            height: min(98vw, 590px) !important;
             aspect-ratio: 1 / 1 !important;
             flex: none !important;
-            max-width: min(92vw, 520px) !important;
-            max-height: min(92vw, 520px) !important;
+            max-width: min(98vw, 590px) !important;
+            max-height: min(98vw, 590px) !important;
           }
 
           .portrait-side {
             order: 2 !important;
-            width: min(94vw, 560px) !important;
+            width: min(98vw, 600px) !important;
             margin-inline: auto !important;
             min-height: auto !important;
             height: auto !important;
@@ -1863,7 +1905,7 @@ export default function Home() {
             display: grid !important;
             grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
             align-items: stretch !important;
-            gap: 0.5rem !important;
+            gap: 0.35rem !important;
             min-height: auto !important;
             flex: none !important;
           }
@@ -1891,9 +1933,9 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
-        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
-          <section className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]">
-            <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(250px,0.95fr)_minmax(260px,0.8fr)_minmax(360px,1.25fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
+        <div className="duel-shell relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
+          <section className="duel-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]">
+            <header className="duel-header pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(250px,0.95fr)_minmax(260px,0.8fr)_minmax(360px,1.25fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
               <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
               <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
               <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
@@ -1901,7 +1943,7 @@ export default function Home() {
               <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
               <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
 
-              <div className="relative z-10 flex min-h-[58px] items-center px-2 sm:min-h-[68px]">
+              <div className="duel-brand relative z-10 flex min-h-[58px] items-center px-2 sm:min-h-[68px]">
                 <div>
                   <h1
                     className="text-4xl font-black leading-[0.82] text-[#f1a22d] sm:text-5xl lg:text-6xl"
@@ -2123,7 +2165,7 @@ export default function Home() {
                         </button>
                       )}
                       <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
-                        TITLE
+                        HOME
                       </button>
                     </div>
                   </div>
