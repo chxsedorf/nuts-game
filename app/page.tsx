@@ -979,7 +979,7 @@ function HomeScreen({
   }
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white lg:h-screen lg:overflow-hidden">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white lg:h-screen lg:overflow-hidden">
       <style>{`
         @keyframes logoRise {
           0% { transform: translateY(16px) scale(0.96); opacity: 0; }
@@ -1010,10 +1010,75 @@ function HomeScreen({
           0%, 100% { box-shadow: 5px 5px 0 #03100b, 0 0 0 2px #ffcf63 inset, 0 0 12px rgba(242,149,48,0.25); }
           50% { box-shadow: 7px 7px 0 #03100b, 0 0 0 2px #fff0a1 inset, 0 0 28px rgba(255,207,99,0.72); }
         }
+
+
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 16%, rgba(245, 181, 68, 0.16), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(82, 210, 159, 0.12), transparent 30%),
+            radial-gradient(circle at 50% 96%, rgba(0, 0, 0, 0.50), transparent 56%),
+            linear-gradient(135deg, rgba(255, 220, 120, 0.055) 0 8%, transparent 8% 16%, rgba(0, 0, 0, 0.08) 16% 24%, transparent 24% 32%),
+            #08291f;
+          background-size: auto, auto, auto, 56px 56px, auto;
+        }
+
+        .balatro-inspired-bg::before {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          background:
+            radial-gradient(circle, rgba(255, 230, 140, 0.10) 1px, transparent 1.6px),
+            radial-gradient(circle, rgba(0, 0, 0, 0.22) 1px, transparent 1.7px),
+            repeating-linear-gradient(45deg, rgba(255, 219, 115, 0.045) 0px, rgba(255, 219, 115, 0.045) 2px, transparent 2px, transparent 16px),
+            repeating-linear-gradient(-45deg, rgba(95, 255, 190, 0.035) 0px, rgba(95, 255, 190, 0.035) 2px, transparent 2px, transparent 18px);
+          background-position: 0 0, 5px 5px, 0 0, 0 0;
+          background-size: 10px 10px, 10px 10px, 42px 42px, 46px 46px;
+          opacity: 0.78;
+          mix-blend-mode: screen;
+        }
+
+        .balatro-inspired-bg::after {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          background:
+            linear-gradient(90deg, rgba(0,0,0,0.32), transparent 18%, transparent 82%, rgba(0,0,0,0.32)),
+            linear-gradient(180deg, rgba(0,0,0,0.28), transparent 18%, transparent 78%, rgba(0,0,0,0.42));
+        }
+
+        .bg-felt-symbols {
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          overflow: hidden;
+          opacity: 0.18;
+        }
+
+        .bg-felt-symbols span {
+          position: absolute;
+          color: rgba(255, 238, 180, 0.34);
+          font-weight: 900;
+          line-height: 1;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.22);
+          transform: rotate(var(--r));
+        }
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(240,165,54,0.22),transparent_25%),radial-gradient(circle_at_82%_24%,rgba(28,91,68,0.42),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(7,26,21,0.9),transparent_42%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#f5c247_1px,transparent_1px),linear-gradient(90deg,#f5c247_1px,transparent_1px)] [background-size:22px_22px]" />
+      <div className="bg-felt-symbols" aria-hidden="true">
+        <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
+        <span style={{ left: "86%", top: "15%", fontSize: "38px", ["--r" as string]: "16deg" }}>♦</span>
+        <span style={{ left: "14%", top: "78%", fontSize: "36px", ["--r" as string]: "14deg" }}>♣</span>
+        <span style={{ left: "78%", top: "80%", fontSize: "46px", ["--r" as string]: "-10deg" }}>♥</span>
+        <span style={{ left: "48%", top: "8%", fontSize: "28px", ["--r" as string]: "8deg" }}>A</span>
+        <span style={{ left: "54%", top: "86%", fontSize: "30px", ["--r" as string]: "-8deg" }}>K</span>
+      </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#2b1743]/80 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 to-transparent" />
 
@@ -1789,7 +1854,7 @@ export default function Home() {
 
   if (!isLoaded) {
     return (
-      <main className="flex h-screen items-center justify-center overflow-hidden bg-[#1b0f2e] text-white">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg flex h-screen items-center justify-center overflow-hidden bg-[#07120f] text-white">
         <div className="rounded-2xl border-[4px] border-black bg-[#d43d4f] px-8 py-5 shadow-[8px_8px_0_#000]">
           <p className="text-2xl font-black tracking-[0.3em] text-[#ffef7a]">
             NUTS
@@ -1819,7 +1884,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#170f2c] text-white md:h-screen md:overflow-hidden">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
         <style>{`
         @media (orientation: portrait), (max-aspect-ratio: 1/1) {
           .portrait-outer {
@@ -2193,6 +2258,15 @@ export default function Home() {
         }
 
       `}</style>
+
+      <div className="bg-felt-symbols" aria-hidden="true">
+        <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
+        <span style={{ left: "86%", top: "15%", fontSize: "38px", ["--r" as string]: "16deg" }}>♦</span>
+        <span style={{ left: "14%", top: "78%", fontSize: "36px", ["--r" as string]: "14deg" }}>♣</span>
+        <span style={{ left: "78%", top: "80%", fontSize: "46px", ["--r" as string]: "-10deg" }}>♥</span>
+        <span style={{ left: "48%", top: "8%", fontSize: "28px", ["--r" as string]: "8deg" }}>A</span>
+        <span style={{ left: "54%", top: "86%", fontSize: "30px", ["--r" as string]: "-8deg" }}>K</span>
+      </div>
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
@@ -2462,7 +2536,7 @@ export default function Home() {
   const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
 
   return (
-    <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#1b0f2e] text-white md:h-screen md:overflow-hidden">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
       <style>{`
         @keyframes floatScore {
           0% { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-3deg); }
@@ -2677,6 +2751,64 @@ export default function Home() {
           70%, 100% { transform: translateX(38%) rotate(0deg); opacity: 0; }
         }
 
+
+
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 16%, rgba(245, 181, 68, 0.16), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(82, 210, 159, 0.12), transparent 30%),
+            radial-gradient(circle at 50% 96%, rgba(0, 0, 0, 0.50), transparent 56%),
+            linear-gradient(135deg, rgba(255, 220, 120, 0.055) 0 8%, transparent 8% 16%, rgba(0, 0, 0, 0.08) 16% 24%, transparent 24% 32%),
+            #08291f;
+          background-size: auto, auto, auto, 56px 56px, auto;
+        }
+
+        .balatro-inspired-bg::before {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          background:
+            radial-gradient(circle, rgba(255, 230, 140, 0.10) 1px, transparent 1.6px),
+            radial-gradient(circle, rgba(0, 0, 0, 0.22) 1px, transparent 1.7px),
+            repeating-linear-gradient(45deg, rgba(255, 219, 115, 0.045) 0px, rgba(255, 219, 115, 0.045) 2px, transparent 2px, transparent 16px),
+            repeating-linear-gradient(-45deg, rgba(95, 255, 190, 0.035) 0px, rgba(95, 255, 190, 0.035) 2px, transparent 2px, transparent 18px);
+          background-position: 0 0, 5px 5px, 0 0, 0 0;
+          background-size: 10px 10px, 10px 10px, 42px 42px, 46px 46px;
+          opacity: 0.78;
+          mix-blend-mode: screen;
+        }
+
+        .balatro-inspired-bg::after {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          background:
+            linear-gradient(90deg, rgba(0,0,0,0.32), transparent 18%, transparent 82%, rgba(0,0,0,0.32)),
+            linear-gradient(180deg, rgba(0,0,0,0.28), transparent 18%, transparent 78%, rgba(0,0,0,0.42));
+        }
+
+        .bg-felt-symbols {
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          overflow: hidden;
+          opacity: 0.18;
+        }
+
+        .bg-felt-symbols span {
+          position: absolute;
+          color: rgba(255, 238, 180, 0.34);
+          font-weight: 900;
+          line-height: 1;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.22);
+          transform: rotate(var(--r));
+        }
+
         .nuts-pixel {
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
           image-rendering: pixelated;
@@ -2881,6 +3013,15 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
 
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
+
+      <div className="bg-felt-symbols" aria-hidden="true">
+        <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
+        <span style={{ left: "86%", top: "15%", fontSize: "38px", ["--r" as string]: "16deg" }}>♦</span>
+        <span style={{ left: "14%", top: "78%", fontSize: "36px", ["--r" as string]: "14deg" }}>♣</span>
+        <span style={{ left: "78%", top: "80%", fontSize: "46px", ["--r" as string]: "-10deg" }}>♥</span>
+        <span style={{ left: "48%", top: "8%", fontSize: "28px", ["--r" as string]: "8deg" }}>A</span>
+        <span style={{ left: "54%", top: "86%", fontSize: "30px", ["--r" as string]: "-8deg" }}>K</span>
+      </div>
 
       {isComboAuraVisible && (
         <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
