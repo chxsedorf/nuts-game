@@ -3118,26 +3118,6 @@ export default function Home() {
     );
   }
 
-  const gameOverRank =
-    game.score >= 50000
-      ? "LIMITLESS"
-      : game.score >= 25000
-      ? "LEGEND"
-      : game.score >= 12000
-      ? "SHARK"
-      : game.score >= 5000
-      ? "HOT STREAK"
-      : game.score >= 1500
-      ? "GOOD RUN"
-      : "TRY AGAIN";
-
-  const gameOverMessage =
-    game.score >= game.highScore && game.score > 0
-      ? "NEW BEST SCORE"
-      : game.score >= 12000
-      ? "THE TABLE REMEMBERS"
-      : "ONE MORE DEAL";
-
   const currentComboTier = getComboTier(game.combo);
   const resultComboTier = resultBanner ? getComboTier(resultBanner.combo) : null;
   const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
@@ -4195,86 +4175,77 @@ export default function Home() {
       ))}
 
       {game.isGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 px-3 py-4 sm:px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/82 px-3 py-4 sm:px-4">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(245,208,111,0.22),transparent_26%),radial-gradient(circle_at_28%_72%,rgba(32,163,111,0.18),transparent_28%),radial-gradient(circle_at_74%_22%,rgba(210,58,47,0.18),transparent_26%)]" />
-          <div className="pointer-events-none absolute inset-0 opacity-[0.11] [background-image:linear-gradient(#f5d06f_1px,transparent_1px),linear-gradient(90deg,#f5d06f_1px,transparent_1px)] [background-size:18px_18px]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.13] [background-image:linear-gradient(#f5d06f_1px,transparent_1px),linear-gradient(90deg,#f5d06f_1px,transparent_1px)] [background-size:18px_18px]" />
 
           <div
-            className="gameover-card pixel-hard relative w-full max-w-2xl overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-3 text-center shadow-[9px_9px_0_#020806,0_0_0_3px_#f0a536_inset] sm:border-[6px] sm:p-6 sm:shadow-[14px_14px_0_#020806,0_0_0_3px_#f0a536_inset]"
-            style={{ animation: "gameOverDrop 520ms cubic-bezier(.2,1.3,.25,1) both" }}
+            className="gameover-card pixel-hard relative w-full max-w-2xl overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-4 text-center shadow-[10px_10px_0_#020806,0_0_0_3px_#f0a536_inset,0_0_0_7px_rgba(6,24,17,0.85)_inset] sm:border-[6px] sm:p-7 sm:shadow-[15px_15px_0_#020806,0_0_0_3px_#f0a536_inset,0_0_0_7px_rgba(6,24,17,0.85)_inset]"
+            style={{ animation: "gameOverEnter 360ms ease-out" }}
           >
-            <div className="pointer-events-none absolute inset-[10px] border-[2px] border-[#f5d06f]/65" />
-            <div className="pointer-events-none absolute -left-16 top-10 h-32 w-32 rotate-12 rounded-[2rem] border-[5px] border-[#061811] bg-[#fff4cf]/10 shadow-[7px_7px_0_#020806]" />
-            <div className="pointer-events-none absolute -right-14 bottom-16 h-28 w-24 rotate-[-14deg] rounded-[1.4rem] border-[5px] border-[#061811] bg-[#fff4cf]/10 shadow-[7px_7px_0_#020806]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,208,111,0.16),transparent_34%),linear-gradient(180deg,rgba(13,72,55,0.98),rgba(4,28,22,0.98))]" />
+            <div className="pointer-events-none absolute inset-3 border-[3px] border-[#f0a536]/80" />
+            <div className="pointer-events-none absolute left-3 top-3 h-9 w-9 border-l-[5px] border-t-[5px] border-[#f0a536]" />
+            <div className="pointer-events-none absolute right-3 top-3 h-9 w-9 border-r-[5px] border-t-[5px] border-[#f0a536]" />
+            <div className="pointer-events-none absolute bottom-3 left-3 h-9 w-9 border-b-[5px] border-l-[5px] border-[#f0a536]" />
+            <div className="pointer-events-none absolute bottom-3 right-3 h-9 w-9 border-b-[5px] border-r-[5px] border-[#f0a536]" />
 
-            <div className="relative z-10 mx-auto mb-4 w-fit rotate-[-2deg] rounded-2xl border-[5px] border-[#061811] bg-[#d23a2f] px-5 py-2 shadow-[6px_6px_0_#020806]">
-              <p className="text-sm font-black tracking-[0.45em] text-[#ffef7a] drop-shadow-[2px_2px_0_#061811] sm:text-base">
+            <div className="relative z-10 mb-4 flex items-center justify-center gap-3 text-[#f0a536] sm:gap-5">
+              <span className="text-3xl drop-shadow-[3px_3px_0_#020806] sm:text-4xl">♠</span>
+              <h2
+                className="text-5xl font-black leading-none tracking-[0.08em] text-[#ff6b3d] sm:text-7xl lg:text-8xl"
+                style={{
+                  textShadow:
+                    "5px 5px 0 #061811, 8px 8px 0 #020806, -2px -2px 0 #ffd27a",
+                }}
+              >
                 GAME OVER
+              </h2>
+              <span className="text-3xl drop-shadow-[3px_3px_0_#020806] sm:text-4xl">♣</span>
+            </div>
+
+            <div className="relative z-10 mx-auto mb-5 h-[3px] max-w-lg bg-[#f0a536] shadow-[0_3px_0_#3c2108]">
+              <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
+            </div>
+
+            <section className="relative z-10 mx-auto max-w-xl rounded-[1.75rem] border-[5px] border-[#061811] bg-[#123f32] px-4 py-5 shadow-[7px_7px_0_#020806,0_0_0_2px_rgba(255,255,255,0.05)_inset] sm:px-6 sm:py-6">
+              <p className="text-lg font-black tracking-[0.24em] text-[#7fd0a4] sm:text-2xl">
+                FINAL SCORE
               </p>
-            </div>
 
-            <div className="relative z-10 grid gap-4 lg:grid-cols-[1.25fr_0.75fr] lg:items-stretch">
-              <section className="rounded-[1.5rem] border-[5px] border-[#061811] bg-[#123f32] p-4 shadow-[7px_7px_0_#020806,0_0_0_2px_rgba(255,255,255,0.05)_inset]">
-                <p className="text-[10px] font-black tracking-[0.34em] text-[#7fd0a4]">
-                  FINAL SCORE
-                </p>
+              <h3
+                className="my-3 text-7xl font-black leading-none text-[#ffef7a] sm:text-8xl lg:text-9xl"
+                style={{
+                  textShadow:
+                    "7px 7px 0 #061811, 11px 11px 0 #020806, -2px -2px 0 #fff4cf",
+                }}
+              >
+                {game.score}
+              </h3>
+            </section>
 
-                <h2
-                  className="my-2 text-5xl font-black leading-none text-[#ffef7a] sm:text-7xl"
-                  style={{ textShadow: "5px 5px 0 #061811, -2px -2px 0 #fff4cf" }}
-                >
-                  {game.score}
-                </h2>
-
-                <div className="mx-auto mb-3 w-fit rounded-xl border-[4px] border-[#061811] bg-[#f0a536] px-4 py-1.5 shadow-[4px_4px_0_#020806]">
-                  <p className="text-sm font-black tracking-[0.16em] text-[#2a1603]">
-                    {gameOverRank}
-                  </p>
-                </div>
-
-                <p className="text-xs font-black tracking-[0.18em] text-[#fff4cf]">
-                  {gameOverMessage}
-                </p>
-              </section>
-
-              <section className="grid gap-3">
-                <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#101b3b] p-3 shadow-[5px_5px_0_#020806]">
-                  <p className="text-[10px] font-black tracking-[0.24em] text-[#6ee7ff]">
-                    BEST SCORE
-                  </p>
-                  <p className="mt-1 text-4xl font-black leading-none text-[#ffef7a] drop-shadow-[3px_3px_0_#000]">
-                    {game.highScore}
-                  </p>
-                </div>
-
-                <div className="rounded-[1.25rem] border-[4px] border-[#061811] bg-[#08241b] p-3 shadow-[5px_5px_0_#020806]">
-                  <p className="text-[9px] font-black tracking-[0.22em] text-[#7fd0a4]">
-                    COMBO
-                  </p>
-                  <p className="mt-1 text-3xl font-black leading-none text-[#f0a536] drop-shadow-[3px_3px_0_#000]">
-                    x{game.combo}
-                  </p>
-                </div>
-              </section>
-            </div>
-
-            <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="relative z-10 mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 onClick={restartGame}
-                className="rounded-2xl border-[5px] border-[#061811] bg-[#ffef7a] px-5 py-4 text-xl font-black text-[#061811] shadow-[6px_6px_0_#020806,0_0_0_2px_#fff4cf_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806]"
+                className="rounded-2xl border-[5px] border-[#061811] bg-[#f0b342] px-5 py-4 text-2xl font-black tracking-[0.06em] text-[#2a1603] shadow-[6px_6px_0_#020806,0_0_0_2px_#fff4cf_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806] sm:text-3xl"
               >
-                RETRY
+                REPLAY
               </button>
 
               <button
                 onClick={() => {
                   playSound("select");
                   setScreen("home");
+
+                  if (bgmVolume > 0) {
+                    setBgmEnabled(true);
+                    window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
+                  }
                 }}
-                className="rounded-2xl border-[5px] border-[#061811] bg-[#1787d8] px-5 py-4 text-xl font-black text-white shadow-[6px_6px_0_#020806,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806]"
-                style={{ textShadow: "2px 2px 0 #03100b" }}
+                className="rounded-2xl border-[5px] border-[#061811] bg-[#1787d8] px-5 py-4 text-2xl font-black tracking-[0.06em] text-white shadow-[6px_6px_0_#020806,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806] sm:text-3xl"
+                style={{ textShadow: "3px 3px 0 #03100b" }}
               >
-                TITLE
+                HOME
               </button>
             </div>
           </div>
