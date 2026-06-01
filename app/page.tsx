@@ -1145,20 +1145,20 @@ function HomeScreen({
         <span style={{ left: "50%", top: "10%", fontSize: 36, "--r": "4deg" } as Record<string, string | number>}>♠</span>
       </div>
 
-      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-14 sm:px-6 lg:px-10">
-        <section className="home-shell pixel-hard relative w-full max-w-[980px] rounded-[28px] border-[5px] border-[#d9912c] px-4 pb-5 pt-7 sm:px-7 sm:pb-7 sm:pt-9 lg:px-8">
+      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+        <section className="home-shell pixel-hard relative w-full max-w-[900px] rounded-[28px] border-[5px] border-[#d9912c] px-4 py-5 sm:px-7 sm:py-6 lg:px-8">
           <span className="home-shell-corner left-3 top-3 border-l-[4px] border-t-[4px]" />
           <span className="home-shell-corner right-3 top-3 border-r-[4px] border-t-[4px]" />
           <span className="home-shell-corner bottom-3 left-3 border-b-[4px] border-l-[4px]" />
           <span className="home-shell-corner bottom-3 right-3 border-b-[4px] border-r-[4px]" />
 
           <div className="mx-auto max-w-[760px]">
-            <div className="home-wordmark-wrap relative mx-auto mb-7 rounded-[22px] border-[4px] border-[#06140f] px-8 py-4 text-center sm:px-12 sm:py-5">
+            <div className="home-wordmark-wrap relative mx-auto mb-5 rounded-[22px] border-[4px] border-[#06140f] px-8 py-3 text-center sm:px-12 sm:py-4">
               <img
                 src={NUTS_LOGO_SRC}
                 alt="NUTS"
                 draggable={false}
-                className="home-wordmark-img mx-auto h-auto w-full max-w-[460px] select-none object-contain"
+                className="home-wordmark-img mx-auto h-auto w-full max-w-[420px] select-none object-contain"
                 loading="eager"
                 decoding="sync"
                 fetchPriority="high"
@@ -1170,20 +1170,20 @@ function HomeScreen({
               </div>
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-[1fr_0.92fr]">
+            <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
               <div className="home-card-panel relative rounded-[22px] border-[4px] border-[#06140f] p-4 sm:p-5">
-                <p className="mb-4 text-center text-[12px] font-black tracking-[0.42em] text-[#f2b84a] sm:text-sm">
+                <p className="mb-3 text-center text-[12px] font-black tracking-[0.42em] text-[#f2b84a] sm:text-sm">
                   BUILD HANDS. BREAK THE GRID.
                 </p>
 
-                <div className="relative mx-auto flex h-[170px] max-w-[420px] items-center justify-center sm:h-[210px]">
+                <div className="relative mx-auto flex h-[145px] max-w-[390px] items-center justify-center sm:h-[175px] lg:h-[190px]">
                   <div className="absolute inset-x-10 bottom-2 h-12 rounded-full bg-black/35 blur-xl" />
                   {menuCards.map((card, index) => {
                     const transforms = ["-rotate-[10deg] -translate-x-16 translate-y-3", "rotate-[2deg] translate-y-0", "rotate-[10deg] translate-x-16 translate-y-4"];
                     return (
                       <div
                         key={card.id}
-                        className={`absolute h-36 w-24 sm:h-44 sm:w-28 ${transforms[index]}`}
+                        className={`absolute h-32 w-[5.15rem] sm:h-40 sm:w-[6.4rem] ${transforms[index]}`}
                         style={{
                           "--rot": `${index === 0 ? -10 : index === 1 ? 2 : 10}deg`,
                           animation: `cardHoverHome ${3.2 + index * 0.2}s ease-in-out infinite`,
@@ -1196,15 +1196,15 @@ function HomeScreen({
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-3 shadow-[4px_4px_0_#020806]">
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-2.5 shadow-[4px_4px_0_#020806]">
                     <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">MODE</p>
                     <p className="mt-1 text-sm font-black text-[#fff4cf]">ENDLESS</p>
                   </div>
-                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-3 shadow-[4px_4px_0_#020806]">
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-2.5 shadow-[4px_4px_0_#020806]">
                     <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">BOARD</p>
                     <p className="mt-1 text-sm font-black text-[#fff4cf]">5 × 5</p>
                   </div>
-                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-3 shadow-[4px_4px_0_#020806]">
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#0e402f] px-2 py-2.5 shadow-[4px_4px_0_#020806]">
                     <p className="text-[9px] font-black tracking-[0.22em] text-[#8bd8af]">CLEAR</p>
                     <p className="mt-1 text-sm font-black text-[#fff4cf]">LINE</p>
                   </div>
@@ -1228,59 +1228,22 @@ function HomeScreen({
                   </button>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-[0.85fr_1.15fr] lg:grid-cols-1 xl:grid-cols-[0.85fr_1.15fr]">
-                  <div className="home-info-box rounded-2xl border-[4px] border-[#06140f] p-4">
-                    <p className="mb-3 text-center text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">
-                      BEST SCORE
-                    </p>
-                    <div className="rounded-xl border-[3px] border-[#06140f] bg-[#071812] px-4 py-4 text-center shadow-[3px_3px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.12)]">
-                      <p className="text-4xl font-black text-[#fff4cf] drop-shadow-[4px_4px_0_#020806]">
-                        {highScore}
-                      </p>
-                    </div>
-                    <div className="mt-4 flex justify-center gap-3 text-2xl text-[#6ea764] opacity-80">
-                      <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
-                    </div>
-                  </div>
-
-                  <div className="home-info-box rounded-2xl border-[4px] border-[#06140f] p-4">
-                    <p className="mb-3 text-center text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">
-                      HOW TO PLAY
-                    </p>
-                    <div className="space-y-2 text-sm font-black leading-5 text-[#d9eadf]">
-                      <p><span className="text-[#ffc35b]">01</span> Place cards on the grid.</p>
-                      <p><span className="text-[#ffc35b]">02</span> Make hands vertically or horizontally.</p>
-                      <p><span className="text-[#ffc35b]">03</span> Hit cards vanish. Multipliers grow.</p>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="home-info-box rounded-2xl border-[4px] border-[#06140f] p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">PREVIEW</p>
-                    <button
-                      onClick={() => setShowHands(true)}
-                      className="rounded-lg border-[3px] border-[#06140f] bg-[#114632] px-3 py-2 text-xs font-black tracking-[0.18em] text-[#fff4cf] shadow-[3px_3px_0_#020806] transition hover:-translate-y-0.5"
-                    >
-                      HANDS
-                    </button>
+                  <p className="mb-3 text-center text-[12px] font-black tracking-[0.24em] text-[#f2b84a]">
+                    BEST SCORE
+                  </p>
+                  <div className="rounded-xl border-[3px] border-[#06140f] bg-[#071812] px-4 py-4 text-center shadow-[3px_3px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.12)]">
+                    <p className="text-4xl font-black text-[#fff4cf] drop-shadow-[4px_4px_0_#020806]">
+                      {highScore}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {previewCells.map((cell, index) => {
-                      const hit = cell === "K♥" || cell === "10♣" || cell === "8♦" || cell === "A♠";
-                      return (
-                        <div
-                          key={`${cell}-${index}`}
-                          className={["home-preview-cell flex aspect-square items-center justify-center rounded-md border-[2px] border-[#06140f] text-[12px] font-black", hit ? "hit" : "text-[#426c55]"].join(" ")}
-                        >
-                          {cell || "♠"}
-                        </div>
-                      );
-                    })}
+                  <div className="mt-4 flex justify-center gap-3 text-2xl text-[#6ea764] opacity-80">
+                    <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </section>
       </div>
