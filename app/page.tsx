@@ -931,13 +931,14 @@ function HomeScreen({
   highScore,
   onStart,
   onStartDuel,
+  onOpenSettings,
 }: {
   highScore: number;
   onStart: () => void;
   onStartDuel: () => void;
+  onOpenSettings: () => void;
 }) {
   const [showHands, setShowHands] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const previewCells = [
     "", "", "K♥", "", "",
@@ -1273,10 +1274,10 @@ function HomeScreen({
 
                 <button
                   type="button"
-                  onClick={() => setShowPrivacy(true)}
+                  onClick={onOpenSettings}
                   className="home-privacy-button rounded-xl px-4 py-3 text-center text-[12px] font-black tracking-[0.22em] sm:text-sm"
                 >
-                  PRIVACY POLICY
+                  SETTINGS
                 </button>
               </div>
             </div>
@@ -1284,55 +1285,6 @@ function HomeScreen({
           </div>
         </section>
       </div>
-
-      {showPrivacy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/72 p-4">
-          <div className="privacy-modal-panel max-h-[88svh] w-full max-w-2xl overflow-y-auto rounded-3xl border-[5px] border-[#d9912c] p-5 text-[#fff4cf] sm:p-7">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a] sm:text-2xl">
-                PRIVACY POLICY
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowPrivacy(false)}
-                className="rounded-xl border-[3px] border-[#06140f] bg-[#f0a536] px-4 py-2 text-sm font-black text-[#2b1503] shadow-[4px_4px_0_#020806]"
-              >
-                CLOSE
-              </button>
-            </div>
-
-            <div className="space-y-4 text-sm leading-7 text-[#d9efe4] sm:text-base">
-              <section>
-                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">1. DATA COLLECTION</h3>
-                <p>
-                  NUTS stores gameplay data such as score, best score, sound setting, and game progress in your browser when needed for gameplay.
-                </p>
-              </section>
-
-              <section>
-                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">2. LOCAL STORAGE</h3>
-                <p>
-                  Best score and settings may be saved using browser local storage. This data is kept on your device and is used only to improve the game experience.
-                </p>
-              </section>
-
-              <section>
-                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">3. PERSONAL INFORMATION</h3>
-                <p>
-                  This game does not require account registration and does not intentionally collect names, email addresses, or other directly identifying information.
-                </p>
-              </section>
-
-              <section>
-                <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">4. CONTACT</h3>
-                <p>
-                  If this policy is updated, the latest version will be shown on this title screen.
-                </p>
-              </section>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showHands && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -1370,7 +1322,14 @@ export default function Home() {
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
   const [resultBanner, setResultBanner] = useState<ResultBanner | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [sfxVolume, setSfxVolume] = useState(0.65);
+  const [bgmEnabled, setBgmEnabled] = useState(false);
+  const [bgmVolume, setBgmVolume] = useState(0.25);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const bgmOscillatorRef = useRef<OscillatorNode | null>(null);
+  const bgmGainRef = useRef<GainNode | null>(null);
 
   useEffect(() => {
     preloadCardImages();
@@ -1418,7 +1377,7 @@ export default function Home() {
     oscillator.frequency.setValueAtTime(frequency, startTime);
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.012);
+    gain.gain.exponentialRampToValueAtTime(gainValue * sfxVolume, startTime + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     oscillator.connect(gain);
@@ -1449,7 +1408,7 @@ export default function Home() {
     filter.type = "highpass";
     filter.frequency.setValueAtTime(900, startTime);
 
-    gain.gain.setValueAtTime(gainValue, startTime);
+    gain.gain.setValueAtTime(gainValue * sfxVolume, startTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     source.buffer = buffer;
@@ -1526,6 +1485,203 @@ export default function Home() {
       playNote(context, 520, now, 0.045, 0.035, "square");
       playNote(context, 780, now + 0.04, 0.06, 0.035, "triangle");
     }
+  }
+
+  function stopBgm() {
+    if (bgmOscillatorRef.current) {
+      try {
+        bgmOscillatorRef.current.stop();
+      } catch {
+        // already stopped
+      }
+      bgmOscillatorRef.current.disconnect();
+      bgmOscillatorRef.current = null;
+    }
+
+    if (bgmGainRef.current) {
+      bgmGainRef.current.disconnect();
+      bgmGainRef.current = null;
+    }
+  }
+
+  function startBgm() {
+    const context = getAudioContext();
+    if (!context) return;
+
+    stopBgm();
+
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(110, context.currentTime);
+
+    gain.gain.setValueAtTime(Math.max(0, bgmVolume) * 0.18, context.currentTime);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+
+    bgmOscillatorRef.current = oscillator;
+    bgmGainRef.current = gain;
+  }
+
+  useEffect(() => {
+    if (!bgmEnabled) {
+      stopBgm();
+      return;
+    }
+
+    if (!bgmOscillatorRef.current) {
+      startBgm();
+      return;
+    }
+
+    const context = getAudioContext();
+    if (!context || !bgmGainRef.current) return;
+
+    bgmGainRef.current.gain.setTargetAtTime(
+      Math.max(0, bgmVolume) * 0.18,
+      context.currentTime,
+      0.03
+    );
+  }, [bgmEnabled, bgmVolume]);
+
+  useEffect(() => {
+    return () => {
+      stopBgm();
+    };
+  }, []);
+
+  function renderPrivacyModal() {
+    if (!privacyOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/72 p-4">
+        <div className="max-h-[88svh] w-full max-w-2xl overflow-y-auto rounded-3xl border-[5px] border-[#d9912c] bg-[#09281f] p-5 text-[#fff4cf] shadow-[10px_10px_0_#020806,inset_0_0_0_3px_rgba(242,184,74,0.18)] sm:p-7">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a] sm:text-2xl">
+              PRIVACY POLICY
+            </h2>
+            <button
+              type="button"
+              onClick={() => setPrivacyOpen(false)}
+              className="rounded-xl border-[3px] border-[#06140f] bg-[#f0a536] px-4 py-2 text-sm font-black text-[#2b1503] shadow-[4px_4px_0_#020806]"
+            >
+              CLOSE
+            </button>
+          </div>
+
+          <div className="space-y-4 text-sm leading-7 text-[#d9efe4] sm:text-base">
+            <section>
+              <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">1. DATA COLLECTION</h3>
+              <p>NUTS stores gameplay data such as score, best score, sound settings, and game progress in your browser when needed for gameplay.</p>
+            </section>
+            <section>
+              <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">2. LOCAL STORAGE</h3>
+              <p>Best score and settings may be saved using browser local storage. This data is kept on your device and is used only to improve the game experience.</p>
+            </section>
+            <section>
+              <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">3. PERSONAL INFORMATION</h3>
+              <p>This game does not require account registration and does not intentionally collect names, email addresses, or other directly identifying information.</p>
+            </section>
+            <section>
+              <h3 className="mb-1 font-black tracking-[0.12em] text-[#f7d17a]">4. CONTACT</h3>
+              <p>If this policy is updated, the latest version will be shown from the settings menu.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderSettingsButtonAndModal() {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            playSound("select");
+            setSettingsOpen(true);
+          }}
+          className="fixed right-4 top-4 z-[70] rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] px-4 py-2 text-sm font-black tracking-[0.16em] text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1"
+        >
+          ⚙ SETTINGS
+        </button>
+
+        {settingsOpen && (
+          <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-md rounded-3xl border-[5px] border-[#d9912c] bg-[#08251d] p-5 text-[#fff4cf] shadow-[10px_10px_0_#020806,inset_0_0_0_3px_rgba(242,184,74,0.16)]">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a]">SETTINGS</h2>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(false)}
+                  className="rounded-xl border-[3px] border-[#06140f] bg-[#f0a536] px-4 py-2 text-sm font-black text-[#2b1503] shadow-[4px_4px_0_#020806]"
+                >
+                  CLOSE
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <label className="block">
+                  <div className="mb-2 flex items-center justify-between text-sm font-black tracking-[0.12em] text-[#f7d17a]">
+                    <span>SFX VOLUME</span>
+                    <span>{Math.round(sfxVolume * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={sfxVolume}
+                    onChange={(event) => setSfxVolume(Number(event.target.value))}
+                    className="w-full accent-[#f0a536]"
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-2 flex items-center justify-between text-sm font-black tracking-[0.12em] text-[#f7d17a]">
+                    <span>BGM VOLUME</span>
+                    <span>{Math.round(bgmVolume * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={bgmVolume}
+                    onChange={(event) => setBgmVolume(Number(event.target.value))}
+                    className="w-full accent-[#20d0b5]"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setBgmEnabled((prev) => !prev)}
+                  className="w-full rounded-xl border-[3px] border-[#06140f] bg-[#0f5a49] px-4 py-3 text-sm font-black tracking-[0.16em] text-[#d8fff4] shadow-[4px_4px_0_#020806]"
+                >
+                  BGM {bgmEnabled ? "ON" : "OFF"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    setPrivacyOpen(true);
+                  }}
+                  className="w-full rounded-xl border-[3px] border-[#06140f] bg-[#125442] px-4 py-3 text-sm font-black tracking-[0.16em] text-[#f7d17a] shadow-[4px_4px_0_#020806]"
+                >
+                  PRIVACY POLICY
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {renderPrivacyModal()}
+      </>
+    );
   }
 
   function resetEffects() {
@@ -1881,14 +2037,18 @@ export default function Home() {
 
   if (screen === "home") {
     return (
-      <HomeScreen
-        highScore={game.highScore}
-        onStart={() => {
-          setMode("solo");
-          startGame();
-        }}
-        onStartDuel={startDuelGame}
-      />
+      <>
+        <HomeScreen
+          highScore={game.highScore}
+          onStart={() => {
+            setMode("solo");
+            startGame();
+          }}
+          onStartDuel={startDuelGame}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+        {renderSettingsButtonAndModal()}
+      </>
     );
   }
 
@@ -4002,6 +4162,7 @@ export default function Home() {
           </div>
         </section>
       </div>
+        {renderSettingsButtonAndModal()}
     </main>
   );
 }
