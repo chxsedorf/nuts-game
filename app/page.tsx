@@ -447,7 +447,10 @@ function getCardColor(card: Card): string {
 
 const CARD_ASSET_VERSION = "v10";
 const LOGO_ASSET_VERSION = "v2";
+const UI_ASSET_VERSION = "v1";
 const NUTS_LOGO_SRC = `/logo/nuts-logo-sign.png?${LOGO_ASSET_VERSION}`;
+const SOLO_BUTTON_SRC = `/ui/solo-play-button.png?${UI_ASSET_VERSION}`;
+const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -1066,119 +1069,45 @@ function HomeScreen({
         }
 
         .home-main-button {
-          position: relative;
-          overflow: visible;
-          min-height: 92px;
-          border: 4px solid #06140f;
-          clip-path: polygon(
-            18px 0,
-            calc(100% - 18px) 0,
-            100% 18px,
-            100% calc(100% - 18px),
-            calc(100% - 18px) 100%,
-            18px 100%,
-            0 calc(100% - 18px),
-            0 18px
-          );
-          box-shadow:
-            8px 8px 0 #020806,
-            inset 0 0 0 3px rgba(255,255,255,0.16),
-            inset 0 0 0 7px rgba(6,20,15,0.55),
-            inset 0 -14px 0 rgba(0,0,0,0.16);
+          appearance: none;
+          border: 0;
+          background: transparent;
+          padding: 0;
+          margin: 0;
+          cursor: pointer;
+          width: 100%;
+          display: block;
           transition: transform 120ms ease, filter 120ms ease;
         }
 
         .home-main-button:hover {
           transform: translateY(-3px);
-          filter: brightness(1.08) saturate(1.08);
+          filter: brightness(1.06) saturate(1.05);
         }
 
         .home-main-button:active {
-          transform: translateY(0);
-          box-shadow:
-            5px 5px 0 #020806,
-            inset 0 0 0 3px rgba(255,255,255,0.12),
-            inset 0 0 0 7px rgba(6,20,15,0.65),
-            inset 0 12px 0 rgba(0,0,0,0.18);
+          transform: translateY(1px) scale(0.995);
+          filter: brightness(0.98);
         }
 
-        .home-main-button::before {
-          content: "";
+        .home-mode-button-img {
+          display: block;
+          width: 100%;
+          height: auto;
+          max-height: 118px;
+          object-fit: contain;
+          image-rendering: pixelated;
+          filter:
+            drop-shadow(8px 8px 0 #020806)
+            drop-shadow(0 0 14px rgba(242,184,74,0.16));
+          user-select: none;
           pointer-events: none;
-          position: absolute;
-          inset: 7px;
-          clip-path: polygon(
-            12px 0,
-            calc(100% - 12px) 0,
-            100% 12px,
-            100% calc(100% - 12px),
-            calc(100% - 12px) 100%,
-            12px 100%,
-            0 calc(100% - 12px),
-            0 12px
-          );
-          border: 2px solid rgba(255, 222, 130, 0.72);
-          box-shadow:
-            inset 0 0 0 2px rgba(40, 16, 4, 0.42),
-            0 0 12px rgba(242,184,74,0.26);
         }
 
-        .home-main-button::after {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: 0;
-          clip-path: inherit;
-          background:
-            radial-gradient(circle at 9% 18%, rgba(255,255,255,0.25) 0 2px, transparent 3px),
-            radial-gradient(circle at 91% 18%, rgba(255,255,255,0.22) 0 2px, transparent 3px),
-            radial-gradient(circle at 9% 82%, rgba(0,0,0,0.20) 0 2px, transparent 3px),
-            linear-gradient(110deg, transparent 0 40%, rgba(255,255,255,0.24) 41% 53%, transparent 54% 100%);
-          transform: translateX(-115%);
-          animation: homeButtonShine 3.4s ease-in-out infinite;
-        }
-
-        .home-button-label {
-          position: relative;
-          z-index: 1;
-          display: inline-block;
-          font-size: clamp(2.05rem, 4.4vw, 3.3rem);
-          line-height: 0.95;
-          letter-spacing: 0.055em;
-          text-shadow:
-            3px 3px 0 rgba(0,0,0,0.72),
-            0 0 8px rgba(255,255,255,0.16);
-        }
-
-        .home-button-label.duel {
-          font-size: clamp(1.85rem, 3.8vw, 2.95rem);
-        }
-
-        .home-solo-button {
-          color: #fff3cf;
-          background:
-            linear-gradient(180deg, #ffe39a 0%, #f6b845 33%, #c36b14 100%);
-          border-color: #1a0d04;
-        }
-
-        .home-duel-button {
-          color: #d8fff4;
-          background:
-            linear-gradient(180deg, #38f0d2 0%, #13b99e 42%, #086b5e 100%);
-          border-color: #04140f;
-        }
-
-        .home-solo-button .home-button-label {
-          color: #fff1c7;
-        }
-
-        .home-duel-button .home-button-label {
-          color: #d6fff3;
-        }
-
-        @keyframes homeButtonShine {
-          0%, 44% { transform: translateX(-115%); }
-          64%, 100% { transform: translateX(115%); }
+        @media (max-width: 640px) {
+          .home-mode-button-img {
+            max-height: 94px;
+          }
         }
 
         .home-info-box {
@@ -1285,19 +1214,37 @@ function HomeScreen({
               </div>
 
               <div className="grid gap-4">
-                <div className="grid gap-4">
+                <div className="grid gap-3">
                   <button
                     onClick={onStart}
-                    className="home-main-button home-solo-button px-7 py-5 font-black"
+                    className="home-main-button"
+                    aria-label="SOLO PLAY"
                   >
-                    <span className="home-button-label">SOLO PLAY</span>
+                    <img
+                      src={SOLO_BUTTON_SRC}
+                      alt="SOLO PLAY"
+                      draggable={false}
+                      className="home-mode-button-img"
+                      loading="eager"
+                      decoding="sync"
+                      fetchPriority="high"
+                    />
                   </button>
 
                   <button
                     onClick={onStartDuel}
-                    className="home-main-button home-duel-button px-7 py-4 font-black"
+                    className="home-main-button"
+                    aria-label="DUEL MODE"
                   >
-                    <span className="home-button-label duel">DUEL MODE</span>
+                    <img
+                      src={DUEL_BUTTON_SRC}
+                      alt="DUEL MODE"
+                      draggable={false}
+                      className="home-mode-button-img"
+                      loading="eager"
+                      decoding="sync"
+                      fetchPriority="high"
+                    />
                   </button>
                 </div>
 
