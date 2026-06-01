@@ -1995,9 +1995,9 @@ export default function Home() {
             height: 100% !important;
             min-height: 0 !important;
             display: grid !important;
-            grid-template-rows: auto minmax(0, 1fr) minmax(0, 0.82fr) !important;
-            gap: 0.3rem !important;
-            padding: 0.35rem !important;
+            grid-template-rows: auto minmax(0, 0.88fr) minmax(0, 0.78fr) !important;
+            gap: 0.22rem !important;
+            padding: 0.28rem !important;
             overflow: hidden !important;
           }
 
@@ -2014,12 +2014,12 @@ export default function Home() {
             min-height: 0 !important;
             height: auto !important;
             margin-bottom: 0 !important;
-            padding: 0.35rem !important;
+            padding: 0.25rem !important;
             overflow: hidden !important;
           }
 
           .portrait-queue-panel .queue-card-well > div:first-child {
-            width: 56px !important;
+            width: 50px !important;
           }
 
           .portrait-queue-panel .queue-card-well p {
@@ -2030,7 +2030,10 @@ export default function Home() {
             min-height: 0 !important;
             height: auto !important;
             overflow: hidden !important;
-            padding: 0.35rem !important;
+            padding: 0.25rem !important;
+            display: grid !important;
+            grid-template-rows: minmax(0, 1fr) auto !important;
+            gap: 0.22rem !important;
           }
 
           .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:first-child {
@@ -2038,7 +2041,13 @@ export default function Home() {
           }
 
           .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:nth-child(2) {
-            padding: 0.35rem !important;
+            padding: 0.25rem !important;
+            min-height: 0 !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > div:last-child {
+            margin-top: 0 !important;
+            gap: 0.25rem !important;
           }
 
           .duel-status-kicker,
@@ -2057,8 +2066,9 @@ export default function Home() {
           }
 
           .portrait-queue-panel button {
-            padding: 0.35rem 0.5rem !important;
-            font-size: 0.9rem !important;
+            padding: 0.28rem 0.5rem !important;
+            font-size: 0.82rem !important;
+            line-height: 1 !important;
           }
         }
 
@@ -2294,7 +2304,7 @@ export default function Home() {
                         </button>
                       )}
                       <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
-                        TITLE
+                        HOME
                       </button>
                     </div>
                   </div>
