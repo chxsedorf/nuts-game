@@ -446,7 +446,7 @@ function getCardColor(card: Card): string {
 
 
 const CARD_ASSET_VERSION = "v2";
-const LOGO_ASSET_VERSION = "v1";
+const LOGO_ASSET_VERSION = "v2";
 const NUTS_LOGO_SRC = `/logo/nuts-logo.png?${LOGO_ASSET_VERSION}`;
 
 const suitCodeMap: Record<Suit, string> = {
@@ -1069,6 +1069,240 @@ function HomeScreen({
           text-shadow: 4px 4px 0 rgba(0,0,0,0.22);
           transform: rotate(var(--r));
         }
+
+        /* === NUTS LOGO MATCH THEME ===================================== */
+        .nuts-logo-img {
+          image-rendering: auto;
+          filter:
+            drop-shadow(5px 5px 0 #020806)
+            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+        }
+
+        .nuts-pixel .table-frame {
+          background:
+            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
+            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
+            #062b22 !important;
+          box-shadow:
+            9px 9px 0 #020806,
+            0 0 0 2px rgba(255, 213, 95, 0.14),
+            inset 0 0 46px rgba(0,0,0,0.42) !important;
+        }
+
+        .nuts-pixel .table-frame::before {
+          border-color: rgba(241, 181, 59, 0.86) !important;
+          box-shadow:
+            0 2px 0 #3b2107,
+            0 0 18px rgba(241, 181, 59, 0.18),
+            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
+        }
+
+        .nuts-pixel header.pixel-inner {
+          background:
+            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
+            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 3px #05150f,
+            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
+            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel header.pixel-inner::after {
+          content: "♣  ♠   ♦  ♠   ♣";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 2.4rem;
+          color: rgba(99, 178, 104, 0.16);
+          font-size: clamp(26px, 3.8vw, 58px);
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+          z-index: 0;
+        }
+
+        .nuts-pixel .portrait-board-wrap,
+        .nuts-pixel .queue-panel,
+        .nuts-pixel .queue-card-well,
+        .nuts-pixel .slot-surface {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
+            #06261f !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
+            0 0 28px rgba(0,0,0,0.38) inset !important;
+        }
+
+        .nuts-pixel .balatro-inspired-bg,
+        .nuts-pixel.felt-bg,
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
+            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
+            #041b17 !important;
+          background-size: auto, auto, auto, 64px 64px, auto !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols {
+          opacity: 0.24 !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols span {
+          color: rgba(102, 177, 101, 0.42) !important;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
+        }
+
+        .nuts-pixel button {
+          border-color: #05150f !important;
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 2px rgba(255,255,255,0.18),
+            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel .pixel-hard-sm,
+        .nuts-pixel .pixel-hard {
+          image-rendering: pixelated;
+        }
+
+        .nuts-pixel .card-image-shell {
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
+        }
+
+        @media (max-width: 640px) {
+          .nuts-logo-img {
+            max-width: min(44vw, 210px) !important;
+          }
+        }
+
+
+        /* === NUTS LOGO MATCH THEME ===================================== */
+        .nuts-logo-img {
+          image-rendering: auto;
+          filter:
+            drop-shadow(5px 5px 0 #020806)
+            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+        }
+
+        .nuts-pixel .table-frame {
+          background:
+            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
+            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
+            #062b22 !important;
+          box-shadow:
+            9px 9px 0 #020806,
+            0 0 0 2px rgba(255, 213, 95, 0.14),
+            inset 0 0 46px rgba(0,0,0,0.42) !important;
+        }
+
+        .nuts-pixel .table-frame::before {
+          border-color: rgba(241, 181, 59, 0.86) !important;
+          box-shadow:
+            0 2px 0 #3b2107,
+            0 0 18px rgba(241, 181, 59, 0.18),
+            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
+        }
+
+        .nuts-pixel header.pixel-inner {
+          background:
+            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
+            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 3px #05150f,
+            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
+            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel header.pixel-inner::after {
+          content: "♣  ♠   ♦  ♠   ♣";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 2.4rem;
+          color: rgba(99, 178, 104, 0.16);
+          font-size: clamp(26px, 3.8vw, 58px);
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+          z-index: 0;
+        }
+
+        .nuts-pixel .portrait-board-wrap,
+        .nuts-pixel .queue-panel,
+        .nuts-pixel .queue-card-well,
+        .nuts-pixel .slot-surface {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
+            #06261f !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
+            0 0 28px rgba(0,0,0,0.38) inset !important;
+        }
+
+        .nuts-pixel .balatro-inspired-bg,
+        .nuts-pixel.felt-bg,
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
+            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
+            #041b17 !important;
+          background-size: auto, auto, auto, 64px 64px, auto !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols {
+          opacity: 0.24 !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols span {
+          color: rgba(102, 177, 101, 0.42) !important;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
+        }
+
+        .nuts-pixel button {
+          border-color: #05150f !important;
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 2px rgba(255,255,255,0.18),
+            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel .pixel-hard-sm,
+        .nuts-pixel .pixel-hard {
+          image-rendering: pixelated;
+        }
+
+        .nuts-pixel .card-image-shell {
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
+        }
+
+        @media (max-width: 640px) {
+          .nuts-logo-img {
+            max-width: min(44vw, 210px) !important;
+          }
+        }
+
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(240,165,54,0.22),transparent_25%),radial-gradient(circle_at_82%_24%,rgba(28,91,68,0.42),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(7,26,21,0.9),transparent_42%)]" />
@@ -1181,7 +1415,7 @@ function HomeScreen({
                       src={NUTS_LOGO_SRC}
                       alt="NUTS GRID POKER"
                       draggable={false}
-                      className="h-auto w-full select-none object-contain drop-shadow-[8px_8px_0_#020806]"
+                      className="nuts-logo-img h-auto w-full select-none object-contain drop-shadow-[10px_10px_0_#020806]"
                       loading="eager"
                       decoding="sync"
                       fetchPriority="high"
@@ -1863,7 +2097,7 @@ export default function Home() {
             src={NUTS_LOGO_SRC}
             alt="NUTS"
             draggable={false}
-            className="h-auto w-[220px] select-none object-contain"
+            className="nuts-logo-img h-auto w-[220px] select-none object-contain"
             loading="eager"
             decoding="sync"
             fetchPriority="high"
@@ -2266,6 +2500,240 @@ export default function Home() {
           }
         }
 
+
+        /* === NUTS LOGO MATCH THEME ===================================== */
+        .nuts-logo-img {
+          image-rendering: auto;
+          filter:
+            drop-shadow(5px 5px 0 #020806)
+            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+        }
+
+        .nuts-pixel .table-frame {
+          background:
+            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
+            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
+            #062b22 !important;
+          box-shadow:
+            9px 9px 0 #020806,
+            0 0 0 2px rgba(255, 213, 95, 0.14),
+            inset 0 0 46px rgba(0,0,0,0.42) !important;
+        }
+
+        .nuts-pixel .table-frame::before {
+          border-color: rgba(241, 181, 59, 0.86) !important;
+          box-shadow:
+            0 2px 0 #3b2107,
+            0 0 18px rgba(241, 181, 59, 0.18),
+            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
+        }
+
+        .nuts-pixel header.pixel-inner {
+          background:
+            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
+            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 3px #05150f,
+            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
+            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel header.pixel-inner::after {
+          content: "♣  ♠   ♦  ♠   ♣";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 2.4rem;
+          color: rgba(99, 178, 104, 0.16);
+          font-size: clamp(26px, 3.8vw, 58px);
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+          z-index: 0;
+        }
+
+        .nuts-pixel .portrait-board-wrap,
+        .nuts-pixel .queue-panel,
+        .nuts-pixel .queue-card-well,
+        .nuts-pixel .slot-surface {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
+            #06261f !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
+            0 0 28px rgba(0,0,0,0.38) inset !important;
+        }
+
+        .nuts-pixel .balatro-inspired-bg,
+        .nuts-pixel.felt-bg,
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
+            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
+            #041b17 !important;
+          background-size: auto, auto, auto, 64px 64px, auto !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols {
+          opacity: 0.24 !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols span {
+          color: rgba(102, 177, 101, 0.42) !important;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
+        }
+
+        .nuts-pixel button {
+          border-color: #05150f !important;
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 2px rgba(255,255,255,0.18),
+            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel .pixel-hard-sm,
+        .nuts-pixel .pixel-hard {
+          image-rendering: pixelated;
+        }
+
+        .nuts-pixel .card-image-shell {
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
+        }
+
+        @media (max-width: 640px) {
+          .nuts-logo-img {
+            max-width: min(44vw, 210px) !important;
+          }
+        }
+
+
+        /* === NUTS LOGO MATCH THEME ===================================== */
+        .nuts-logo-img {
+          image-rendering: auto;
+          filter:
+            drop-shadow(5px 5px 0 #020806)
+            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+        }
+
+        .nuts-pixel .table-frame {
+          background:
+            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
+            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
+            #062b22 !important;
+          box-shadow:
+            9px 9px 0 #020806,
+            0 0 0 2px rgba(255, 213, 95, 0.14),
+            inset 0 0 46px rgba(0,0,0,0.42) !important;
+        }
+
+        .nuts-pixel .table-frame::before {
+          border-color: rgba(241, 181, 59, 0.86) !important;
+          box-shadow:
+            0 2px 0 #3b2107,
+            0 0 18px rgba(241, 181, 59, 0.18),
+            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
+        }
+
+        .nuts-pixel header.pixel-inner {
+          background:
+            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
+            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 3px #05150f,
+            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
+            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel header.pixel-inner::after {
+          content: "♣  ♠   ♦  ♠   ♣";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 2.4rem;
+          color: rgba(99, 178, 104, 0.16);
+          font-size: clamp(26px, 3.8vw, 58px);
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+          z-index: 0;
+        }
+
+        .nuts-pixel .portrait-board-wrap,
+        .nuts-pixel .queue-panel,
+        .nuts-pixel .queue-card-well,
+        .nuts-pixel .slot-surface {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
+            #06261f !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
+            0 0 28px rgba(0,0,0,0.38) inset !important;
+        }
+
+        .nuts-pixel .balatro-inspired-bg,
+        .nuts-pixel.felt-bg,
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
+            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
+            #041b17 !important;
+          background-size: auto, auto, auto, 64px 64px, auto !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols {
+          opacity: 0.24 !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols span {
+          color: rgba(102, 177, 101, 0.42) !important;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
+        }
+
+        .nuts-pixel button {
+          border-color: #05150f !important;
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 2px rgba(255,255,255,0.18),
+            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel .pixel-hard-sm,
+        .nuts-pixel .pixel-hard {
+          image-rendering: pixelated;
+        }
+
+        .nuts-pixel .card-image-shell {
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
+        }
+
+        @media (max-width: 640px) {
+          .nuts-logo-img {
+            max-width: min(44vw, 210px) !important;
+          }
+        }
+
       `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -2294,7 +2762,7 @@ export default function Home() {
                   src={NUTS_LOGO_SRC}
                   alt="NUTS"
                   draggable={false}
-                  className="h-auto max-h-[58px] w-[180px] select-none object-contain drop-shadow-[4px_4px_0_#020806] sm:max-h-[72px] sm:w-[240px] lg:w-[280px]"
+                  className="nuts-logo-img h-auto max-h-[72px] w-[230px] select-none object-contain drop-shadow-[5px_5px_0_#020806] sm:max-h-[86px] sm:w-[300px] lg:w-[340px]"
                   loading="eager"
                   decoding="sync"
                   fetchPriority="high"
@@ -3009,6 +3477,240 @@ export default function Home() {
             #0b3a2d;
           background-size: auto, auto, auto, 82px 82px, auto;
         }
+
+        /* === NUTS LOGO MATCH THEME ===================================== */
+        .nuts-logo-img {
+          image-rendering: auto;
+          filter:
+            drop-shadow(5px 5px 0 #020806)
+            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+        }
+
+        .nuts-pixel .table-frame {
+          background:
+            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
+            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
+            #062b22 !important;
+          box-shadow:
+            9px 9px 0 #020806,
+            0 0 0 2px rgba(255, 213, 95, 0.14),
+            inset 0 0 46px rgba(0,0,0,0.42) !important;
+        }
+
+        .nuts-pixel .table-frame::before {
+          border-color: rgba(241, 181, 59, 0.86) !important;
+          box-shadow:
+            0 2px 0 #3b2107,
+            0 0 18px rgba(241, 181, 59, 0.18),
+            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
+        }
+
+        .nuts-pixel header.pixel-inner {
+          background:
+            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
+            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 3px #05150f,
+            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
+            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel header.pixel-inner::after {
+          content: "♣  ♠   ♦  ♠   ♣";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 2.4rem;
+          color: rgba(99, 178, 104, 0.16);
+          font-size: clamp(26px, 3.8vw, 58px);
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+          z-index: 0;
+        }
+
+        .nuts-pixel .portrait-board-wrap,
+        .nuts-pixel .queue-panel,
+        .nuts-pixel .queue-card-well,
+        .nuts-pixel .slot-surface {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
+            #06261f !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
+            0 0 28px rgba(0,0,0,0.38) inset !important;
+        }
+
+        .nuts-pixel .balatro-inspired-bg,
+        .nuts-pixel.felt-bg,
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
+            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
+            #041b17 !important;
+          background-size: auto, auto, auto, 64px 64px, auto !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols {
+          opacity: 0.24 !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols span {
+          color: rgba(102, 177, 101, 0.42) !important;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
+        }
+
+        .nuts-pixel button {
+          border-color: #05150f !important;
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 2px rgba(255,255,255,0.18),
+            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel .pixel-hard-sm,
+        .nuts-pixel .pixel-hard {
+          image-rendering: pixelated;
+        }
+
+        .nuts-pixel .card-image-shell {
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
+        }
+
+        @media (max-width: 640px) {
+          .nuts-logo-img {
+            max-width: min(44vw, 210px) !important;
+          }
+        }
+
+
+        /* === NUTS LOGO MATCH THEME ===================================== */
+        .nuts-logo-img {
+          image-rendering: auto;
+          filter:
+            drop-shadow(5px 5px 0 #020806)
+            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+        }
+
+        .nuts-pixel .table-frame {
+          background:
+            radial-gradient(circle at 14% 18%, rgba(255, 211, 103, 0.12), transparent 25%),
+            radial-gradient(circle at 82% 22%, rgba(41, 125, 87, 0.18), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.38)),
+            #062b22 !important;
+          box-shadow:
+            9px 9px 0 #020806,
+            0 0 0 2px rgba(255, 213, 95, 0.14),
+            inset 0 0 46px rgba(0,0,0,0.42) !important;
+        }
+
+        .nuts-pixel .table-frame::before {
+          border-color: rgba(241, 181, 59, 0.86) !important;
+          box-shadow:
+            0 2px 0 #3b2107,
+            0 0 18px rgba(241, 181, 59, 0.18),
+            inset 0 0 0 2px rgba(3, 22, 14, 0.82) !important;
+        }
+
+        .nuts-pixel header.pixel-inner {
+          background:
+            linear-gradient(180deg, rgba(16, 76, 57, 0.94), rgba(3, 38, 30, 0.98)),
+            radial-gradient(circle at 15% 35%, rgba(245, 181, 68, 0.14), transparent 28%) !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            inset 0 0 0 3px #05150f,
+            inset 0 0 0 6px rgba(241, 181, 59, 0.28),
+            inset 0 -18px 26px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel header.pixel-inner::after {
+          content: "♣  ♠   ♦  ♠   ♣";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 2.4rem;
+          color: rgba(99, 178, 104, 0.16);
+          font-size: clamp(26px, 3.8vw, 58px);
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+          z-index: 0;
+        }
+
+        .nuts-pixel .portrait-board-wrap,
+        .nuts-pixel .queue-panel,
+        .nuts-pixel .queue-card-well,
+        .nuts-pixel .slot-surface {
+          background:
+            radial-gradient(circle at 22% 18%, rgba(112, 190, 124, 0.10), transparent 26%),
+            linear-gradient(145deg, rgba(255,255,255,0.045), rgba(0,0,0,0.30)),
+            #06261f !important;
+          border-color: #05150f !important;
+          box-shadow:
+            6px 6px 0 #020806,
+            0 0 0 2px rgba(241, 181, 59, 0.16) inset,
+            0 0 28px rgba(0,0,0,0.38) inset !important;
+        }
+
+        .nuts-pixel .balatro-inspired-bg,
+        .nuts-pixel.felt-bg,
+        .balatro-inspired-bg {
+          background:
+            radial-gradient(circle at 18% 14%, rgba(241, 181, 59, 0.14), transparent 26%),
+            radial-gradient(circle at 82% 18%, rgba(27, 94, 64, 0.28), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(0,0,0,0.54), transparent 56%),
+            linear-gradient(135deg, rgba(255, 218, 111, 0.045) 0 9%, transparent 9% 18%, rgba(0,0,0,0.08) 18% 27%, transparent 27% 36%),
+            #041b17 !important;
+          background-size: auto, auto, auto, 64px 64px, auto !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols {
+          opacity: 0.24 !important;
+        }
+
+        .nuts-pixel .bg-felt-symbols span {
+          color: rgba(102, 177, 101, 0.42) !important;
+          text-shadow: 4px 4px 0 rgba(0,0,0,0.30) !important;
+        }
+
+        .nuts-pixel button {
+          border-color: #05150f !important;
+          box-shadow:
+            5px 5px 0 #020806,
+            inset 0 0 0 2px rgba(255,255,255,0.18),
+            inset 0 -8px 12px rgba(0,0,0,0.24) !important;
+        }
+
+        .nuts-pixel .pixel-hard-sm,
+        .nuts-pixel .pixel-hard {
+          image-rendering: pixelated;
+        }
+
+        .nuts-pixel .card-image-shell {
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.58));
+        }
+
+        @media (max-width: 640px) {
+          .nuts-logo-img {
+            max-width: min(44vw, 210px) !important;
+          }
+        }
+
       `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -3194,7 +3896,7 @@ export default function Home() {
                 src={NUTS_LOGO_SRC}
                 alt="NUTS GRID POKER"
                 draggable={false}
-                className="h-auto max-h-[58px] w-[170px] select-none object-contain drop-shadow-[4px_4px_0_#020806] sm:max-h-[72px] sm:w-[230px] lg:w-[260px]"
+                className="nuts-logo-img h-auto max-h-[72px] w-[220px] select-none object-contain drop-shadow-[5px_5px_0_#020806] sm:max-h-[84px] sm:w-[290px] lg:w-[330px]"
                 loading="eager"
                 decoding="sync"
                 fetchPriority="high"
