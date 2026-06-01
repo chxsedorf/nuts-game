@@ -1805,125 +1805,249 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#1b0f2e] text-white md:h-screen md:overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(110,231,255,0.18),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(244,63,94,0.18),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(7,26,21,0.9),transparent_42%)]" />
-        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1180px] flex-col gap-3 px-3 py-3 md:h-screen md:justify-center md:overflow-hidden">
-          <header className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
-            <div className="grid grid-cols-2 gap-2">
-              <div className={["rounded-2xl border-[4px] border-black p-3 shadow-[5px_5px_0_#000]", duel.currentPlayer === 1 && !duel.isGameOver ? "bg-[#6ee7ff] text-[#06160f]" : "bg-[#0b3025] text-[#d8eadc]"].join(" ")}>
-                <p className="text-[10px] font-black tracking-[0.24em]">PLAYER 1</p>
-                <p className="text-3xl font-black">{p1Owned}</p>
-              </div>
-              <div className={["rounded-2xl border-[4px] border-black p-3 text-right shadow-[5px_5px_0_#000]", duel.currentPlayer === 2 && !duel.isGameOver ? "bg-[#fb7185] text-[#2a050b]" : "bg-[#0b3025] text-[#d8eadc]"].join(" ")}>
-                <p className="text-[10px] font-black tracking-[0.24em]">PLAYER 2</p>
-                <p className="text-3xl font-black">{p2Owned}</p>
-              </div>
-            </div>
+      <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#170f2c] text-white md:h-screen md:overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
-            <div className="rounded-2xl border-[4px] border-black bg-[#f0a536] px-5 py-3 text-center text-[#2a1603] shadow-[5px_5px_0_#000]">
-              <p className="text-[10px] font-black tracking-[0.28em]">TERRITORY DUEL</p>
-              <p className="text-2xl font-black">{duel.isGameOver ? winnerText : `P${duel.currentPlayer} TURN`}</p>
-            </div>
+        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
+          <section className="table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]">
+            <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(250px,0.95fr)_minmax(260px,0.8fr)_minmax(360px,1.25fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
+              <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
+              <div className="pointer-events-none absolute bottom-2 left-3 right-3 h-[3px] bg-[#b97828] shadow-[0_2px_0_#03100b]" />
+              <div className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0b342]" />
+              <div className="pointer-events-none absolute right-1 top-1 h-5 w-5 rounded-bl-xl border-b-[4px] border-l-[4px] border-[#f0b342]" />
+              <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
+              <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
 
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-xl border-[3px] border-black bg-[#08241b] p-2 shadow-[4px_4px_0_#000]">
-                <p className="text-[9px] font-black tracking-[0.2em] text-[#8bd8af]">CARD</p>
-                <p className="text-xl font-black text-[#fff4cf]">{duel.placedCount}/52</p>
-              </div>
-              <div className="rounded-xl border-[3px] border-black bg-[#08241b] p-2 shadow-[4px_4px_0_#000]">
-                <p className="text-[9px] font-black tracking-[0.2em] text-[#8bd8af]">DECK</p>
-                <p className="text-xl font-black text-[#fff4cf]">{duel.deck.length}</p>
-              </div>
-              <div className="rounded-xl border-[3px] border-black bg-[#08241b] p-2 shadow-[4px_4px_0_#000]">
-                <p className="text-[9px] font-black tracking-[0.2em] text-[#8bd8af]">EMPTY</p>
-                <p className="text-xl font-black text-[#fff4cf]">{emptyCells}</p>
-              </div>
-            </div>
-          </header>
-
-          <section className="grid min-h-0 gap-3 md:grid-cols-[1fr_220px] md:items-stretch">
-            <div className="relative rounded-[1.75rem] border-[6px] border-black bg-[#07160f] p-3 shadow-[8px_8px_0_#000,0_0_0_3px_#f0a536_inset]">
-              {resultBanner && (
-                <div className="absolute right-4 top-4 z-20 rounded-xl border-[3px] border-black bg-[#f0a536] px-4 py-2 text-[#2a1603] shadow-[4px_4px_0_#000]">
-                  <p className="text-[10px] font-black tracking-[0.2em]">CLAIM</p>
-                  <p className="text-lg font-black">{resultBanner.text}</p>
+              <div className="relative z-10 flex min-h-[58px] items-center px-2 sm:min-h-[68px]">
+                <div>
+                  <h1
+                    className="text-4xl font-black leading-[0.82] text-[#f1a22d] sm:text-5xl lg:text-6xl"
+                    style={{
+                      textShadow:
+                        "4px 0 #5a2b05, 0 4px #5a2b05, 5px 5px 0 #1d0c02, -2px -2px 0 #ffd16b",
+                    }}
+                  >
+                    NUTS
+                  </h1>
+                  <p
+                    className="mt-2 text-xs font-black tracking-[0.34em] text-[#7fd0a4]"
+                    style={{ textShadow: "2px 2px 0 #03100b" }}
+                  >
+                    TERRITORY DUEL
+                  </p>
                 </div>
-              )}
+              </div>
 
-              <div className="grid grid-cols-5 gap-2">
-                {duel.board.map((boardRow, rowIndex) =>
-                  boardRow.map((cell, colIndex) => {
-                    const cellKey = keyOf(rowIndex, colIndex);
-                    const owner = duel.owners[rowIndex][colIndex];
-                    const isPlaced = placedCell === cellKey;
-                    const isHit = highlightCells.has(cellKey);
-                    const isClearing = clearingCells.has(cellKey);
-                    const ownerClass = owner === 1
-                      ? "bg-[#083344] shadow-[0_0_0_3px_rgba(110,231,255,0.55)_inset]"
-                      : owner === 2
-                      ? "bg-[#4c0519] shadow-[0_0_0_3px_rgba(251,113,133,0.55)_inset]"
-                      : "bg-[#0b3025]";
+              <div className="relative z-10 grid grid-cols-2 gap-1.5">
+                <div className={[
+                  "pixel-hard-sm relative flex min-h-[58px] flex-col justify-center border-[3px] border-[#061811] px-3 py-2 shadow-[4px_4px_0_#03100b,0_0_0_2px_rgba(255,255,255,0.08)_inset] transition",
+                  duel.currentPlayer === 1 && !duel.isGameOver ? "bg-[#155e75]" : "bg-[#071a15]",
+                ].join(" ")}> 
+                  <p className="text-[10px] font-black tracking-[0.2em] text-[#6ee7ff]">PLAYER 1</p>
+                  <p className="text-3xl font-black leading-none text-white drop-shadow-[3px_3px_0_#03100b]">{p1Owned}</p>
+                </div>
+                <div className={[
+                  "pixel-hard-sm relative flex min-h-[58px] flex-col justify-center border-[3px] border-[#061811] px-3 py-2 text-right shadow-[4px_4px_0_#03100b,0_0_0_2px_rgba(255,255,255,0.08)_inset] transition",
+                  duel.currentPlayer === 2 && !duel.isGameOver ? "bg-[#9f1239]" : "bg-[#071a15]",
+                ].join(" ")}> 
+                  <p className="text-[10px] font-black tracking-[0.2em] text-[#fb7185]">PLAYER 2</p>
+                  <p className="text-3xl font-black leading-none text-white drop-shadow-[3px_3px_0_#03100b]">{p2Owned}</p>
+                </div>
+              </div>
 
-                    return (
-                      <button
-                        key={cellKey}
-                        onClick={() => placeDuelCard(rowIndex, colIndex)}
-                        disabled={duel.isGameOver || Boolean(cell) || !duel.currentCard}
-                        className={[
-                          "relative aspect-square rounded-xl border-[4px] border-black p-1 transition",
-                          ownerClass,
-                          !cell && !duel.isGameOver ? "hover:-translate-y-1 hover:bg-[#18533c]" : "",
-                          isPlaced ? "scale-[1.03]" : "",
-                          isHit ? "ring-4 ring-[#f0a536]" : "",
-                          isClearing ? "opacity-80" : "",
-                        ].join(" ")}
-                      >
-                        <span className="absolute left-1 top-1 z-0 text-[10px] font-black text-white/60">
-                          {owner ? `P${owner}` : ""}
-                        </span>
-                        {cell ? (
-                          <div className="relative z-10 h-full w-full">
-                            <CardFace card={cell} size="tiny" />
-                          </div>
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-lg font-black text-white/10">
-                            ◆
-                          </div>
-                        )}
+              <div className="relative z-10 grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
+                <StatBox label="TURN" value={duel.isGameOver ? winnerText : `P${duel.currentPlayer}`} accent pulse={!duel.isGameOver} />
+                <StatBox label="CARD" value={`${duel.placedCount}/52`} />
+                <StatBox label="DECK" value={duel.deck.length} />
+                <StatBox label="EMPTY" value={emptyCells} />
+              </div>
+            </header>
+
+            <div className="relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
+              <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
+                <section className="pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
+                  <div className="mb-2 flex h-7 items-center justify-between">
+                    <p className="rounded-md border-[3px] border-[#061811] bg-[#123f32] px-3 py-1 text-xs font-black tracking-[0.25em] text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
+                      SHARED BOARD
+                    </p>
+                    <div className="flex gap-1.5 text-[10px] font-black">
+                      <span className="rounded-md border-[2px] border-[#061811] bg-[#155e75] px-2 py-1 text-[#dffbff] shadow-[2px_2px_0_#04120d]">P1</span>
+                      <span className="rounded-md border-[2px] border-[#061811] bg-[#9f1239] px-2 py-1 text-[#fff1f2] shadow-[2px_2px_0_#04120d]">P2</span>
+                    </div>
+                  </div>
+
+                  <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                    {resultBanner && (
+                      <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
+                        <div
+                          className="rounded-xl border-[4px] border-[#061811] bg-[#f5d06f]/92 px-3 py-2 text-right text-[#061811] shadow-[4px_4px_0_#03100b] backdrop-blur-[1px]"
+                          style={{ animation: "targetBanner 160ms ease-out" }}
+                        >
+                          <p className="text-[9px] font-black tracking-[0.22em] opacity-75">CLAIM</p>
+                          <p className="mt-0.5 max-w-[220px] truncate text-lg font-black leading-tight">{resultBanner.text}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {duel.board.map((boardRow, rowIndex) =>
+                      boardRow.map((cell, colIndex) => {
+                        const cellKey = keyOf(rowIndex, colIndex);
+                        const owner = duel.owners[rowIndex][colIndex];
+                        const isPlaced = placedCell === cellKey;
+                        const isHit = highlightCells.has(cellKey);
+                        const isClearing = clearingCells.has(cellKey);
+                        const canPlace = !cell && !duel.isGameOver && Boolean(duel.currentCard);
+                        const ownerGlow = owner === 1
+                          ? "after:absolute after:inset-1 after:border-[3px] after:border-[#6ee7ff]/75 after:content-['']"
+                          : owner === 2
+                          ? "after:absolute after:inset-1 after:border-[3px] after:border-[#fb7185]/75 after:content-['']"
+                          : "";
+                        const ownerBadgeClass = owner === 1 ? "bg-[#155e75] text-[#dffbff]" : "bg-[#9f1239] text-[#fff1f2]";
+
+                        return (
+                          <button
+                            key={cellKey}
+                            onClick={() => placeDuelCard(rowIndex, colIndex)}
+                            disabled={!canPlace}
+                            className={[
+                              "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
+                              cell
+                                ? "rotate-[-1deg] border-[#061811] bg-[#fff4cf] p-1 shadow-[4px_4px_0_#04120d]"
+                                : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
+                              canPlace ? "cursor-pointer hover:-translate-y-1 hover:brightness-125" : "",
+                              ownerGlow,
+                              isPlaced ? "scale-[1.03]" : "",
+                              isHit ? "z-20 bg-[#fff4cf] shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]" : "",
+                              isClearing ? "opacity-80" : "",
+                            ].join(" ")}
+                            style={{
+                              animation: isClearing
+                                ? "clearShake 520ms ease-in-out forwards"
+                                : isHit
+                                ? "handGlow 760ms ease-in-out 2"
+                                : isPlaced
+                                ? "cardPop 360ms ease-out"
+                                : undefined,
+                            }}
+                          >
+                            {owner && (
+                              <span className={[
+                                "pointer-events-none absolute left-1 top-1 z-30 rounded-md border-[2px] border-[#061811] px-1.5 py-0.5 text-[9px] font-black shadow-[2px_2px_0_#03100b]",
+                                ownerBadgeClass,
+                              ].join(" ")}>
+                                P{owner}
+                              </span>
+                            )}
+
+                            {cell ? (
+                              <>
+                                <div className="mx-auto h-full max-h-full aspect-[5/7] max-w-[82%]">
+                                  <CardFace card={cell} size="normal" />
+                                </div>
+
+                                {isHit && (
+                                  <div
+                                    className="pointer-events-none absolute right-1 top-1 z-40 rounded-md border-[2px] border-black bg-[#6ee7ff]/90 px-1.5 py-0.5 text-[9px] font-black text-black shadow-[2px_2px_0_#000]"
+                                    style={{ animation: "hitBadge 220ms ease-out forwards" }}
+                                  >
+                                    CLAIM
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <span className={["relative z-10 text-3xl font-black", canPlace ? "text-[#f5d06f]" : "text-[#7fbfa0]/22"].join(" ")}>
+                                ♠
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+              </div>
+
+              <aside className="flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+                <div className="queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+                  <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
+                    <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
+                      NOW
+                    </p>
+                  </div>
+
+                  <div className="queue-card-well mb-2 flex w-full shrink-0 flex-col items-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
+                    <div
+                      className="w-20 shrink-0 rotate-[-2deg] pixel-hard border-[5px] border-[#061811] bg-[#fff8e4] p-1 shadow-[5px_5px_0_#04120d] sm:w-24 lg:w-28 xl:w-32"
+                      style={{ aspectRatio: "5 / 7" }}
+                    >
+                      {duel.currentCard ? (
+                        <CardFace card={duel.currentCard} size="small" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center rounded-lg bg-[#fff8e4] text-center text-xs font-black text-black/50">
+                          EMPTY
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-[10px] font-black tracking-[0.18em] text-[#7fd0a4]">
+                      PLACE THIS
+                    </p>
+                    <p
+                      className="mt-1 text-2xl font-black leading-none text-white xl:text-3xl"
+                      style={{ textShadow: "3px 3px 0 #03100b" }}
+                    >
+                      {duel.currentCard ? `${duel.currentCard.rank}${suitSymbols[duel.currentCard.suit]}` : "-"}
+                    </p>
+
+                    <div className="mt-2 flex justify-center gap-2">
+                      <span className={[
+                        "h-3 w-3 rounded-full border-[2px] border-[#061811] shadow-[2px_2px_0_#04120d]",
+                        duel.currentPlayer === 1 && !duel.isGameOver ? "bg-[#6ee7ff]" : "bg-[#234338]",
+                      ].join(" ")} />
+                      <span className={[
+                        "h-3 w-3 rounded-full border-[2px] border-[#061811] shadow-[2px_2px_0_#04120d]",
+                        duel.currentPlayer === 2 && !duel.isGameOver ? "bg-[#fb7185]" : "bg-[#234338]",
+                      ].join(" ")} />
+                    </div>
+                  </div>
+
+                  <div className="pixel-hard flex min-h-0 flex-1 flex-col border-[4px] border-[#061811] bg-[#081b18] p-2 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
+                    <div className="mb-2 shrink-0 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
+                      <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
+                        STATUS
+                      </p>
+                    </div>
+
+                    <div className="flex min-h-0 flex-1 flex-col justify-center rounded-xl border-[3px] border-[#061811] bg-[#07160f] p-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.35)]">
+                      <p className="text-[10px] font-black tracking-[0.22em] text-[#f5d06f]">
+                        {duel.isGameOver ? "RESULT" : "CURRENT TURN"}
+                      </p>
+                      <p className="mt-2 text-2xl font-black text-white drop-shadow-[3px_3px_0_#03100b]">
+                        {duel.isGameOver ? winnerText : `PLAYER ${duel.currentPlayer}`}
+                      </p>
+                      <p className="mt-3 text-base font-black text-[#fff4cf]">
+                        {duel.lastResult}
+                      </p>
+                      <p className="mt-2 text-sm font-bold leading-relaxed text-[#8bd8af]">
+                        {duel.isGameOver ? "Count the claimed cells." : "Make a hand to claim or steal cells."}
+                      </p>
+                    </div>
+
+                    <div className="mt-2 grid gap-2">
+                      {duel.isGameOver && (
+                        <button onClick={restartDuelGame} className="rounded-xl border-[4px] border-[#061811] bg-[#f0a536] px-4 py-3 text-xl font-black text-[#2a1603] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
+                          REMATCH
+                        </button>
+                      )}
+                      <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
+                        TITLE
                       </button>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            <aside className="grid gap-3 rounded-[1.75rem] border-[6px] border-black bg-[#08241b] p-3 shadow-[8px_8px_0_#000,0_0_0_3px_#18533c_inset]">
-              <div className="rounded-2xl border-[4px] border-black bg-[#07160f] p-3 text-center shadow-[5px_5px_0_#000]">
-                <p className="mb-2 text-[10px] font-black tracking-[0.3em] text-[#f0a536]">CURRENT CARD</p>
-                <div className="mx-auto h-36 w-24">
-                  {duel.currentCard ? <CardFace card={duel.currentCard} /> : <div className="flex h-full items-center justify-center rounded-xl border-[4px] border-black bg-[#0b3025] text-sm font-black text-[#8bd8af]">EMPTY</div>}
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="rounded-2xl border-[4px] border-black bg-[#0b3025] p-3 shadow-[5px_5px_0_#000]">
-                <p className="text-[10px] font-black tracking-[0.28em] text-[#f0a536]">STATUS</p>
-                <p className="mt-2 text-lg font-black text-[#fff4cf]">{duel.lastResult}</p>
-                <p className="mt-1 text-sm font-bold text-[#8bd8af]">
-                  {duel.isGameOver ? "No more moves. Count territory." : "Make a hand to claim cells."}
-                </p>
-              </div>
-
-              <div className="grid gap-2">
-                {duel.isGameOver && (
-                  <button onClick={restartDuelGame} className="rounded-xl border-[4px] border-black bg-[#f0a536] px-4 py-3 text-xl font-black text-[#2a1603] shadow-[5px_5px_0_#000]">
-                    REMATCH
-                  </button>
-                )}
-                <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-black bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#000]">
-                  TITLE
-                </button>
-              </div>
-            </aside>
+              </aside>
+            </div>
           </section>
         </div>
       </main>
