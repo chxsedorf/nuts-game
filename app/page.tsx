@@ -446,6 +446,8 @@ function getCardColor(card: Card): string {
 
 
 const CARD_ASSET_VERSION = "v2";
+const LOGO_ASSET_VERSION = "v1";
+const NUTS_LOGO_SRC = `/logo/nuts-logo.png?${LOGO_ASSET_VERSION}`;
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -1174,16 +1176,17 @@ function HomeScreen({
                   <p className="relative z-10 mb-1 text-[12px] font-black tracking-[0.48em] text-[#f0a536]">
                     CASINO PUZZLE
                   </p>
-                  <h1
-                    className="relative z-10 text-[clamp(4.5rem,13vw,9rem)] font-black leading-[0.82] text-[#f29530]"
-                    style={{
-                      WebkitTextStroke: "2px #ffd47a",
-                      textShadow: "7px 7px 0 #2a1603, 10px 10px 0 #020806",
-                      animation: "titleGlow 2.8s ease-in-out infinite",
-                    }}
-                  >
-                    NUTS
-                  </h1>
+                  <div className="relative z-10 mx-auto w-full max-w-[640px]">
+                    <img
+                      src={NUTS_LOGO_SRC}
+                      alt="NUTS GRID POKER"
+                      draggable={false}
+                      className="h-auto w-full select-none object-contain drop-shadow-[8px_8px_0_#020806]"
+                      loading="eager"
+                      decoding="sync"
+                      fetchPriority="high"
+                    />
+                  </div>
                   <p className="relative z-10 mt-3 text-sm font-black tracking-[0.38em] text-[#e7d79e] md:text-base">
                     BUILD HANDS. BREAK THE GRID.
                   </p>
@@ -1855,10 +1858,16 @@ export default function Home() {
   if (!isLoaded) {
     return (
       <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg flex h-screen items-center justify-center overflow-hidden bg-[#07120f] text-white">
-        <div className="rounded-2xl border-[4px] border-black bg-[#d43d4f] px-8 py-5 shadow-[8px_8px_0_#000]">
-          <p className="text-2xl font-black tracking-[0.3em] text-[#ffef7a]">
-            NUTS
-          </p>
+        <div className="rounded-2xl border-[4px] border-black bg-[#0b3a2b] px-6 py-4 shadow-[8px_8px_0_#000]">
+          <img
+            src={NUTS_LOGO_SRC}
+            alt="NUTS"
+            draggable={false}
+            className="h-auto w-[220px] select-none object-contain"
+            loading="eager"
+            decoding="sync"
+            fetchPriority="high"
+          />
         </div>
       </main>
     );
@@ -2280,24 +2289,16 @@ export default function Home() {
               <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
               <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
 
-              <div className="relative z-10 flex min-h-[58px] items-center px-2 sm:min-h-[68px]">
-                <div>
-                  <h1
-                    className="text-4xl font-black leading-[0.82] text-[#f1a22d] sm:text-5xl lg:text-6xl"
-                    style={{
-                      textShadow:
-                        "4px 0 #5a2b05, 0 4px #5a2b05, 5px 5px 0 #1d0c02, -2px -2px 0 #ffd16b",
-                    }}
-                  >
-                    NUTS
-                  </h1>
-                  <p
-                    className="mt-2 text-xs font-black tracking-[0.34em] text-[#7fd0a4]"
-                    style={{ textShadow: "2px 2px 0 #03100b" }}
-                  >
-                    TERRITORY DUEL
-                  </p>
-                </div>
+              <div className="relative z-10 flex min-h-[58px] items-center px-1.5 sm:min-h-[68px] sm:px-2">
+                <img
+                  src={NUTS_LOGO_SRC}
+                  alt="NUTS"
+                  draggable={false}
+                  className="h-auto max-h-[58px] w-[180px] select-none object-contain drop-shadow-[4px_4px_0_#020806] sm:max-h-[72px] sm:w-[240px] lg:w-[280px]"
+                  loading="eager"
+                  decoding="sync"
+                  fetchPriority="high"
+                />
               </div>
 
               <div className="relative z-10 grid grid-cols-2 gap-1.5">
@@ -3188,24 +3189,16 @@ export default function Home() {
             <div className="pointer-events-none absolute bottom-1 left-1 h-5 w-5 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#b97828]" />
             <div className="pointer-events-none absolute bottom-1 right-1 h-5 w-5 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#b97828]" />
 
-            <div className="relative z-10 flex min-h-[52px] items-center px-2 sm:min-h-[68px]">
-              <div>
-                <h1
-                  className="text-4xl font-black leading-[0.82] text-[#f1a22d] sm:text-5xl lg:text-6xl"
-                  style={{
-                    textShadow:
-                      "4px 0 #5a2b05, 0 4px #5a2b05, 5px 5px 0 #1d0c02, -2px -2px 0 #ffd16b",
-                  }}
-                >
-                  NUTS
-                </h1>
-                <p
-                  className="mt-2 text-xs font-black tracking-[0.38em] text-[#7fd0a4]"
-                  style={{ textShadow: "2px 2px 0 #03100b" }}
-                >
-                  GRID POKER
-                </p>
-              </div>
+            <div className="relative z-10 flex min-h-[52px] items-center px-1.5 sm:min-h-[68px] sm:px-2">
+              <img
+                src={NUTS_LOGO_SRC}
+                alt="NUTS GRID POKER"
+                draggable={false}
+                className="h-auto max-h-[58px] w-[170px] select-none object-contain drop-shadow-[4px_4px_0_#020806] sm:max-h-[72px] sm:w-[230px] lg:w-[260px]"
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+              />
             </div>
 
             <div className="relative z-10 grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2 xl:gap-3">
