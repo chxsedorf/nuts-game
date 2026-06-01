@@ -1340,6 +1340,11 @@ export default function Home() {
 
   const isResolvingHand = highlightCells.size > 0;
 
+  function getSafeSfxGain(gainValue: number) {
+    if (!soundEnabled || sfxVolume <= 0) return 0;
+    return Math.max(0.0001, gainValue * sfxVolume);
+  }
+
   function getAudioContext() {
     if (!audioContextRef.current) {
       audioContextRef.current = createAudioContext();
@@ -1362,6 +1367,9 @@ export default function Home() {
     gainValue: number,
     type: OscillatorType = "square"
   ) {
+    const safeGain = getSafeSfxGain(gainValue);
+    if (safeGain <= 0) return;
+
     const oscillator = context.createOscillator();
     const gain = context.createGain();
 
@@ -1369,7 +1377,7 @@ export default function Home() {
     oscillator.frequency.setValueAtTime(frequency, startTime);
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(gainValue * sfxVolume, startTime + 0.012);
+    gain.gain.exponentialRampToValueAtTime(safeGain, startTime + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     oscillator.connect(gain);
@@ -1385,6 +1393,9 @@ export default function Home() {
     duration: number,
     gainValue: number
   ) {
+    const safeGain = getSafeSfxGain(gainValue);
+    if (safeGain <= 0) return;
+
     const sampleRate = context.sampleRate;
     const buffer = context.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
     const data = buffer.getChannelData(0);
@@ -1400,7 +1411,7 @@ export default function Home() {
     filter.type = "highpass";
     filter.frequency.setValueAtTime(900, startTime);
 
-    gain.gain.setValueAtTime(gainValue * sfxVolume, startTime);
+    gain.gain.setValueAtTime(safeGain, startTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     source.buffer = buffer;
@@ -1413,7 +1424,7 @@ export default function Home() {
   }
 
   function playSound(sound: SoundName) {
-    if (!soundEnabled) return;
+    if (!soundEnabled || sfxVolume <= 0) return;
 
     const context = getAudioContext();
     if (!context) return;
@@ -1627,8 +1638,8 @@ export default function Home() {
                     max="1"
                     step="0.01"
                     value={sfxVolume}
-                    onChange={(event) => setSfxVolume(Number(event.target.value))}
-                    className="w-full accent-[#f0a536]"
+                    onInput={(event) => setSfxVolume(Number(event.currentTarget.value))}
+                    className="w-full touch-pan-x accent-[#f0a536]"
                   />
                 </label>
 
@@ -1643,8 +1654,8 @@ export default function Home() {
                     max="1"
                     step="0.01"
                     value={bgmVolume}
-                    onChange={(event) => setBgmVolume(Number(event.target.value))}
-                    className="w-full accent-[#20d0b5]"
+                    onInput={(event) => setBgmVolume(Number(event.currentTarget.value))}
+                    className="w-full touch-pan-x accent-[#20d0b5]"
                   />
                 </label>
 
