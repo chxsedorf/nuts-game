@@ -702,6 +702,15 @@ function CardFace({
 
   const isRed = card.suit === "heart" || card.suit === "diamond";
   const colorClass = isRed ? "text-[#b83224]" : "text-[#10271f]";
+  const isFaceCard = card.rank === "J" || card.rank === "Q" || card.rank === "K";
+  const faceMeta =
+    card.rank === "J"
+      ? { title: "JACK", crest: "♞", crown: "◆" }
+      : card.rank === "Q"
+      ? { title: "QUEEN", crest: "♕", crown: "◇" }
+      : card.rank === "K"
+      ? { title: "KING", crest: "♔", crown: "✦" }
+      : null;
 
   return (
     <div
@@ -719,12 +728,45 @@ function CardFace({
         </span>
       </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-[2px_2px_0_rgba(255,244,207,0.75)]">
-        <span className={`${rankSize} leading-none`}>{card.rank}</span>
-        <span className={`${suitSize} -mt-1 leading-none`}>
-          {suitSymbols[card.suit]}
-        </span>
-      </div>
+      {isFaceCard && faceMeta ? (
+        <div className="relative z-10 flex h-[78%] w-[72%] flex-col items-center justify-center overflow-hidden rounded-[3px] border-[2px] border-[#d7b86c] bg-[#f7ead0] shadow-[inset_0_0_0_2px_rgba(45,33,20,0.32),3px_3px_0_rgba(0,0,0,0.24)]">
+          <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(135deg,transparent_0_34%,rgba(215,184,108,.75)_34%_39%,transparent_39%_61%,rgba(215,184,108,.75)_61%_66%,transparent_66%)]" />
+          <div className="absolute left-1/2 top-1 h-[2px] w-2/3 -translate-x-1/2 bg-[#d7b86c]" />
+          <div className="absolute bottom-1 left-1/2 h-[2px] w-2/3 -translate-x-1/2 bg-[#d7b86c]" />
+
+          <span className="relative z-10 text-[10px] leading-none tracking-[0.16em] opacity-80">
+            {faceMeta.title}
+          </span>
+          <span
+            className={[
+              "relative z-10 -my-1 leading-none drop-shadow-[2px_2px_0_rgba(255,244,207,0.85)]",
+              size === "large" ? "text-5xl" : size === "small" ? "text-3xl" : "text-4xl",
+            ].join(" ")}
+          >
+            {faceMeta.crest}
+          </span>
+          <div className="relative z-10 flex items-center gap-1 leading-none">
+            <span className="text-xs">{faceMeta.crown}</span>
+            <span className={`${rankSize} leading-none`}>{card.rank}</span>
+            <span className="text-xs">{faceMeta.crown}</span>
+          </div>
+          <span
+            className={[
+              "relative z-10 -mt-1 leading-none",
+              size === "large" ? "text-4xl" : size === "small" ? "text-2xl" : "text-3xl",
+            ].join(" ")}
+          >
+            {suitSymbols[card.suit]}
+          </span>
+        </div>
+      ) : (
+        <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-[2px_2px_0_rgba(255,244,207,0.75)]">
+          <span className={`${rankSize} leading-none`}>{card.rank}</span>
+          <span className={`${suitSize} -mt-1 leading-none`}>
+            {suitSymbols[card.suit]}
+          </span>
+        </div>
+      )}
 
       <div className="absolute bottom-1 right-1 z-20 flex rotate-180 flex-col items-center leading-none">
         <span className={`${cornerSize} drop-shadow-[1px_1px_0_#fff4cf]`}>
