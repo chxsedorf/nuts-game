@@ -1609,9 +1609,11 @@ export default function Home() {
             playSound("select");
             setSettingsOpen(true);
           }}
-          className="fixed right-4 top-4 z-[70] rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] px-4 py-2 text-sm font-black tracking-[0.16em] text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1"
+          aria-label="Open settings"
+          title="Settings"
+          className="fixed right-3 top-3 z-[70] grid h-12 w-12 place-items-center rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] text-2xl font-black text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1 hover:brightness-110 sm:right-4 sm:top-4 sm:h-14 sm:w-14 sm:text-3xl"
         >
-          ⚙ SETTINGS
+          <span aria-hidden="true" className="drop-shadow-[2px_2px_0_#020806]">⚙</span>
         </button>
 
         {settingsOpen && (
