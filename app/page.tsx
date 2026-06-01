@@ -445,7 +445,7 @@ function getCardColor(card: Card): string {
 }
 
 
-const CARD_ASSET_VERSION = "v3";
+const CARD_ASSET_VERSION = "v4";
 const LOGO_ASSET_VERSION = "v2";
 const NUTS_LOGO_SRC = `/logo/nuts-logo.png?${LOGO_ASSET_VERSION}`;
 
