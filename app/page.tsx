@@ -1676,7 +1676,7 @@ export default function Home() {
 
         {settingsOpen && (
           <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 p-4">
-            <div className="w-full max-w-md rounded-3xl border-[5px] border-[#d9912c] bg-[#08251d] p-5 text-[#fff4cf] shadow-[10px_10px_0_#020806,inset_0_0_0_3px_rgba(242,184,74,0.16)]">
+            <div className="max-h-[88svh] w-full max-w-2xl overflow-y-auto rounded-3xl border-[5px] border-[#d9912c] bg-[#08251d] p-5 text-[#fff4cf] shadow-[10px_10px_0_#020806,inset_0_0_0_3px_rgba(242,184,74,0.16)]">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a]">SETTINGS</h2>
                 <button
@@ -1753,6 +1753,67 @@ export default function Home() {
                     className="w-full touch-pan-x accent-[#20d0b5]"
                   />
                 </label>
+
+                <div className="rounded-2xl border-[3px] border-[#06140f] bg-[#0b3328] p-4 shadow-[4px_4px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.10)]">
+                  <h3 className="mb-3 text-sm font-black tracking-[0.18em] text-[#f2b84a]">
+                    HOW TO PLAY
+                  </h3>
+
+                  <div className="grid gap-2 text-sm text-[#d9efe4]">
+                    <div className="rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <p className="font-black tracking-[0.12em] text-[#f7d17a]">01 PLACE A CARD</p>
+                      <p className="mt-1 text-xs leading-5">空いているマスに、表示されたカードを1枚置きます。</p>
+                    </div>
+                    <div className="rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <p className="font-black tracking-[0.12em] text-[#f7d17a]">02 MAKE A HAND</p>
+                      <p className="mt-1 text-xs leading-5">縦・横のみで役を作ります。斜めは無効です。</p>
+                    </div>
+                    <div className="rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <p className="font-black tracking-[0.12em] text-[#f7d17a]">03 CLEAR & COMBO</p>
+                      <p className="mt-1 text-xs leading-5">Three以上の役は消えます。Pairは消えずにコンボをつなぎます。</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border-[3px] border-[#06140f] bg-[#0b3328] p-4 shadow-[4px_4px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.10)]">
+                  <h3 className="mb-3 text-sm font-black tracking-[0.18em] text-[#f2b84a]">
+                    HAND LIST
+                  </h3>
+
+                  <div className="grid gap-2 text-xs text-[#d9efe4]">
+                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <div>
+                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">PAIR</p>
+                        <p className="mt-1 leading-5">同じ数字2枚。消えない。コンボ継続用。</p>
+                      </div>
+                      <p className="font-black text-[#f7d17a]">+{scoreTable.pair * 2}</p>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <div>
+                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">THREE CARD</p>
+                        <p className="mt-1 leading-5">同じ数字3枚。役カードが消える。</p>
+                      </div>
+                      <p className="font-black text-[#f7d17a]">+{scoreTable.three * 3}</p>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <div>
+                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">STRAIGHT</p>
+                        <p className="mt-1 leading-5">連続した数字3枚。Aは1としても使えます。</p>
+                      </div>
+                      <p className="font-black text-[#f7d17a]">+{scoreTable.straight * 3}</p>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
+                      <div>
+                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">FULL HOUSE</p>
+                        <p className="mt-1 leading-5">3枚同数字 + 2枚同数字。高得点。</p>
+                      </div>
+                      <p className="font-black text-[#f7d17a]">+{scoreTable.fullHouse * 5}</p>
+                    </div>
+                  </div>
+                </div>
 
                 <button
                   type="button"
