@@ -2277,18 +2277,14 @@ export default function Home() {
                     </div>
 
                     <div className="flex min-h-0 flex-1 flex-col justify-center rounded-xl border-[3px] border-[#061811] bg-[#07160f] p-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.35)]">
-                      <p className="duel-status-kicker text-[10px] font-black tracking-[0.22em] text-[#f5d06f]">
-                        {duel.isGameOver ? "RESULT" : "CURRENT TURN"}
-                      </p>
-                      <p className="duel-status-title mt-2 text-2xl font-black text-white drop-shadow-[3px_3px_0_#03100b]">
+                      <p className="duel-status-title text-2xl font-black text-white drop-shadow-[3px_3px_0_#03100b]">
                         {duel.isGameOver ? winnerText : `PLAYER ${duel.currentPlayer}`}
                       </p>
-                      <p className="duel-status-result mt-3 text-base font-black text-[#fff4cf]">
-                        {duel.lastResult}
-                      </p>
-                      <p className="duel-status-message mt-2 text-sm font-bold leading-relaxed text-[#8bd8af]">
-                        {duel.isGameOver ? `P1 ${p1Owned} - P2 ${p2Owned}` : "Make a hand to claim or steal cells."}
-                      </p>
+                      {duel.isGameOver && (
+                        <p className="duel-status-result mt-3 text-base font-black text-[#fff4cf]">
+                          P1 {p1Owned} - P2 {p2Owned}
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-2 grid gap-2">
