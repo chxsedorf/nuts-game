@@ -931,12 +931,10 @@ function HomeScreen({
   highScore,
   onStart,
   onStartDuel,
-  onOpenSettings,
 }: {
   highScore: number;
   onStart: () => void;
   onStartDuel: () => void;
-  onOpenSettings: () => void;
 }) {
   const [showHands, setShowHands] = useState(false);
 
@@ -1272,13 +1270,7 @@ function HomeScreen({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={onOpenSettings}
-                  className="home-privacy-button rounded-xl px-4 py-3 text-center text-[12px] font-black tracking-[0.22em] sm:text-sm"
-                >
-                  SETTINGS
-                </button>
+
               </div>
             </div>
 
@@ -2045,7 +2037,6 @@ export default function Home() {
             startGame();
           }}
           onStartDuel={startDuelGame}
-          onOpenSettings={() => setSettingsOpen(true)}
         />
         {renderSettingsButtonAndModal()}
       </>
@@ -4131,20 +4122,13 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:gap-2">
+              <div className="grid shrink-0 grid-cols-2 gap-1.5 sm:gap-2">
                 <button
                   onClick={restartGame}
                   className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
                 >
                   RESTART
-                </button>
-
-                <button
-                  onClick={toggleSound}
-                  className="rounded-xl border-[4px] border-[#061811] bg-[#f5d06f] px-2 py-2.5 text-sm font-black text-[#061811] shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.18)_inset]"
-                >
-                  {soundEnabled ? "SFX ON" : "SFX OFF"}
                 </button>
 
                 <button
