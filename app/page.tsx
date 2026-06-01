@@ -1393,7 +1393,8 @@ export default function Home() {
     context: AudioContext,
     startTime: number,
     duration: number,
-    gainValue: number
+    gainValue: number,
+    filterFrequency = 900
   ) {
     const safeGain = getSafeSfxGain(gainValue);
     if (safeGain <= 0) return;
@@ -1411,7 +1412,7 @@ export default function Home() {
     const filter = context.createBiquadFilter();
 
     filter.type = "highpass";
-    filter.frequency.setValueAtTime(900, startTime);
+    filter.frequency.setValueAtTime(filterFrequency, startTime);
 
     gain.gain.setValueAtTime(safeGain, startTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
@@ -1425,6 +1426,65 @@ export default function Home() {
     source.stop(startTime + duration);
   }
 
+  function playChord(
+    context: AudioContext,
+    frequencies: number[],
+    startTime: number,
+    duration: number,
+    gainValue: number,
+    type: OscillatorType = "square"
+  ) {
+    frequencies.forEach((frequency, index) => {
+      playNote(
+        context,
+        frequency,
+        startTime + index * 0.018,
+        duration + index * 0.015,
+        gainValue,
+        type
+      );
+    });
+  }
+
+  function playCardSnap(context: AudioContext, startTime: number) {
+    playNoise(context, startTime, 0.045, 0.028, 2400);
+    playNote(context, 210, startTime, 0.045, 0.028, "square");
+    playNote(context, 420, startTime + 0.025, 0.035, 0.018, "triangle");
+  }
+
+  function playUiClick(context: AudioContext, startTime: number) {
+    playNote(context, 620, startTime, 0.028, 0.025, "square");
+    playNote(context, 920, startTime + 0.018, 0.032, 0.018, "triangle");
+  }
+
+  function playSuccessJingle(context: AudioContext, startTime: number) {
+    playChord(context, [392, 523.25, 659.25], startTime, 0.08, 0.03, "square");
+    playChord(context, [523.25, 659.25, 783.99], startTime + 0.08, 0.09, 0.032, "triangle");
+    playNote(context, 1046.5, startTime + 0.18, 0.13, 0.038, "triangle");
+    playNoise(context, startTime + 0.02, 0.10, 0.018, 3200);
+  }
+
+  function playComboUp(context: AudioContext, startTime: number) {
+    playNote(context, 440, startTime, 0.055, 0.026, "square");
+    playNote(context, 554.37, startTime + 0.045, 0.06, 0.028, "square");
+    playNote(context, 659.25, startTime + 0.095, 0.08, 0.032, "triangle");
+    playNoise(context, startTime + 0.075, 0.06, 0.010, 2800);
+  }
+
+  function playErrorDrop(context: AudioContext, startTime: number) {
+    playNote(context, 220, startTime, 0.09, 0.035, "sawtooth");
+    playNote(context, 164.81, startTime + 0.07, 0.11, 0.032, "sawtooth");
+    playNote(context, 110, startTime + 0.145, 0.13, 0.024, "square");
+    playNoise(context, startTime + 0.02, 0.13, 0.012, 700);
+  }
+
+  function playGameOverJingle(context: AudioContext, startTime: number) {
+    playChord(context, [392, 493.88, 587.33], startTime, 0.11, 0.03, "triangle");
+    playChord(context, [329.63, 392, 493.88], startTime + 0.13, 0.13, 0.028, "triangle");
+    playNote(context, 196, startTime + 0.30, 0.22, 0.032, "sawtooth");
+    playNoise(context, startTime + 0.30, 0.20, 0.012, 520);
+  }
+
   function playSound(sound: SoundName) {
     if (!soundEnabled || sfxVolume <= 0) return;
 
@@ -1434,48 +1494,46 @@ export default function Home() {
     const now = context.currentTime;
 
     if (sound === "place") {
-      playNote(context, 220, now, 0.055, 0.055, "square");
-      playNote(context, 330, now + 0.045, 0.07, 0.045, "triangle");
+      playCardSnap(context, now);
       return;
     }
 
     if (sound === "select") {
-      playNote(context, 520, now, 0.045, 0.035, "square");
-      playNote(context, 740, now + 0.035, 0.05, 0.03, "square");
+      playUiClick(context, now);
       return;
     }
 
     if (sound === "hit") {
-      playNote(context, 392, now, 0.08, 0.055, "square");
-      playNote(context, 523.25, now + 0.06, 0.085, 0.055, "square");
-      playNote(context, 783.99, now + 0.13, 0.13, 0.06, "triangle");
-      playNoise(context, now + 0.02, 0.12, 0.025);
+      playSuccessJingle(context, now);
+      playComboUp(context, now + 0.18);
       return;
     }
 
     if (sound === "miss") {
-      playNote(context, 196, now, 0.09, 0.05, "sawtooth");
-      playNote(context, 130.81, now + 0.075, 0.13, 0.045, "sawtooth");
-      playNoise(context, now, 0.16, 0.018);
+      playErrorDrop(context, now);
       return;
     }
 
     if (sound === "gameover") {
-      playNote(context, 392, now, 0.12, 0.055, "triangle");
-      playNote(context, 261.63, now + 0.11, 0.16, 0.052, "triangle");
-      playNote(context, 164.81, now + 0.25, 0.24, 0.055, "sawtooth");
+      playGameOverJingle(context, now);
       return;
     }
 
     if (sound === "start") {
-      playNote(context, 261.63, now, 0.07, 0.045, "square");
-      playNote(context, 329.63, now + 0.06, 0.07, 0.045, "square");
-      playNote(context, 523.25, now + 0.13, 0.12, 0.055, "triangle");
+      playChord(context, [261.63, 329.63, 392], now, 0.075, 0.026, "square");
+      playChord(context, [329.63, 415.3, 523.25], now + 0.105, 0.10, 0.028, "triangle");
+      playNoise(context, now + 0.04, 0.08, 0.012, 2600);
       return;
     }
 
-    playNote(context, 180, now, 0.055, 0.04, "square");
-    playNote(context, 260, now + 0.05, 0.08, 0.04, "square");
+    if (sound === "restart") {
+      playNote(context, 300, now, 0.045, 0.024, "square");
+      playNote(context, 420, now + 0.04, 0.045, 0.024, "square");
+      playNote(context, 600, now + 0.08, 0.055, 0.024, "triangle");
+      return;
+    }
+
+    playUiClick(context, now);
   }
 
   function toggleSound() {
@@ -1645,6 +1703,29 @@ export default function Home() {
                     onInput={(event) => setSfxVolume(Number(event.currentTarget.value))}
                     className="w-full touch-pan-x accent-[#f0a536]"
                   />
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => playSound("place")}
+                      className="rounded-lg border-[2px] border-[#06140f] bg-[#123f32] px-2 py-2 text-[10px] font-black tracking-[0.08em] text-[#f7d17a] shadow-[3px_3px_0_#020806]"
+                    >
+                      PLACE
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => playSound("hit")}
+                      className="rounded-lg border-[2px] border-[#06140f] bg-[#123f32] px-2 py-2 text-[10px] font-black tracking-[0.08em] text-[#f7d17a] shadow-[3px_3px_0_#020806]"
+                    >
+                      HIT
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => playSound("miss")}
+                      className="rounded-lg border-[2px] border-[#06140f] bg-[#123f32] px-2 py-2 text-[10px] font-black tracking-[0.08em] text-[#f7d17a] shadow-[3px_3px_0_#020806]"
+                    >
+                      MISS
+                    </button>
+                  </div>
                 </label>
 
                 <label className="block">
