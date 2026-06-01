@@ -451,6 +451,8 @@ const UI_ASSET_VERSION = "v2";
 const NUTS_LOGO_SRC = `/logo/nuts-logo-sign.png?${LOGO_ASSET_VERSION}`;
 const SOLO_BUTTON_SRC = `/ui/solo-play-button.png?${UI_ASSET_VERSION}`;
 const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
+const HOME_BGM_SRC = "/audio/home-bgm.mp3";
+const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -1320,8 +1322,8 @@ export default function Home() {
   const [bgmEnabled, setBgmEnabled] = useState(false);
   const [bgmVolume, setBgmVolume] = useState(0.25);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const bgmOscillatorRef = useRef<OscillatorNode | null>(null);
-  const bgmGainRef = useRef<GainNode | null>(null);
+  const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bgmTrackRef = useRef<string>("");
 
   useEffect(() => {
     preloadCardImages();
@@ -1490,69 +1492,69 @@ export default function Home() {
     }
   }
 
-  function stopBgm() {
-    if (bgmOscillatorRef.current) {
-      try {
-        bgmOscillatorRef.current.stop();
-      } catch {
-        // already stopped
-      }
-      bgmOscillatorRef.current.disconnect();
-      bgmOscillatorRef.current = null;
-    }
-
-    if (bgmGainRef.current) {
-      bgmGainRef.current.disconnect();
-      bgmGainRef.current = null;
-    }
+  function getBgmSource() {
+    return screen === "home" ? HOME_BGM_SRC : PLAY_BGM_SRC;
   }
 
-  function startBgm() {
-    const context = getAudioContext();
-    if (!context) return;
+  function stopBgm() {
+    if (!bgmAudioRef.current) return;
 
-    stopBgm();
+    bgmAudioRef.current.pause();
+    bgmAudioRef.current.currentTime = 0;
+  }
 
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
+  function startBgm(nextSource = getBgmSource()) {
+    if (typeof window === "undefined") return;
+    if (bgmVolume <= 0) return;
 
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(110, context.currentTime);
+    let audio = bgmAudioRef.current;
 
-    gain.gain.setValueAtTime(Math.max(0, bgmVolume) * 0.18, context.currentTime);
+    if (!audio) {
+      audio = new Audio(nextSource);
+      audio.loop = true;
+      audio.preload = "auto";
+      bgmAudioRef.current = audio;
+      bgmTrackRef.current = nextSource;
+    }
 
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start();
+    if (bgmTrackRef.current !== nextSource) {
+      audio.pause();
+      audio.src = nextSource;
+      audio.load();
+      bgmTrackRef.current = nextSource;
+    }
 
-    bgmOscillatorRef.current = oscillator;
-    bgmGainRef.current = gain;
+    audio.loop = true;
+    audio.volume = Math.min(1, Math.max(0, bgmVolume));
+
+    void audio.play().catch(() => {
+      // Browser autoplay rules may block playback until the next user gesture.
+    });
   }
 
   useEffect(() => {
-    if (!bgmEnabled) {
+    const source = getBgmSource();
+    const audio = bgmAudioRef.current;
+
+    if (bgmVolume <= 0 || !bgmEnabled) {
       stopBgm();
       return;
     }
 
-    if (!bgmOscillatorRef.current) {
-      startBgm();
+    if (!audio || bgmTrackRef.current !== source) {
+      startBgm(source);
       return;
     }
 
-    const context = getAudioContext();
-    if (!context || !bgmGainRef.current) return;
-
-    bgmGainRef.current.gain.setTargetAtTime(
-      Math.max(0, bgmVolume) * 0.18,
-      context.currentTime,
-      0.03
-    );
-  }, [bgmEnabled, bgmVolume]);
+    audio.volume = Math.min(1, Math.max(0, bgmVolume));
+  }, [screen, mode, bgmEnabled, bgmVolume]);
 
   useEffect(() => {
     return () => {
-      stopBgm();
+      if (bgmAudioRef.current) {
+        bgmAudioRef.current.pause();
+        bgmAudioRef.current = null;
+      }
     };
   }, []);
 
@@ -1658,6 +1660,12 @@ export default function Home() {
                       const nextVolume = Number(event.currentTarget.value);
                       setBgmVolume(nextVolume);
                       setBgmEnabled(nextVolume > 0);
+
+                      if (nextVolume > 0) {
+                        window.setTimeout(() => startBgm(getBgmSource()), 0);
+                      } else {
+                        stopBgm();
+                      }
                     }}
                     className="w-full touch-pan-x accent-[#20d0b5]"
                   />
@@ -1705,6 +1713,11 @@ export default function Home() {
     resetEffects();
     setGame((prev) => createInitialGame(prev.highScore));
     setScreen("game");
+
+    if (bgmVolume > 0) {
+      setBgmEnabled(true);
+      window.setTimeout(() => startBgm(PLAY_BGM_SRC), 0);
+    }
   }
 
   function startDuelGame() {
@@ -1713,6 +1726,11 @@ export default function Home() {
     setMode("duel");
     setDuel(createInitialDuelGame());
     setScreen("game");
+
+    if (bgmVolume > 0) {
+      setBgmEnabled(true);
+      window.setTimeout(() => startBgm(PLAY_BGM_SRC), 0);
+    }
   }
 
   function restartDuelGame() {
@@ -2818,7 +2836,7 @@ export default function Home() {
                               canPlace ? "cursor-pointer hover:-translate-y-1 hover:brightness-125" : "",
                               ownerGlow,
                               isPlaced ? "scale-[1.03]" : "",
-                              isHit ? "z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]" : "",
+                              isHit ? "pixel-hit-cell z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]" : "",
                               isClearing ? "opacity-80" : "",
                             ].join(" ")}
                             style={{
@@ -3037,6 +3055,226 @@ export default function Home() {
         @keyframes targetBanner {
           0% { transform: scale(0.92); opacity: 0; }
           100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pixelSparkle {
+          0%, 100% { opacity: 0.16; transform: translateY(0); }
+          50% { opacity: 0.34; transform: translateY(-1px); }
+        }
+
+        @keyframes pixelHitPulse {
+          0% {
+            box-shadow:
+              inset 0 0 0 2px #f5d06f,
+              0 0 0 0 rgba(245,208,111,0.58),
+              4px 4px 0 #000;
+          }
+          50% {
+            box-shadow:
+              inset 0 0 0 4px #6ee7ff,
+              0 0 0 5px rgba(110,231,255,0.26),
+              6px 6px 0 #000;
+          }
+          100% {
+            box-shadow:
+              inset 0 0 0 2px #f5d06f,
+              0 0 0 0 rgba(245,208,111,0.58),
+              4px 4px 0 #000;
+          }
+        }
+
+        .table-frame {
+          background:
+            radial-gradient(circle at 50% 0%, rgba(245,208,111,0.12), transparent 34%),
+            linear-gradient(180deg, rgba(10,68,51,0.96), rgba(4,27,22,0.98)) !important;
+          box-shadow:
+            10px 10px 0 #020806,
+            0 0 0 4px #06140f,
+            0 0 0 7px #d9912c,
+            inset 0 0 0 3px rgba(255,220,116,0.16),
+            inset 0 0 54px rgba(0,0,0,0.48) !important;
+        }
+
+        .table-frame::before,
+        .table-frame::after {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          z-index: 1;
+          width: 34px;
+          height: 34px;
+          border-color: #f2b84a;
+          opacity: 0.92;
+        }
+
+        .table-frame::before {
+          left: 8px;
+          top: 8px;
+          border-left: 5px solid #f2b84a;
+          border-top: 5px solid #f2b84a;
+          box-shadow: 4px 4px 0 rgba(0,0,0,0.36) inset;
+        }
+
+        .table-frame::after {
+          right: 8px;
+          bottom: 8px;
+          border-right: 5px solid #f2b84a;
+          border-bottom: 5px solid #f2b84a;
+          box-shadow: -4px -4px 0 rgba(0,0,0,0.36) inset;
+        }
+
+        .portrait-board-wrap {
+          clip-path: polygon(
+            14px 0,
+            calc(100% - 14px) 0,
+            100% 14px,
+            100% calc(100% - 14px),
+            calc(100% - 14px) 100%,
+            14px 100%,
+            0 calc(100% - 14px),
+            0 14px
+          );
+          background:
+            radial-gradient(circle at 50% 0%, rgba(245,208,111,0.12), transparent 28%),
+            linear-gradient(180deg, #0d4334, #061d17) !important;
+          box-shadow:
+            7px 7px 0 #020806,
+            inset 0 0 0 3px #255d48,
+            inset 0 0 0 7px rgba(6,24,17,0.78),
+            inset 0 0 28px rgba(0,0,0,0.48) !important;
+        }
+
+        .portrait-board-wrap::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 8px;
+          z-index: 0;
+          border: 2px solid rgba(242,184,74,0.22);
+          clip-path: inherit;
+        }
+
+        .portrait-board {
+          background:
+            radial-gradient(circle, rgba(245,208,111,0.12) 1px, transparent 1.8px),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 10px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,0.026) 0 1px, transparent 1px 10px),
+            linear-gradient(180deg, #092d24, #061b16) !important;
+          background-size: 10px 10px, 10px 10px, 10px 10px, auto !important;
+          image-rendering: pixelated;
+          box-shadow:
+            inset 0 0 0 3px #1a4e3e,
+            inset 0 0 0 7px #06140f,
+            inset 0 0 38px rgba(0,0,0,0.62),
+            5px 5px 0 #04120d !important;
+        }
+
+        .portrait-board > button {
+          image-rendering: pixelated;
+          clip-path: polygon(
+            7px 0,
+            calc(100% - 7px) 0,
+            100% 7px,
+            100% calc(100% - 7px),
+            calc(100% - 7px) 100%,
+            7px 100%,
+            0 calc(100% - 7px),
+            0 7px
+          );
+        }
+
+        .portrait-board > button::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          background:
+            radial-gradient(circle, rgba(245,208,111,0.16) 1px, transparent 1.8px),
+            linear-gradient(135deg, rgba(255,255,255,0.025), transparent 36%);
+          background-size: 9px 9px, auto;
+          opacity: 0.32;
+          image-rendering: pixelated;
+        }
+
+        .portrait-board > button > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .slot-surface {
+          background:
+            radial-gradient(circle at 50% 50%, rgba(245,208,111,0.10), transparent 42%),
+            repeating-linear-gradient(45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 8px),
+            linear-gradient(180deg, #123d31, #09231d) !important;
+        }
+
+        .slot-surface:hover {
+          background:
+            radial-gradient(circle at 50% 50%, rgba(245,208,111,0.18), transparent 42%),
+            repeating-linear-gradient(45deg, rgba(255,255,255,0.048) 0 2px, transparent 2px 8px),
+            linear-gradient(180deg, #185443, #0d3027) !important;
+        }
+
+        .pixel-hit-cell {
+          animation: pixelHitPulse 520ms steps(4) infinite !important;
+        }
+
+        .pixel-hit-cell::before {
+          opacity: 0.62 !important;
+          background:
+            radial-gradient(circle, rgba(255,239,122,0.78) 0 2px, transparent 2.5px),
+            radial-gradient(circle, rgba(110,231,255,0.72) 0 2px, transparent 2.5px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,0.10) 0 2px, transparent 2px 8px) !important;
+          background-position: 0 0, 5px 5px, 0 0 !important;
+          background-size: 10px 10px, 10px 10px, 8px 8px !important;
+          animation: pixelSparkle 260ms steps(2) infinite !important;
+        }
+
+        .queue-panel,
+        .portrait-queue-panel,
+        .solo-queue-panel {
+          clip-path: polygon(
+            12px 0,
+            calc(100% - 12px) 0,
+            100% 12px,
+            100% calc(100% - 12px),
+            calc(100% - 12px) 100%,
+            12px 100%,
+            0 calc(100% - 12px),
+            0 12px
+          );
+          background:
+            radial-gradient(circle at 50% 0%, rgba(245,208,111,0.12), transparent 32%),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.030) 0 1px, transparent 1px 9px),
+            linear-gradient(180deg, #0e3d31, #061b15) !important;
+          box-shadow:
+            7px 7px 0 #020806,
+            inset 0 0 0 3px #255d48,
+            inset 0 0 0 7px rgba(6,24,17,0.72),
+            inset 0 0 24px rgba(0,0,0,0.42) !important;
+        }
+
+        .queue-card-well {
+          background:
+            radial-gradient(circle, rgba(245,208,111,0.10) 1px, transparent 1.8px),
+            linear-gradient(180deg, #0b2f27, #061811) !important;
+          background-size: 10px 10px, auto !important;
+          clip-path: polygon(
+            10px 0,
+            calc(100% - 10px) 0,
+            100% 10px,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            10px 100%,
+            0 calc(100% - 10px),
+            0 10px
+          );
+        }
+
+        .pixel-inner,
+        .pixel-hard-sm {
+          image-rendering: pixelated;
         }
 
         @media (orientation: portrait), (max-aspect-ratio: 1/1) {
@@ -4020,7 +4258,7 @@ export default function Home() {
                               : "",
                             !cell && !canPlace ? "hover:bg-[#1c4639]" : "",
                             isHighlighted
-                              ? "z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]"
+                              ? "pixel-hit-cell z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]"
                               : "",
                             shouldDim ? "opacity-70" : "",
                           ].join(" ")}
@@ -4142,6 +4380,11 @@ export default function Home() {
                   onClick={() => {
                     playSound("select");
                     setScreen("home");
+
+                    if (bgmVolume > 0) {
+                      setBgmEnabled(true);
+                      window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
+                    }
                   }}
                   className="rounded-xl border-[4px] border-[#061811] bg-[#d23a2f] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset]"
                   style={{ textShadow: "2px 2px 0 #03100b" }}
