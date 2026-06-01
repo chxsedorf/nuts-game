@@ -445,6 +445,8 @@ function getCardColor(card: Card): string {
 }
 
 
+const CARD_ASSET_VERSION = "v2";
+
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
   heart: "H",
@@ -453,7 +455,7 @@ const suitCodeMap: Record<Suit, string> = {
 };
 
 function getCardImagePath(card: Card): string {
-  return `/cards/${card.rank}${suitCodeMap[card.suit]}.png`;
+  return `/cards/${card.rank}${suitCodeMap[card.suit]}.png?${CARD_ASSET_VERSION}`;
 }
 
 function keyOf(row: number, col: number) {
