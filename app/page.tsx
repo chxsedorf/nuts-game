@@ -445,9 +445,9 @@ function getCardColor(card: Card): string {
 }
 
 
-const CARD_ASSET_VERSION = "v9";
-const LOGO_ASSET_VERSION = "v2";
-const NUTS_LOGO_SRC = `/logo/nuts-logo.png?${LOGO_ASSET_VERSION}`;
+const CARD_ASSET_VERSION = "v10";
+const LOGO_ASSET_VERSION = "v1";
+const NUTS_LOGO_SRC = `/logo/nuts-wordmark.svg?${LOGO_ASSET_VERSION}`;
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -1061,8 +1061,28 @@ function HomeScreen({
         .nuts-logo-img {
           image-rendering: auto;
           filter:
-            drop-shadow(5px 5px 0 #020806)
-            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+            drop-shadow(0 4px 0 #4a2307)
+            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
+            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
+          mix-blend-mode: normal;
+        }
+
+        .nuts-wordmark-stack {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .nuts-wordmark-sub {
+          margin-top: -4px;
+          margin-left: 8px;
+          color: #87c77b;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.33em;
+          text-shadow: 3px 3px 0 #020806;
         }
 
         .nuts-pixel .table-frame {
@@ -1178,8 +1198,28 @@ function HomeScreen({
         .nuts-logo-img {
           image-rendering: auto;
           filter:
-            drop-shadow(5px 5px 0 #020806)
-            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+            drop-shadow(0 4px 0 #4a2307)
+            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
+            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
+          mix-blend-mode: normal;
+        }
+
+        .nuts-wordmark-stack {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .nuts-wordmark-sub {
+          margin-top: -4px;
+          margin-left: 8px;
+          color: #87c77b;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.33em;
+          text-shadow: 3px 3px 0 #020806;
         }
 
         .nuts-pixel .table-frame {
@@ -1402,7 +1442,7 @@ function HomeScreen({
                       src={NUTS_LOGO_SRC}
                       alt="NUTS GRID POKER"
                       draggable={false}
-                      className="nuts-logo-img h-auto w-full select-none object-contain drop-shadow-[10px_10px_0_#020806]"
+                      className="nuts-logo-img h-auto w-full select-none object-contain"
                       loading="eager"
                       decoding="sync"
                       fetchPriority="high"
@@ -2492,8 +2532,28 @@ export default function Home() {
         .nuts-logo-img {
           image-rendering: auto;
           filter:
-            drop-shadow(5px 5px 0 #020806)
-            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+            drop-shadow(0 4px 0 #4a2307)
+            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
+            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
+          mix-blend-mode: normal;
+        }
+
+        .nuts-wordmark-stack {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .nuts-wordmark-sub {
+          margin-top: -4px;
+          margin-left: 8px;
+          color: #87c77b;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.33em;
+          text-shadow: 3px 3px 0 #020806;
         }
 
         .nuts-pixel .table-frame {
@@ -2609,8 +2669,28 @@ export default function Home() {
         .nuts-logo-img {
           image-rendering: auto;
           filter:
-            drop-shadow(5px 5px 0 #020806)
-            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+            drop-shadow(0 4px 0 #4a2307)
+            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
+            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
+          mix-blend-mode: normal;
+        }
+
+        .nuts-wordmark-stack {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .nuts-wordmark-sub {
+          margin-top: -4px;
+          margin-left: 8px;
+          color: #87c77b;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.33em;
+          text-shadow: 3px 3px 0 #020806;
         }
 
         .nuts-pixel .table-frame {
@@ -2749,7 +2829,7 @@ export default function Home() {
                   src={NUTS_LOGO_SRC}
                   alt="NUTS"
                   draggable={false}
-                  className="nuts-logo-img h-auto max-h-[72px] w-[230px] select-none object-contain drop-shadow-[5px_5px_0_#020806] sm:max-h-[86px] sm:w-[300px] lg:w-[340px]"
+                  className="nuts-logo-img h-auto max-h-[72px] w-[210px] select-none object-contain sm:max-h-[82px] sm:w-[280px] lg:w-[310px]"
                   loading="eager"
                   decoding="sync"
                   fetchPriority="high"
@@ -3474,8 +3554,28 @@ export default function Home() {
         .nuts-logo-img {
           image-rendering: auto;
           filter:
-            drop-shadow(5px 5px 0 #020806)
-            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+            drop-shadow(0 4px 0 #4a2307)
+            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
+            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
+          mix-blend-mode: normal;
+        }
+
+        .nuts-wordmark-stack {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .nuts-wordmark-sub {
+          margin-top: -4px;
+          margin-left: 8px;
+          color: #87c77b;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.33em;
+          text-shadow: 3px 3px 0 #020806;
         }
 
         .nuts-pixel .table-frame {
@@ -3591,8 +3691,28 @@ export default function Home() {
         .nuts-logo-img {
           image-rendering: auto;
           filter:
-            drop-shadow(5px 5px 0 #020806)
-            drop-shadow(0 0 10px rgba(245, 181, 68, 0.28));
+            drop-shadow(0 4px 0 #4a2307)
+            drop-shadow(0 8px 0 rgba(2, 8, 6, 0.62))
+            drop-shadow(0 0 12px rgba(245, 181, 68, 0.22));
+          mix-blend-mode: normal;
+        }
+
+        .nuts-wordmark-stack {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .nuts-wordmark-sub {
+          margin-top: -4px;
+          margin-left: 8px;
+          color: #87c77b;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.33em;
+          text-shadow: 3px 3px 0 #020806;
         }
 
         .nuts-pixel .table-frame {
@@ -3888,7 +4008,7 @@ export default function Home() {
                 src={NUTS_LOGO_SRC}
                 alt="NUTS GRID POKER"
                 draggable={false}
-                className="nuts-logo-img h-auto max-h-[72px] w-[220px] select-none object-contain drop-shadow-[5px_5px_0_#020806] sm:max-h-[84px] sm:w-[290px] lg:w-[330px]"
+                className="nuts-logo-img h-auto max-h-[72px] w-[205px] select-none object-contain sm:max-h-[82px] sm:w-[270px] lg:w-[305px]"
                 loading="eager"
                 decoding="sync"
                 fetchPriority="high"
