@@ -76,6 +76,22 @@ type ResultBanner = {
 };
 
 type ScreenState = "home" | "game";
+type GameMode = "solo" | "duel";
+type PlayerId = 1 | 2;
+type CellOwner = PlayerId | null;
+type OwnerBoard = CellOwner[][];
+
+type DuelState = {
+  board: Board;
+  owners: OwnerBoard;
+  deck: Card[];
+  currentCard: Card | null;
+  currentPlayer: PlayerId;
+  placedCount: number;
+  lastResult: string;
+  lastHandName: string;
+  isGameOver: boolean;
+};
 
 type SoundName =
   | "start"
@@ -248,6 +264,37 @@ function createEmptyBoard(): Board {
   return Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => null)
   );
+}
+
+function createEmptyOwnerBoard(): OwnerBoard {
+  return Array.from({ length: BOARD_SIZE }, () =>
+    Array.from({ length: BOARD_SIZE }, () => null)
+  );
+}
+
+function hasEmptyCell(board: Board) {
+  return board.some((row) => row.some((cell) => cell === null));
+}
+
+function countOwnedCells(owners: OwnerBoard, player: PlayerId) {
+  return owners.flat().filter((owner) => owner === player).length;
+}
+
+function createInitialDuelGame(): DuelState {
+  const deck = createDeck();
+  const [currentCard, ...rest] = deck;
+
+  return {
+    board: createEmptyBoard(),
+    owners: createEmptyOwnerBoard(),
+    deck: rest,
+    currentCard: currentCard ?? null,
+    currentPlayer: 1,
+    placedCount: 0,
+    lastResult: "P1 TURN",
+    lastHandName: "",
+    isGameOver: false,
+  };
 }
 
 function shuffle<T>(array: T[]): T[] {
@@ -879,9 +926,11 @@ function MobileRoleListPanel() {
 function HomeScreen({
   highScore,
   onStart,
+  onStartDuel,
 }: {
   highScore: number;
   onStart: () => void;
+  onStartDuel: () => void;
 }) {
   const [showHands, setShowHands] = useState(false);
 
@@ -1116,8 +1165,15 @@ function HomeScreen({
                   className="pixel-hard-sm relative overflow-hidden border-[5px] border-[#06160f] bg-[#f0a536] px-6 py-5 text-3xl font-black text-[#2a1603] shadow-[5px_5px_0_#03100b] transition hover:-translate-y-1 active:translate-y-0"
                   style={{ animation: "buttonPulseGold 1.7s ease-in-out infinite" }}
                 >
-                  <span className="relative z-10">PLAY</span>
+                  <span className="relative z-10">SOLO PLAY</span>
                   <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-white/25" style={{ animation: "shineSweep 2.7s ease-in-out infinite" }} />
+                </button>
+
+                <button
+                  onClick={onStartDuel}
+                  className="pixel-hard-sm relative overflow-hidden border-[5px] border-[#06160f] bg-[#6ee7ff] px-6 py-4 text-2xl font-black text-[#06160f] shadow-[5px_5px_0_#03100b] transition hover:-translate-y-1 active:translate-y-0"
+                >
+                  DUEL MODE
                 </button>
 
                 <div className="grid grid-cols-[1fr_0.85fr] gap-3">
@@ -1214,6 +1270,8 @@ function HomeScreen({
 
 export default function Home() {
   const [game, setGame] = useState<GameState>(() => createInitialGame(0));
+  const [duel, setDuel] = useState<DuelState>(() => createInitialDuelGame());
+  const [mode, setMode] = useState<GameMode>("solo");
   const [isLoaded, setIsLoaded] = useState(false);
   const [screen, setScreen] = useState<ScreenState>("home");
 
@@ -1404,6 +1462,123 @@ export default function Home() {
     resetEffects();
     setGame((prev) => createInitialGame(prev.highScore));
     setScreen("game");
+  }
+
+  function startDuelGame() {
+    playSound("start");
+    resetEffects();
+    setMode("duel");
+    setDuel(createInitialDuelGame());
+    setScreen("game");
+  }
+
+  function restartDuelGame() {
+    playSound("restart");
+    resetEffects();
+    setDuel(createInitialDuelGame());
+  }
+
+  function finishDuel(nextDuel: DuelState, message = "DUEL OVER") {
+    window.setTimeout(() => playSound("gameover"), 180);
+    return {
+      ...nextDuel,
+      lastResult: message,
+      isGameOver: true,
+    };
+  }
+
+  function placeDuelCard(row: number, col: number) {
+    if (duel.isGameOver) return;
+    if (!duel.currentCard) return;
+    if (duel.board[row][col]) return;
+
+    playSound("place");
+
+    const selected = duel.currentCard;
+    const newBoard = duel.board.map((boardRow) => [...boardRow]);
+    const newOwners = duel.owners.map((ownerRow) => [...ownerRow]);
+    newBoard[row][col] = selected;
+
+    const results = evaluateBoard(newBoard, row, col);
+    const hasHand = results.length > 0;
+    const handTargets = new Set<string>();
+
+    for (const result of results) {
+      for (const cardPosition of result.cards) {
+        const targetKey = keyOf(cardPosition.row, cardPosition.col);
+        handTargets.add(targetKey);
+        newOwners[cardPosition.row][cardPosition.col] = duel.currentPlayer;
+      }
+    }
+
+    if (hasHand) {
+      for (const targetKey of handTargets) {
+        const [targetRow, targetCol] = targetKey.split("-").map(Number);
+        newBoard[targetRow][targetCol] = null;
+      }
+    }
+
+    const [nextCard, ...nextDeck] = duel.deck;
+    const nextPlayer: PlayerId = duel.currentPlayer === 1 ? 2 : 1;
+    const placedCount = duel.placedCount + 1;
+    const p1Owned = countOwnedCells(newOwners, 1);
+    const p2Owned = countOwnedCells(newOwners, 2);
+    const winnerText =
+      p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
+
+    const nextBase: DuelState = {
+      board: newBoard,
+      owners: newOwners,
+      deck: nextDeck,
+      currentCard: nextCard ?? null,
+      currentPlayer: nextPlayer,
+      placedCount,
+      lastResult: hasHand
+        ? `P${duel.currentPlayer} CLAIMED ${handTargets.size}`
+        : `P${nextPlayer} TURN`,
+      lastHandName: hasHand ? results.map((result) => result.name).join(" + ") : "",
+      isGameOver: false,
+    };
+
+    const isDeckDone = !nextCard;
+    const isStuck = !hasEmptyCell(newBoard);
+    const nextDuel = isDeckDone
+      ? finishDuel(nextBase, `52 CARDS DONE · ${winnerText}`)
+      : isStuck
+      ? finishDuel(nextBase, `BOARD STUCK · ${winnerText}`)
+      : nextBase;
+
+    if (hasHand) {
+      window.setTimeout(() => playSound("hit"), 90);
+    }
+
+    setPlacedCell(keyOf(row, col));
+    setHighlightCells(handTargets);
+    setClearingCells(hasHand ? handTargets : new Set());
+    setResultPulse(hasHand);
+
+    if (hasHand) {
+      const bannerId = Date.now() + 1;
+      setResultBanner({
+        id: bannerId,
+        text: nextBase.lastHandName,
+        score: handTargets.size,
+        combo: duel.currentPlayer,
+        comboNext: undefined,
+      });
+      window.setTimeout(() => {
+        setResultBanner((prev) => (prev?.id === bannerId ? null : prev));
+      }, 900);
+    }
+
+    setDuel(nextDuel);
+
+    window.setTimeout(() => {
+      setPlacedCell(null);
+      setHighlightCells(new Set());
+      setClearingCells(new Set());
+      setResultPulse(false);
+    }, 720);
   }
 
   function selectHandCard(index: number) {
@@ -1611,7 +1786,148 @@ export default function Home() {
   }
 
   if (screen === "home") {
-    return <HomeScreen highScore={game.highScore} onStart={startGame} />;
+    return (
+      <HomeScreen
+        highScore={game.highScore}
+        onStart={() => {
+          setMode("solo");
+          startGame();
+        }}
+        onStartDuel={startDuelGame}
+      />
+    );
+  }
+
+  if (mode === "duel") {
+    const p1Owned = countOwnedCells(duel.owners, 1);
+    const p2Owned = countOwnedCells(duel.owners, 2);
+    const emptyCells = duel.board.flat().filter((cell) => cell === null).length;
+    const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
+
+    return (
+      <main className="relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#1b0f2e] text-white md:h-screen md:overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(110,231,255,0.18),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(244,63,94,0.18),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(7,26,21,0.9),transparent_42%)]" />
+        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1180px] flex-col gap-3 px-3 py-3 md:h-screen md:justify-center md:overflow-hidden">
+          <header className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
+            <div className="grid grid-cols-2 gap-2">
+              <div className={["rounded-2xl border-[4px] border-black p-3 shadow-[5px_5px_0_#000]", duel.currentPlayer === 1 && !duel.isGameOver ? "bg-[#6ee7ff] text-[#06160f]" : "bg-[#0b3025] text-[#d8eadc]"].join(" ")}>
+                <p className="text-[10px] font-black tracking-[0.24em]">PLAYER 1</p>
+                <p className="text-3xl font-black">{p1Owned}</p>
+              </div>
+              <div className={["rounded-2xl border-[4px] border-black p-3 text-right shadow-[5px_5px_0_#000]", duel.currentPlayer === 2 && !duel.isGameOver ? "bg-[#fb7185] text-[#2a050b]" : "bg-[#0b3025] text-[#d8eadc]"].join(" ")}>
+                <p className="text-[10px] font-black tracking-[0.24em]">PLAYER 2</p>
+                <p className="text-3xl font-black">{p2Owned}</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border-[4px] border-black bg-[#f0a536] px-5 py-3 text-center text-[#2a1603] shadow-[5px_5px_0_#000]">
+              <p className="text-[10px] font-black tracking-[0.28em]">TERRITORY DUEL</p>
+              <p className="text-2xl font-black">{duel.isGameOver ? winnerText : `P${duel.currentPlayer} TURN`}</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-xl border-[3px] border-black bg-[#08241b] p-2 shadow-[4px_4px_0_#000]">
+                <p className="text-[9px] font-black tracking-[0.2em] text-[#8bd8af]">CARD</p>
+                <p className="text-xl font-black text-[#fff4cf]">{duel.placedCount}/52</p>
+              </div>
+              <div className="rounded-xl border-[3px] border-black bg-[#08241b] p-2 shadow-[4px_4px_0_#000]">
+                <p className="text-[9px] font-black tracking-[0.2em] text-[#8bd8af]">DECK</p>
+                <p className="text-xl font-black text-[#fff4cf]">{duel.deck.length}</p>
+              </div>
+              <div className="rounded-xl border-[3px] border-black bg-[#08241b] p-2 shadow-[4px_4px_0_#000]">
+                <p className="text-[9px] font-black tracking-[0.2em] text-[#8bd8af]">EMPTY</p>
+                <p className="text-xl font-black text-[#fff4cf]">{emptyCells}</p>
+              </div>
+            </div>
+          </header>
+
+          <section className="grid min-h-0 gap-3 md:grid-cols-[1fr_220px] md:items-stretch">
+            <div className="relative rounded-[1.75rem] border-[6px] border-black bg-[#07160f] p-3 shadow-[8px_8px_0_#000,0_0_0_3px_#f0a536_inset]">
+              {resultBanner && (
+                <div className="absolute right-4 top-4 z-20 rounded-xl border-[3px] border-black bg-[#f0a536] px-4 py-2 text-[#2a1603] shadow-[4px_4px_0_#000]">
+                  <p className="text-[10px] font-black tracking-[0.2em]">CLAIM</p>
+                  <p className="text-lg font-black">{resultBanner.text}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-5 gap-2">
+                {duel.board.map((boardRow, rowIndex) =>
+                  boardRow.map((cell, colIndex) => {
+                    const cellKey = keyOf(rowIndex, colIndex);
+                    const owner = duel.owners[rowIndex][colIndex];
+                    const isPlaced = placedCell === cellKey;
+                    const isHit = highlightCells.has(cellKey);
+                    const isClearing = clearingCells.has(cellKey);
+                    const ownerClass = owner === 1
+                      ? "bg-[#083344] shadow-[0_0_0_3px_rgba(110,231,255,0.55)_inset]"
+                      : owner === 2
+                      ? "bg-[#4c0519] shadow-[0_0_0_3px_rgba(251,113,133,0.55)_inset]"
+                      : "bg-[#0b3025]";
+
+                    return (
+                      <button
+                        key={cellKey}
+                        onClick={() => placeDuelCard(rowIndex, colIndex)}
+                        disabled={duel.isGameOver || Boolean(cell) || !duel.currentCard}
+                        className={[
+                          "relative aspect-square rounded-xl border-[4px] border-black p-1 transition",
+                          ownerClass,
+                          !cell && !duel.isGameOver ? "hover:-translate-y-1 hover:bg-[#18533c]" : "",
+                          isPlaced ? "scale-[1.03]" : "",
+                          isHit ? "ring-4 ring-[#f0a536]" : "",
+                          isClearing ? "opacity-80" : "",
+                        ].join(" ")}
+                      >
+                        <span className="absolute left-1 top-1 z-0 text-[10px] font-black text-white/60">
+                          {owner ? `P${owner}` : ""}
+                        </span>
+                        {cell ? (
+                          <div className="relative z-10 h-full w-full">
+                            <CardFace card={cell} size="tiny" />
+                          </div>
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-lg font-black text-white/10">
+                            ◆
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <aside className="grid gap-3 rounded-[1.75rem] border-[6px] border-black bg-[#08241b] p-3 shadow-[8px_8px_0_#000,0_0_0_3px_#18533c_inset]">
+              <div className="rounded-2xl border-[4px] border-black bg-[#07160f] p-3 text-center shadow-[5px_5px_0_#000]">
+                <p className="mb-2 text-[10px] font-black tracking-[0.3em] text-[#f0a536]">CURRENT CARD</p>
+                <div className="mx-auto h-36 w-24">
+                  {duel.currentCard ? <CardFace card={duel.currentCard} /> : <div className="flex h-full items-center justify-center rounded-xl border-[4px] border-black bg-[#0b3025] text-sm font-black text-[#8bd8af]">EMPTY</div>}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border-[4px] border-black bg-[#0b3025] p-3 shadow-[5px_5px_0_#000]">
+                <p className="text-[10px] font-black tracking-[0.28em] text-[#f0a536]">STATUS</p>
+                <p className="mt-2 text-lg font-black text-[#fff4cf]">{duel.lastResult}</p>
+                <p className="mt-1 text-sm font-bold text-[#8bd8af]">
+                  {duel.isGameOver ? "No more moves. Count territory." : "Make a hand to claim cells."}
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                {duel.isGameOver && (
+                  <button onClick={restartDuelGame} className="rounded-xl border-[4px] border-black bg-[#f0a536] px-4 py-3 text-xl font-black text-[#2a1603] shadow-[5px_5px_0_#000]">
+                    REMATCH
+                  </button>
+                )}
+                <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-black bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#000]">
+                  TITLE
+                </button>
+              </div>
+            </aside>
+          </section>
+        </div>
+      </main>
+    );
   }
 
   const gameOverRank =
