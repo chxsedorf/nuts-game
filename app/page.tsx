@@ -45,6 +45,7 @@ type HandResult = {
   score: number;
   cards: CardPosition[];
   shouldClear: boolean;
+  priority: number;
 };
 
 type GameState = {
@@ -547,17 +548,39 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
 }
 
 function getHandRankKey(card: Card): string {
-  // Hand judgement should follow the printed card rank, not a numeric value that may be used elsewhere.
-  // A is treated as 1 only for straight order, but A-A and A-A-A still match by rank.
-  return card.rank === "A" ? "1" : card.rank;
+  const rankText = String(card.rank).toUpperCase();
+
+  // The UI treats A as 1. Accept "1" as well for safety.
+  if (rankText === "A" || rankText === "1") return "1";
+  return rankText;
 }
 
 function getStraightOrderValue(card: Card): number {
-  if (card.rank === "A") return 1;
-  if (card.rank === "J") return 11;
-  if (card.rank === "Q") return 12;
-  if (card.rank === "K") return 13;
-  return Number(card.rank);
+  const rankText = getHandRankKey(card);
+
+  if (rankText === "J") return 11;
+  if (rankText === "Q") return 12;
+  if (rankText === "K") return 13;
+
+  const numericValue = Number(rankText);
+  return Number.isFinite(numericValue) ? numericValue : Number.NaN;
+}
+
+function getResultKey(result: HandResult): string {
+  return result.cards
+    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+    .sort()
+    .join("|");
+}
+
+function containsAllCardPositions(parent: HandResult, child: HandResult): boolean {
+  const parentKeys = new Set(
+    parent.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+  );
+
+  return child.cards.every((cardPosition) =>
+    parentKeys.has(keyOf(cardPosition.row, cardPosition.col))
+  );
 }
 
 function areSameRank(cards: LineCard[]): boolean {
@@ -567,12 +590,12 @@ function areSameRank(cards: LineCard[]): boolean {
   return cards.every((item) => getHandRankKey(item.card) === firstRank);
 }
 
-function isThreeCard(cards: LineCard[]): boolean {
-  return cards.length === 3 && areSameRank(cards);
-}
-
 function isPairCards(cards: LineCard[]): boolean {
   return cards.length === 2 && areSameRank(cards);
+}
+
+function isThreeCard(cards: LineCard[]): boolean {
+  return cards.length === 3 && areSameRank(cards);
 }
 
 function isStraightCards(cards: LineCard[]): boolean {
@@ -582,7 +605,14 @@ function isStraightCards(cards: LineCard[]): boolean {
     .map((item) => getStraightOrderValue(item.card))
     .sort((a, b) => a - b);
 
-  // 2,3,3 / A,2,2 / duplicated ranks must never be a straight.
+  // Duplicates and invalid ranks must never become Straight.
+  // Examples:
+  // A,2,3 => true
+  // 1,2,3 => true
+  // 2,3,4 => true
+  // 2,3,3 => false
+  // A,2,2 => false
+  if (values.some((value) => Number.isNaN(value))) return false;
   if (new Set(values).size !== 3) return false;
 
   return values[1] === values[0] + 1 && values[2] === values[1] + 1;
@@ -602,30 +632,52 @@ function isCleanFullHouse(cards: LineCard[]): boolean {
   return sortedCounts.length === 2 && sortedCounts[0] === 2 && sortedCounts[1] === 3;
 }
 
+function createHandResult(
+  name: string,
+  score: number,
+  cards: LineCard[],
+  shouldClear: boolean,
+  priority: number
+): HandResult {
+  return {
+    name,
+    score,
+    cards: toPositions(cards),
+    shouldClear,
+    priority,
+  };
+}
+
 function addUniqueResult(results: HandResult[], result: HandResult) {
-  const resultKey = result.cards
-    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-    .sort()
-    .join("|");
+  const resultKey = getResultKey(result);
 
-  const alreadyExists = results.some((existing) => {
-    const existingKey = existing.cards
-      .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-      .sort()
-      .join("|");
-
-    return existing.name === result.name && existingKey === resultKey;
-  });
+  const alreadyExists = results.some(
+    (existing) => existing.name === result.name && getResultKey(existing) === resultKey
+  );
 
   if (!alreadyExists) {
     results.push(result);
   }
 }
 
+function filterDominatedResults(results: HandResult[]): HandResult[] {
+  // Prevent confusing double-counts:
+  // - Three Card should not also show its internal Pair.
+  // - Full House should not also show its internal Pair / Three Card.
+  // - Pair remains valid when it is the only hand, but Pair never clears.
+  return results.filter((result) => {
+    return !results.some((other) => {
+      if (other === result) return false;
+      if (other.priority <= result.priority) return false;
+      return containsAllCardPositions(other, result);
+    });
+  });
+}
+
 function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
   if (line.length < 2) return [];
 
-  const results: HandResult[] = [];
+  const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
     const pairCards = line.slice(start, start + 2);
@@ -635,12 +687,10 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
       includesPlaced(pairCards, placedRow, placedCol) &&
       isPairCards(pairCards)
     ) {
-      addUniqueResult(results, {
-        name: "Pair",
-        score: scoreTable.pair * pairCards.length,
-        cards: toPositions(pairCards),
-        shouldClear: false,
-      });
+      addUniqueResult(
+        candidates,
+        createHandResult("Pair", scoreTable.pair * pairCards.length, pairCards, false, 10)
+      );
     }
 
     const threeCards = line.slice(start, start + 3);
@@ -650,19 +700,15 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
       includesPlaced(threeCards, placedRow, placedCol)
     ) {
       if (isThreeCard(threeCards)) {
-        addUniqueResult(results, {
-          name: "Three Card",
-          score: scoreTable.three * threeCards.length,
-          cards: toPositions(threeCards),
-          shouldClear: true,
-        });
+        addUniqueResult(
+          candidates,
+          createHandResult("Three Card", scoreTable.three * threeCards.length, threeCards, true, 30)
+        );
       } else if (isStraightCards(threeCards)) {
-        addUniqueResult(results, {
-          name: "Straight",
-          score: scoreTable.straight * threeCards.length,
-          cards: toPositions(threeCards),
-          shouldClear: true,
-        });
+        addUniqueResult(
+          candidates,
+          createHandResult("Straight", scoreTable.straight * threeCards.length, threeCards, true, 30)
+        );
       }
     }
 
@@ -673,16 +719,14 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
       includesPlaced(fiveCards, placedRow, placedCol) &&
       isCleanFullHouse(fiveCards)
     ) {
-      addUniqueResult(results, {
-        name: "Full House",
-        score: scoreTable.fullHouse * fiveCards.length,
-        cards: toPositions(fiveCards),
-        shouldClear: true,
-      });
+      addUniqueResult(
+        candidates,
+        createHandResult("Full House", scoreTable.fullHouse * fiveCards.length, fiveCards, true, 50)
+      );
     }
   }
 
-  return results;
+  return filterDominatedResults(candidates);
 }
 
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
