@@ -454,6 +454,7 @@ const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
 const HOME_BGM_SRC = "/audio/home-bgm.mp3";
 const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
 const GAME_OVER_TITLE_SRC = "/ui/game-over-title.png";
+const BGM_OUTPUT_GAIN = 0.62;
 
 const suitCodeMap: Record<Suit, string> = {
   spade: "S",
@@ -1321,7 +1322,7 @@ export default function Home() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.65);
   const [bgmEnabled, setBgmEnabled] = useState(false);
-  const [bgmVolume, setBgmVolume] = useState(0.25);
+  const [bgmVolume, setBgmVolume] = useState(0.18);
   const audioContextRef = useRef<AudioContext | null>(null);
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgmTrackRef = useRef<string>("");
@@ -1555,11 +1556,22 @@ export default function Home() {
     return screen === "home" ? HOME_BGM_SRC : PLAY_BGM_SRC;
   }
 
-  function stopBgm() {
+  function getEffectiveBgmVolume() {
+    return Math.min(1, Math.max(0, bgmVolume * BGM_OUTPUT_GAIN));
+  }
+
+  function pauseBgm(reset = false) {
     if (!bgmAudioRef.current) return;
 
     bgmAudioRef.current.pause();
-    bgmAudioRef.current.currentTime = 0;
+
+    if (reset) {
+      bgmAudioRef.current.currentTime = 0;
+    }
+  }
+
+  function stopBgm() {
+    pauseBgm(true);
   }
 
   function startBgm(nextSource = getBgmSource()) {
@@ -1584,7 +1596,7 @@ export default function Home() {
     }
 
     audio.loop = true;
-    audio.volume = Math.min(1, Math.max(0, bgmVolume));
+    audio.volume = getEffectiveBgmVolume();
 
     void audio.play().catch(() => {
       // Browser autoplay rules may block playback until the next user gesture.
@@ -1605,8 +1617,45 @@ export default function Home() {
       return;
     }
 
-    audio.volume = Math.min(1, Math.max(0, bgmVolume));
+    audio.volume = getEffectiveBgmVolume();
   }, [screen, mode, bgmEnabled, bgmVolume]);
+
+  useEffect(() => {
+    function handlePageHidden() {
+      pauseBgm(false);
+    }
+
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        pauseBgm(false);
+        return;
+      }
+
+      if (bgmEnabled && bgmVolume > 0) {
+        window.setTimeout(() => startBgm(getBgmSource()), 0);
+      }
+    }
+
+    function handlePageShow() {
+      if (bgmEnabled && bgmVolume > 0 && !document.hidden) {
+        window.setTimeout(() => startBgm(getBgmSource()), 0);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHidden);
+    window.addEventListener("beforeunload", handlePageHidden);
+    window.addEventListener("blur", handlePageHidden);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHidden);
+      window.removeEventListener("beforeunload", handlePageHidden);
+      window.removeEventListener("blur", handlePageHidden);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [bgmEnabled, bgmVolume, screen, mode]);
 
   useEffect(() => {
     return () => {
@@ -1659,9 +1708,10 @@ export default function Home() {
     );
   }
 
-  function renderSettingsButtonAndModal() {
+  function renderSettingsButtonAndModal(showFloatingButton = true) {
     return (
       <>
+        {showFloatingButton && (
         <button
           type="button"
           onClick={() => {
@@ -1674,6 +1724,7 @@ export default function Home() {
         >
           <span aria-hidden="true" className="drop-shadow-[2px_2px_0_#020806]">⚙</span>
         </button>
+        )}
 
         {settingsOpen && (
           <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 p-4">
@@ -3091,6 +3142,144 @@ export default function Home() {
           }
         }
 
+        @media (min-width: 900px) {
+          .portrait-frame {
+            padding: 0.3rem !important;
+          }
+
+          .portrait-frame > header {
+            margin-bottom: 0.25rem !important;
+            padding: 0.28rem 0.5rem !important;
+            grid-template-columns: minmax(180px,0.7fr) minmax(210px,0.7fr) minmax(420px,1.45fr) !important;
+          }
+
+          .portrait-frame > header .nuts-logo-img {
+            max-height: 48px !important;
+            width: 205px !important;
+          }
+
+          .portrait-frame > header .min-h-\[58px\],
+          .portrait-frame > header .sm\:min-h-\[68px\] {
+            min-height: 46px !important;
+          }
+
+          .duel-empty-settings {
+            gap: 0.18rem !important;
+          }
+
+          .duel-empty-settings button {
+            height: 26px !important;
+            min-height: 26px !important;
+            padding: 0 !important;
+            font-size: 1rem !important;
+            line-height: 1 !important;
+          }
+
+          .portrait-stack-layout {
+            height: calc(100svh - 78px) !important;
+            grid-template-columns: minmax(520px, 0.92fr) 310px !important;
+            gap: 0.45rem !important;
+          }
+
+          .portrait-board-wrap {
+            padding: 0.3rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 {
+            height: 20px !important;
+            margin-bottom: 0.22rem !important;
+          }
+
+          .portrait-board {
+            height: calc(100svh - 125px) !important;
+            max-height: calc(100svh - 125px) !important;
+            gap: 0.25rem !important;
+            padding: 0.35rem !important;
+          }
+
+          .portrait-queue-panel {
+            grid-template-rows: 28px minmax(132px, 0.46fr) minmax(126px, 0.54fr) !important;
+            gap: 0.25rem !important;
+            padding: 0.3rem !important;
+          }
+
+          .portrait-queue-panel > :first-child {
+            padding-block: 0.16rem !important;
+          }
+
+          .portrait-queue-panel > :first-child p {
+            font-size: 0.92rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            padding: 0.3rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: clamp(54px, 6.7vw, 78px) !important;
+          }
+
+          .portrait-queue-panel .queue-card-well p {
+            margin-top: 0.15rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            padding: 0.3rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > .mb-2 {
+            margin-bottom: 0.25rem !important;
+            padding-block: 0.15rem !important;
+          }
+
+          .duel-status-title {
+            font-size: 1.02rem !important;
+          }
+
+          .portrait-queue-panel button {
+            min-height: 28px !important;
+            padding: 0.25rem 0.55rem !important;
+            font-size: 0.8rem !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 700px) {
+          .portrait-stack-layout {
+            height: calc(100svh - 70px) !important;
+            grid-template-columns: minmax(500px, 0.92fr) 285px !important;
+          }
+
+          .portrait-frame > header {
+            padding-block: 0.18rem !important;
+          }
+
+          .portrait-frame > header .nuts-logo-img {
+            max-height: 42px !important;
+            width: 185px !important;
+          }
+
+          .portrait-board {
+            height: calc(100svh - 112px) !important;
+            max-height: calc(100svh - 112px) !important;
+          }
+
+          .portrait-board-wrap > .mb-2 {
+            display: none !important;
+          }
+
+          .portrait-queue-panel {
+            grid-template-rows: 24px minmax(105px, 0.45fr) minmax(104px, 0.55fr) !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: clamp(44px, 5.8vw, 62px) !important;
+          }
+
+          .duel-status-title {
+            font-size: 0.92rem !important;
+          }
+        }
+
         `}
 </style>
 
@@ -3148,7 +3337,21 @@ export default function Home() {
                 <StatBox label="TURN" value={duel.isGameOver ? winnerText : `P${duel.currentPlayer}`} accent pulse={!duel.isGameOver} />
                 <StatBox label="CARD" value={`${duel.placedCount}/52`} />
                 <StatBox label="DECK" value={duel.deck.length} />
-                <StatBox label="EMPTY" value={emptyCells} />
+                <div className="duel-empty-settings grid min-h-0 grid-rows-[1fr_auto] gap-1">
+                  <StatBox label="EMPTY" value={emptyCells} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSound("select");
+                      setSettingsOpen(true);
+                    }}
+                    aria-label="Open settings"
+                    title="Settings"
+                    className="pixel-hard-sm grid h-8 place-items-center border-[3px] border-[#061811] bg-[#0e4a3a] text-lg font-black text-[#f7d17a] shadow-[4px_4px_0_#03100b,0_0_0_2px_rgba(242,184,74,0.18)_inset] transition hover:-translate-y-0.5 hover:brightness-110"
+                  >
+                    ⚙
+                  </button>
+                </div>
               </div>
             </header>
 
@@ -3345,7 +3548,7 @@ export default function Home() {
             </div>
           </section>
         </div>
-        {renderSettingsButtonAndModal()}
+        {renderSettingsButtonAndModal(false)}
       </main>
     );
   }
