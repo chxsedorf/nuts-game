@@ -3710,6 +3710,55 @@ export default function Home() {
           width: 100% !important;
           max-width: 100% !important;
         }
+
+        /* FINAL: keep image buttons frameless even before hover/focus. */
+        .duel-control-buttons button.control-image-button,
+        .solo-control-buttons button.control-image-button,
+        .duel-control-buttons button.control-image-button:hover,
+        .solo-control-buttons button.control-image-button:hover,
+        .duel-control-buttons button.control-image-button:active,
+        .solo-control-buttons button.control-image-button:active,
+        .duel-control-buttons button.control-image-button:focus,
+        .solo-control-buttons button.control-image-button:focus,
+        .duel-control-buttons button.control-image-button:focus-visible,
+        .solo-control-buttons button.control-image-button:focus-visible {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          border-width: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          min-height: 0 !important;
+          height: auto !important;
+          line-height: 0 !important;
+          overflow: visible !important;
+        }
+
+        .duel-control-buttons button.control-image-button img,
+        .solo-control-buttons button.control-image-button img {
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          display: block !important;
+        }
+
+        .duel-control-buttons,
+        .solo-control-buttons {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          border-width: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -5484,6 +5533,55 @@ export default function Home() {
         .solo-control-buttons .control-image-button {
           width: 100% !important;
           max-width: 100% !important;
+        }
+
+        /* FINAL: keep image buttons frameless even before hover/focus. */
+        .duel-control-buttons button.control-image-button,
+        .solo-control-buttons button.control-image-button,
+        .duel-control-buttons button.control-image-button:hover,
+        .solo-control-buttons button.control-image-button:hover,
+        .duel-control-buttons button.control-image-button:active,
+        .solo-control-buttons button.control-image-button:active,
+        .duel-control-buttons button.control-image-button:focus,
+        .solo-control-buttons button.control-image-button:focus,
+        .duel-control-buttons button.control-image-button:focus-visible,
+        .solo-control-buttons button.control-image-button:focus-visible {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          border-width: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          min-height: 0 !important;
+          height: auto !important;
+          line-height: 0 !important;
+          overflow: visible !important;
+        }
+
+        .duel-control-buttons button.control-image-button img,
+        .solo-control-buttons button.control-image-button img {
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          display: block !important;
+        }
+
+        .duel-control-buttons,
+        .solo-control-buttons {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          border-width: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
         }
 `}</style>
 
