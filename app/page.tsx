@@ -734,20 +734,30 @@ function evaluateWindow(
   windowCards: LineCard[],
   placedRow: number,
   placedCol: number,
-  results: HandResult[]
+  results: HandResult[],
+  options: {
+    allowPair: boolean;
+    requirePlacedForClear: boolean;
+  }
 ) {
-  // Every hand must include the card that was just placed.
-  // This prevents old pairs / old hands from being scored again.
-  if (!includesPlaced(windowCards, placedRow, placedCol)) return;
+  const touchesPlacedCard = includesPlaced(windowCards, placedRow, placedCol);
 
-  if (windowCards.length === 5) {
-    if (isCleanFullHouse(windowCards)) {
-      addUniqueResult(results, createHandResult("Full House", windowCards));
+  // Pair: exactly 2 same-rank cards.
+  // It scores and continues combo, but never clears.
+  // Pair must include the newly placed card so old pairs never re-score.
+  if (windowCards.length === 2) {
+    if (options.allowPair && touchesPlacedCard && isPairCards(windowCards)) {
+      addUniqueResult(results, createHandResult("Pair", windowCards));
     }
 
     return;
   }
 
+  const clearHandCanScore = !options.requirePlacedForClear || touchesPlacedCard;
+  if (!clearHandCanScore) return;
+
+  // Three / Straight: exactly 3 cards.
+  // Three clears. Straight clears.
   if (windowCards.length === 3) {
     if (isThreeCard(windowCards)) {
       addUniqueResult(results, createHandResult("Three Card", windowCards));
@@ -761,21 +771,30 @@ function evaluateWindow(
     return;
   }
 
-  if (windowCards.length === 2 && isPairCards(windowCards)) {
-    addUniqueResult(results, createHandResult("Pair", windowCards));
+  // Full House: exactly 5 cards, 3+2, clears.
+  if (windowCards.length === 5 && isCleanFullHouse(windowCards)) {
+    addUniqueResult(results, createHandResult("Full House", windowCards));
   }
 }
 
-function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+function evaluateLine(
+  line: LineCard[],
+  placedRow: number,
+  placedCol: number,
+  options: {
+    allowPair: boolean;
+    requirePlacedForClear: boolean;
+  }
+): HandResult[] {
   if (line.length < 2) return [];
 
   const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
-    // Stronger clearing hands first, Pair last.
-    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates);
-    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates);
-    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates);
+    // Higher-value clear hands first, Pair last.
+    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, options);
+    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, options);
+    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, options);
   }
 
   return filterDominatedResults(candidates);
@@ -812,17 +831,55 @@ function getAxisSegments(board: Board, row: number, col: number, axis: "row" | "
   return segments;
 }
 
+function getAllAxisSegments(board: Board): LineCard[][] {
+  const segments: LineCard[][] = [];
+
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    segments.push(...getAxisSegments(board, row, 0, "row"));
+  }
+
+  for (let col = 0; col < BOARD_SIZE; col++) {
+    segments.push(...getAxisSegments(board, 0, col, "col"));
+  }
+
+  return segments;
+}
+
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   const allResults: HandResult[] = [];
-  const segments = [
+  const touchedSegments = [
     ...getAxisSegments(board, row, col, "row"),
     ...getAxisSegments(board, row, col, "col"),
   ];
 
-  for (const segment of segments) {
+  // Pass 1:
+  // Evaluate the row/column touched by the newly placed card.
+  // Pair is allowed here only.
+  for (const segment of touchedSegments) {
     if (!includesPlaced(segment, row, col)) continue;
 
-    const segmentResults = evaluateLine(segment, row, col);
+    const segmentResults = evaluateLine(segment, row, col, {
+      allowPair: true,
+      requirePlacedForClear: true,
+    });
+
+    for (const result of segmentResults) {
+      addUniqueResult(allResults, result);
+    }
+  }
+
+  // Pass 2:
+  // Safety net for clearable hands already visible on the board.
+  // This catches A-A-A / 2-2-2 / 3-3-3 / 2-3-4 even if the newly placed card
+  // was not inside that exact 3-card window.
+  //
+  // Pair is intentionally disabled here because Pair does not clear.
+  // This prevents old pairs from scoring again every turn.
+  for (const segment of getAllAxisSegments(board)) {
+    const segmentResults = evaluateLine(segment, row, col, {
+      allowPair: false,
+      requirePlacedForClear: false,
+    }).filter((result) => result.shouldClear);
 
     for (const result of segmentResults) {
       addUniqueResult(allResults, result);
@@ -2525,6 +2582,9 @@ export default function Home() {
     const newOwners = duel.owners.map((ownerRow) => [...ownerRow]);
     newBoard[row][col] = selected;
 
+    // Hand rules:
+    // Pair = combo + small score, no clear, newly placed card only.
+    // Three/Straight/Full House = combo + score + clear, with board safety scan.
     const results = evaluateBoard(newBoard, row, col);
     const hasHand = results.length > 0;
     const claimResults = results.filter((result) => result.shouldClear);
