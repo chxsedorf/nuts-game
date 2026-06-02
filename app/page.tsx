@@ -5751,6 +5751,69 @@ export default function Home() {
         .result-image-buttons .home-image-button {
           aspect-ratio: 2084 / 577 !important;
         }
+
+        /* NUTS-style result score panel. */
+        .result-score-panel {
+          border: 5px solid #061811;
+          border-radius: 1.65rem;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(245,208,111,0.12), transparent 38%),
+            linear-gradient(180deg, #14503d 0%, #0a2f26 56%, #061d17 100%);
+          box-shadow:
+            8px 8px 0 #020806,
+            0 0 0 2px rgba(240,165,54,0.90) inset,
+            0 0 0 7px rgba(6,24,17,0.86) inset,
+            inset 0 0 42px rgba(0,0,0,0.36);
+        }
+
+        .result-score-label {
+          min-width: min(78%, 310px);
+          border: 4px solid #061811;
+          border-radius: 0.9rem;
+          background:
+            linear-gradient(180deg, #0f5a43 0%, #0c3a2e 52%, #072119 100%);
+          box-shadow:
+            5px 5px 0 #020806,
+            0 0 0 2px #f0a536 inset,
+            0 0 0 5px rgba(6,24,17,0.82) inset;
+          clip-path: polygon(7% 0, 93% 0, 100% 20%, 100% 80%, 93% 100%, 7% 100%, 0 80%, 0 20%);
+        }
+
+        .result-score-window {
+          border: 5px solid #061811;
+          border-radius: 1.35rem;
+          background: #071c16;
+          box-shadow:
+            inset 0 0 0 2px #1f6b50,
+            inset 0 0 46px rgba(0,0,0,0.58),
+            6px 6px 0 #020806;
+        }
+
+        .result-score-number {
+          letter-spacing: -0.045em;
+          image-rendering: pixelated;
+        }
+
+        @media (max-width: 640px) {
+          .result-score-panel {
+            border-width: 4px;
+            border-radius: 1.25rem;
+          }
+
+          .result-score-label {
+            min-width: min(82%, 260px);
+            border-width: 3px;
+          }
+
+          .result-score-window {
+            min-height: 132px !important;
+            border-width: 4px;
+          }
+
+          .result-score-number {
+            font-size: clamp(4.4rem, 18vw, 6rem) !important;
+          }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5863,23 +5926,37 @@ export default function Home() {
               <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
             </div>
 
-            <section className="relative z-10 mx-auto max-w-xl rounded-[1.75rem] border-[5px] border-[#061811] bg-[#123f32] px-4 py-5 shadow-[7px_7px_0_#020806,0_0_0_2px_rgba(255,255,255,0.05)_inset] sm:px-6 sm:py-6">
-              <p className="text-lg font-black tracking-[0.24em] text-[#7fd0a4] sm:text-2xl">
-                FINAL SCORE
-              </p>
+            <section className="result-score-panel relative z-10 mx-auto max-w-xl px-3 pb-4 pt-8 sm:px-5 sm:pb-5 sm:pt-9">
+              <div className="result-score-label pixel-hard absolute left-1/2 top-0 z-20 -translate-x-1/2 px-6 py-2 text-center shadow-[5px_5px_0_#020806]">
+                <p className="text-base font-black tracking-[0.13em] text-[#fff4cf] sm:text-xl">
+                  FINAL SCORE
+                </p>
+              </div>
 
-              <h3
-                className="my-3 text-7xl font-black leading-none text-[#ffef7a] sm:text-8xl lg:text-9xl"
-                style={{
-                  textShadow:
-                    "7px 7px 0 #061811, 11px 11px 0 #020806, -2px -2px 0 #fff4cf",
-                }}
-              >
-                {game.score}
-              </h3>
+              <div className="pointer-events-none absolute left-5 right-5 top-8 h-[3px] bg-[#f0a536] shadow-[0_2px_0_#3c2108]" />
+              <div className="pointer-events-none absolute left-1/2 top-8 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
+
+              <div className="result-score-window relative mx-auto flex min-h-[150px] items-center justify-center overflow-hidden px-4 py-6 sm:min-h-[190px] sm:px-7 sm:py-8">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(245,208,111,0.10),transparent_38%),linear-gradient(180deg,rgba(19,76,58,0.95),rgba(4,24,18,0.98))]" />
+                <div className="pointer-events-none absolute inset-2 rounded-[1.25rem] border-[3px] border-[#1e634b]/75 shadow-[inset_0_0_34px_rgba(0,0,0,0.46)]" />
+                <div className="pointer-events-none absolute left-3 top-3 h-8 w-8 rounded-br-xl border-b-[4px] border-r-[4px] border-[#f0a536]" />
+                <div className="pointer-events-none absolute right-3 top-3 h-8 w-8 rounded-bl-xl border-b-[4px] border-l-[4px] border-[#f0a536]" />
+                <div className="pointer-events-none absolute bottom-3 left-3 h-8 w-8 rounded-tr-xl border-r-[4px] border-t-[4px] border-[#f0a536]" />
+                <div className="pointer-events-none absolute bottom-3 right-3 h-8 w-8 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#f0a536]" />
+
+                <h3
+                  className="result-score-number relative z-10 text-7xl font-black leading-none text-[#fff1a8] sm:text-8xl lg:text-9xl"
+                  style={{
+                    textShadow:
+                      "0 4px 0 #f0a536, 8px 8px 0 #061811, 13px 13px 0 #020806, -2px -2px 0 #fff8d8",
+                  }}
+                >
+                  {game.score}
+                </h3>
+              </div>
             </section>
 
-            <div className="result-image-buttons relative z-10 mt-6 grid items-center gap-3 sm:grid-cols-2">
+            <div className="result-image-buttons relative z-10 mt-5 grid items-center gap-4 px-3 sm:grid-cols-2 sm:px-4">
               <button
                 onClick={restartGame}
                 className="control-image-button restart-image-button transition hover:-translate-y-0.5 active:translate-y-0"
