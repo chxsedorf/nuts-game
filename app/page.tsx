@@ -451,8 +451,8 @@ const UI_ASSET_VERSION = "v2";
 const NUTS_LOGO_SRC = `/logo/nuts-logo-sign.png?${LOGO_ASSET_VERSION}`;
 const SOLO_BUTTON_SRC = `/ui/solo-play-button.png?${UI_ASSET_VERSION}`;
 const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
-const RESTART_BUTTON_SRC = `/ui/restart-pixel-button.png?${UI_ASSET_VERSION}`;
-const HOME_BUTTON_SRC = `/ui/home-pixel-button.png?${UI_ASSET_VERSION}`;
+const RESTART_BUTTON_SRC = `/ui/restart-pixel-button-uniform.png?${UI_ASSET_VERSION}`;
+const HOME_BUTTON_SRC = `/ui/home-pixel-button-uniform.png?${UI_ASSET_VERSION}`;
 const HOME_BGM_SRC = "/audio/home-bgm.mp3";
 const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
 const GAME_OVER_TITLE_SRC = "/ui/game-over-title.png";
@@ -3604,10 +3604,21 @@ export default function Home() {
           min-height: 0 !important;
           padding: 0 !important;
           border: 0 !important;
-          background: transparent !important;
+          border-radius: 0 !important;
+          background: none !important;
+          background-color: transparent !important;
           box-shadow: none !important;
+          outline: none !important;
+          -webkit-appearance: none !important;
+          appearance: none !important;
           overflow: visible !important;
           image-rendering: pixelated !important;
+        }
+
+        .control-image-button::before,
+        .control-image-button::after {
+          display: none !important;
+          content: none !important;
         }
 
         .control-image-button img {
@@ -3618,7 +3629,8 @@ export default function Home() {
           pointer-events: none !important;
           user-select: none !important;
           image-rendering: pixelated !important;
-          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.72)) !important;
+          background: transparent !important;
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.62)) !important;
         }
 
         .duel-control-buttons,
@@ -3627,22 +3639,26 @@ export default function Home() {
         }
 
         .duel-control-buttons .restart-image-button,
-        .solo-control-buttons .restart-image-button {
-          aspect-ratio: 3.61 / 1 !important;
-        }
-
+        .solo-control-buttons .restart-image-button,
         .duel-control-buttons .home-image-button,
         .solo-control-buttons .home-image-button {
-          aspect-ratio: 2.89 / 1 !important;
+          aspect-ratio: 2084 / 577 !important;
+          width: 100% !important;
+          max-width: 100% !important;
         }
+
+        
 
         @media (orientation: portrait), (max-width: 700px) {
           .solo-control-buttons .control-image-button {
             align-self: center !important;
+            width: 100% !important;
           }
 
           .solo-control-buttons .control-image-button img {
-            max-height: 72px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: 64px !important;
           }
         }
 
@@ -5315,10 +5331,21 @@ export default function Home() {
           min-height: 0 !important;
           padding: 0 !important;
           border: 0 !important;
-          background: transparent !important;
+          border-radius: 0 !important;
+          background: none !important;
+          background-color: transparent !important;
           box-shadow: none !important;
+          outline: none !important;
+          -webkit-appearance: none !important;
+          appearance: none !important;
           overflow: visible !important;
           image-rendering: pixelated !important;
+        }
+
+        .control-image-button::before,
+        .control-image-button::after {
+          display: none !important;
+          content: none !important;
         }
 
         .control-image-button img {
@@ -5329,7 +5356,8 @@ export default function Home() {
           pointer-events: none !important;
           user-select: none !important;
           image-rendering: pixelated !important;
-          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.72)) !important;
+          background: transparent !important;
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.62)) !important;
         }
 
         .duel-control-buttons,
@@ -5338,22 +5366,26 @@ export default function Home() {
         }
 
         .duel-control-buttons .restart-image-button,
-        .solo-control-buttons .restart-image-button {
-          aspect-ratio: 3.61 / 1 !important;
-        }
-
+        .solo-control-buttons .restart-image-button,
         .duel-control-buttons .home-image-button,
         .solo-control-buttons .home-image-button {
-          aspect-ratio: 2.89 / 1 !important;
+          aspect-ratio: 2084 / 577 !important;
+          width: 100% !important;
+          max-width: 100% !important;
         }
+
+        
 
         @media (orientation: portrait), (max-width: 700px) {
           .solo-control-buttons .control-image-button {
             align-self: center !important;
+            width: 100% !important;
           }
 
           .solo-control-buttons .control-image-button img {
-            max-height: 72px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: 64px !important;
           }
         }
 
