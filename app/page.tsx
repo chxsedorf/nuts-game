@@ -4721,6 +4721,130 @@ export default function Home() {
           }
         }
 
+
+        /* Final mobile SOLO lower panel: left = NOW card, right = RESTART/HOME. */
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-side {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+            grid-template-rows: auto !important;
+            align-items: stretch !important;
+            gap: 0.55rem !important;
+            width: calc(100vw - 1rem) !important;
+            max-width: calc(100vw - 1rem) !important;
+            margin-inline: auto !important;
+          }
+
+          .solo-side .solo-queue-panel {
+            grid-column: 1 / 2 !important;
+            grid-row: 1 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 258px !important;
+            height: 258px !important;
+            display: grid !important;
+            grid-template-rows: 42px minmax(0, 1fr) !important;
+            gap: 0.45rem !important;
+            padding: 0.55rem !important;
+            overflow: hidden !important;
+          }
+
+          .solo-side .solo-queue-panel > .pixel-hard-sm {
+            margin-bottom: 0 !important;
+            padding-block: 0.35rem !important;
+          }
+
+          .solo-side .solo-queue-panel > .pixel-hard-sm p {
+            font-size: 1.05rem !important;
+            line-height: 1 !important;
+          }
+
+          .solo-side .queue-card-well {
+            min-height: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            margin-bottom: 0 !important;
+            padding: 0.65rem 0.35rem !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(112px, 30vw, 148px) !important;
+            max-width: 78% !important;
+          }
+
+          .solo-side .queue-card-well p {
+            margin-top: 0.35rem !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(2) {
+            font-size: 1.85rem !important;
+            line-height: 1 !important;
+          }
+
+          .solo-control-buttons {
+            grid-column: 2 / 3 !important;
+            grid-row: 1 !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            grid-template-rows: 1fr 1fr !important;
+            gap: 0.55rem !important;
+            width: 100% !important;
+            height: 258px !important;
+            min-height: 258px !important;
+            align-self: stretch !important;
+          }
+
+          .solo-control-buttons button {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            padding: 0.75rem 0.5rem !important;
+            font-size: 1.05rem !important;
+            line-height: 1 !important;
+            border-width: 4px !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            height: 236px !important;
+            min-height: 236px !important;
+          }
+
+          .solo-side .solo-queue-panel {
+            grid-template-rows: 38px minmax(0, 1fr) !important;
+            padding: 0.45rem !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(100px, 28vw, 132px) !important;
+            max-width: 78% !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(2) {
+            font-size: 1.65rem !important;
+          }
+
+          .solo-control-buttons button {
+            font-size: 0.95rem !important;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            height: 220px !important;
+            min-height: 220px !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(90px, 26vw, 120px) !important;
+          }
+        }
+
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5067,7 +5191,7 @@ export default function Home() {
               
             </div>
 
-            <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+            <aside className="portrait-side solo-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
               <div className="portrait-queue-panel solo-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                 <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                   <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
