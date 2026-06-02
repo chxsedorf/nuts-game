@@ -3105,7 +3105,18 @@ export default function Home() {
                           REMATCH
                         </button>
                       )}
-                      <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
+                      <button
+                        onClick={() => {
+                          playSound("select");
+                          setScreen("home");
+
+                          if (bgmVolume > 0) {
+                            setBgmEnabled(true);
+                            window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
+                          }
+                        }}
+                        className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1"
+                      >
                         HOME
                       </button>
                     </div>
@@ -3115,6 +3126,7 @@ export default function Home() {
             </div>
           </section>
         </div>
+        {renderSettingsButtonAndModal()}
       </main>
     );
   }
