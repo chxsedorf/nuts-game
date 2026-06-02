@@ -593,34 +593,42 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
 }
 
 function getHandRankKey(card: Card): string {
-  const rankText = String(card.rank).trim().toUpperCase();
+  const rankText = String(card.rank ?? "").trim().toUpperCase();
+  const numericValue = Number(card.value);
 
-  // In Nuts, the A card is displayed/played as 1.
-  // Accept both "A" and "1" to prevent asset/data mismatch.
-  if (rankText === "A" || rankText === "1") return "1";
+  // Strong Ace normalization.
+  // Any of these must be treated as the same rank:
+  // rank "A", rank "1", rank "ACE", value 14, value 1.
+  if (
+    rankText === "A" ||
+    rankText === "1" ||
+    rankText === "ACE" ||
+    numericValue === 14 ||
+    numericValue === 1
+  ) {
+    return "A";
+  }
 
-  // Prefer the printed rank, but fall back to value if a malformed card slips in.
+  if (rankText === "J" || rankText === "JACK") return "J";
+  if (rankText === "Q" || rankText === "QUEEN") return "Q";
+  if (rankText === "K" || rankText === "KING") return "K";
+
   if (rankText) return rankText;
 
-  if (card.value === 14 || card.value === 1) return "1";
   return String(card.value);
 }
 
 function getStraightOrderValue(card: Card): number {
-  const rankText = getHandRankKey(card);
+  const rankKey = getHandRankKey(card);
 
-  if (rankText === "J") return 11;
-  if (rankText === "Q") return 12;
-  if (rankText === "K") return 13;
+  if (rankKey === "A") return 1;
+  if (rankKey === "J") return 11;
+  if (rankKey === "Q") return 12;
+  if (rankKey === "K") return 13;
 
-  const rankValue = Number(rankText);
+  const rankValue = Number(rankKey);
 
   if (Number.isFinite(rankValue)) return rankValue;
-
-  // Final fallback: use card.value if rank text ever mismatches the image/data.
-  // A can be stored as 14, but in Nuts it must work as 1 for A-2-3.
-  if (card.value === 14) return 1;
-  if (Number.isFinite(card.value)) return card.value;
 
   return Number.NaN;
 }
@@ -646,35 +654,19 @@ function areSameRank(cards: LineCard[]): boolean {
   if (cards.length === 0) return false;
 
   const firstRank = getHandRankKey(cards[0].card);
-  const firstValue = getStraightOrderValue(cards[0].card);
-
-  if (Number.isNaN(firstValue)) return false;
-
-  return cards.every((item) => {
-    const rank = getHandRankKey(item.card);
-    const value = getStraightOrderValue(item.card);
-
-    // Double-lock the judgement:
-    // 1. printed rank must match
-    // 2. normalized order value must match
-    // This guarantees 3-2 / 2-3 can never be treated as Pair.
-    return rank === firstRank && value === firstValue;
-  });
+  return cards.every((item) => getHandRankKey(item.card) === firstRank);
 }
 
 function isPairCards(cards: LineCard[]): boolean {
   if (cards.length !== 2) return false;
 
   const [first, second] = cards;
-  const firstRank = getHandRankKey(first.card);
-  const secondRank = getHandRankKey(second.card);
-  const firstValue = getStraightOrderValue(first.card);
-  const secondValue = getStraightOrderValue(second.card);
 
-  if (Number.isNaN(firstValue) || Number.isNaN(secondValue)) return false;
-
-  // Absolute guard: adjacent different ranks such as 3-2 / 2-3 do nothing.
-  return firstRank === secondRank && firstValue === secondValue;
+  // Absolute rule:
+  // Pair is ONLY two identical normalized ranks.
+  // A-A / 1-1 works.
+  // A-2 / 1-2 / 3-2 never works.
+  return getHandRankKey(first.card) === getHandRankKey(second.card);
 }
 
 function isThreeCard(cards: LineCard[]): boolean {
@@ -763,7 +755,7 @@ function evaluateWindow(
   if (!includesPlaced(windowCards, placedRow, placedCol)) return;
 
   if (windowCards.length === 2 && isPairCards(windowCards)) {
-    // Strict Pair only. 3-2 / 2-3 / 1-2 / 1-3 must never reach here.
+    // Strict Pair only. A-A works, but A-2 / 3-2 / 2-3 never reach here.
     addUniqueResult(
       results,
       createHandResult("Pair", scoreTable.pair * windowCards.length, windowCards, false, 10)
@@ -1753,6 +1745,31 @@ function HomeScreen({
             font-size: 0.75rem;
             border-width: 2px;
           }
+        }
+
+        /* Stability fix: hand hits must not shift the whole play screen. */
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          transform-origin: center center;
+        }
+
+        .hand-impact-layer {
+          contain: layout paint !important;
+        }
+
+        .hand-impact-card {
+          will-change: transform, opacity, filter;
+        }
+
+        @keyframes tinyImpactShake {
+          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+          20% { transform: translate3d(-1px, 0, 0) rotate(-0.25deg); }
+          40% { transform: translate3d(1px, 0, 0) rotate(0.25deg); }
+          60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
+          80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
         }
 `}</style>
 
@@ -4757,6 +4774,31 @@ export default function Home() {
             border-width: 2px;
           }
         }
+
+        /* Stability fix: hand hits must not shift the whole play screen. */
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          transform-origin: center center;
+        }
+
+        .hand-impact-layer {
+          contain: layout paint !important;
+        }
+
+        .hand-impact-card {
+          will-change: transform, opacity, filter;
+        }
+
+        @keyframes tinyImpactShake {
+          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+          20% { transform: translate3d(-1px, 0, 0) rotate(-0.25deg); }
+          40% { transform: translate3d(1px, 0, 0) rotate(0.25deg); }
+          60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
+          80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -4833,22 +4875,26 @@ export default function Home() {
                       </div>
                     )}
 
-                    {resultHandTone && resultBanner && (
-                      <div className="hand-impact-layer pointer-events-none absolute inset-0 z-50 grid place-items-center">
-                        <div className={`hand-impact-card ${resultHandTone.className}`}>
-                          <span className="hand-impact-eyebrow">{resultHandTone.eyebrow}</span>
-                          <strong>{resultHandTone.label}</strong>
-                          <span className="hand-impact-score">+{resultBanner.score}</span>
-                          {resultBanner.comboNext && (
-                            <span className="hand-impact-combo">COMBO x{resultBanner.comboNext}</span>
-                          )}
+                                        {resultBanner && !resultBanner.isBreak && (() => {
+                      const handTone = getHandAnimationTone(resultBanner.text);
+
+                      return (
+                        <div className="hand-impact-layer pointer-events-none absolute inset-0 z-50 grid place-items-center">
+                          <div className={`hand-impact-card ${handTone.className}`}>
+                            <span className="hand-impact-eyebrow">{handTone.eyebrow}</span>
+                            <strong>{handTone.label}</strong>
+                            <span className="hand-impact-score">+{resultBanner.score}</span>
+                            {resultBanner.comboNext && (
+                              <span className="hand-impact-combo">COMBO x{resultBanner.comboNext}</span>
+                            )}
+                          </div>
+                          <span className={`hand-impact-line ${handTone.lineClass}`} />
+                          <span className="hand-sparkle hand-sparkle-a">✦</span>
+                          <span className="hand-sparkle hand-sparkle-b">◆</span>
+                          <span className="hand-sparkle hand-sparkle-c">✦</span>
                         </div>
-                        <span className={`hand-impact-line ${resultHandTone.lineClass}`} />
-                        <span className="hand-sparkle hand-sparkle-a">✦</span>
-                        <span className="hand-sparkle hand-sparkle-b">◆</span>
-                        <span className="hand-sparkle hand-sparkle-c">✦</span>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {duel.board.map((boardRow, rowIndex) =>
                       boardRow.map((cell, colIndex) => {
@@ -5420,11 +5466,13 @@ export default function Home() {
         }
 
         @keyframes boardKick {
-          0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-          18% { transform: translate3d(-1px, 1px, 0) rotate(-0.06deg); }
-          36% { transform: translate3d(1px, -1px, 0) rotate(0.06deg); }
-          54% { transform: translate3d(-1px, 0, 0) rotate(-0.03deg); }
-          100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes resultFrameFlash {
+          0% { filter: brightness(1); }
+          22% { filter: brightness(1.10) saturate(1.08); }
+          100% { filter: brightness(1); }
         }
 
         @keyframes resultBurst {
@@ -7381,6 +7429,31 @@ export default function Home() {
             border-width: 2px;
           }
         }
+
+        /* Stability fix: hand hits must not shift the whole play screen. */
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          transform-origin: center center;
+        }
+
+        .hand-impact-layer {
+          contain: layout paint !important;
+        }
+
+        .hand-impact-card {
+          will-change: transform, opacity, filter;
+        }
+
+        @keyframes tinyImpactShake {
+          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+          20% { transform: translate3d(-1px, 0, 0) rotate(-0.25deg); }
+          40% { transform: translate3d(1px, 0, 0) rotate(0.25deg); }
+          60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
+          80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -7549,7 +7622,7 @@ export default function Home() {
       <div className="portrait-outer relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
         <section
           className="portrait-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]"
-          style={{ animation: resultPulse ? "boardKick 360ms ease-out" : undefined }}
+          style={{ animation: resultPulse ? "resultFrameFlash 360ms ease-out" : undefined }}
         >
           <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
