@@ -794,109 +794,19 @@ function HomeScreen({
           0%, 100% { box-shadow: 8px 8px 0 #000; }
           50% { box-shadow: 0 0 0 4px #ffef7a, 10px 10px 0 #000; }
         }
-      
-        /* ULTIMATE GAMEPLAY POSITION LOCK
-           The game canvas is pinned to the viewport. No in-game state may change its top offset. */
-        html,
-        body {
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-          height: 100% !important;
-          max-height: 100% !important;
-          overscroll-behavior: none !important;
-          scroll-behavior: auto !important;
+
+        .table-frame,
+        .pixel-hard {
+          overflow-anchor: none;
         }
 
-        body {
-          position: static !important;
-          top: auto !important;
-          left: auto !important;
-          right: auto !important;
-          width: auto !important;
+        @media (min-width: 768px) {
+          html,
+          body {
+            overflow: hidden;
+          }
         }
-
-        .game-fixed-viewport,
-        .balatro-inspired-bg {
-          position: fixed !important;
-          inset: 0 !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100vw !important;
-          height: 100dvh !important;
-          min-height: 100dvh !important;
-          max-height: 100dvh !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-          transform: none !important;
-          translate: none !important;
-        }
-
-        .portrait-outer {
-          position: absolute !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          max-width: 100vw !important;
-          height: 100dvh !important;
-          min-height: 0 !important;
-          max-height: 100dvh !important;
-          margin: 0 !important;
-          padding: 0.375rem !important;
-          overflow: hidden !important;
-          transform: none !important;
-          translate: none !important;
-        }
-
-        .portrait-frame {
-          height: calc(100dvh - 0.75rem) !important;
-          min-height: 0 !important;
-          max-height: calc(100dvh - 0.75rem) !important;
-          overflow: hidden !important;
-          transform: none !important;
-          translate: none !important;
-          animation: none !important;
-        }
-
-        .portrait-stack-layout,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-side,
-        .portrait-queue-panel {
-          min-height: 0 !important;
-          overflow-anchor: none !important;
-          scroll-margin: 0 !important;
-          scroll-padding: 0 !important;
-          transform: none !important;
-          translate: none !important;
-        }
-
-        .portrait-board-wrap > .mb-2 {
-          height: 1.75rem !important;
-          min-height: 1.75rem !important;
-          max-height: 1.75rem !important;
-          overflow: hidden !important;
-        }
-
-        .portrait-board button,
-        .portrait-board button:focus,
-        .portrait-board button:focus-visible {
-          outline: none !important;
-          scroll-margin: 0 !important;
-        }
-
-        .micro-shake-overlay {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: 100dvh !important;
-          pointer-events: none !important;
-        }
-
-        @keyframes boardKick {
-          0%, 100% { transform: none; }
-        }
-`}</style>
+      `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,211,74,0.22),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(64,151,255,0.25),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(255,73,96,0.22),transparent_32%)]" />
 
@@ -1082,26 +992,6 @@ export default function Home() {
 
   const selectedCard = game.hand[0] ?? null;
 
-  function keepGameViewportAtTop(duration = 1200) {
-    if (typeof window === "undefined" || typeof document === "undefined") return;
-
-    const scrollingElement = document.scrollingElement || document.documentElement;
-    const endAt = performance.now() + duration;
-
-    const snap = () => {
-      window.scrollTo(0, 0);
-      scrollingElement.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-
-      if (performance.now() < endAt) {
-        window.requestAnimationFrame(snap);
-      }
-    };
-
-    window.requestAnimationFrame(snap);
-  }
-
   const isResolvingHand = highlightCells.size > 0;
 
   function resetEffects() {
@@ -1138,8 +1028,6 @@ export default function Home() {
   }
 
   function placeCard(row: number, col: number) {
-    keepGameViewportAtTop(1200);
-
     if (game.isGameOver) return;
     if (!game.hand[0]) return;
     if (game.board[row][col]) return;
@@ -1521,109 +1409,7 @@ export default function Home() {
             #0b3a2d;
           background-size: auto, auto, auto, 82px 82px, auto;
         }
-      
-        /* ULTIMATE GAMEPLAY POSITION LOCK
-           The game canvas is pinned to the viewport. No in-game state may change its top offset. */
-        html,
-        body {
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-          height: 100% !important;
-          max-height: 100% !important;
-          overscroll-behavior: none !important;
-          scroll-behavior: auto !important;
-        }
-
-        body {
-          position: static !important;
-          top: auto !important;
-          left: auto !important;
-          right: auto !important;
-          width: auto !important;
-        }
-
-        .game-fixed-viewport,
-        .balatro-inspired-bg {
-          position: fixed !important;
-          inset: 0 !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100vw !important;
-          height: 100dvh !important;
-          min-height: 100dvh !important;
-          max-height: 100dvh !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-          transform: none !important;
-          translate: none !important;
-        }
-
-        .portrait-outer {
-          position: absolute !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          max-width: 100vw !important;
-          height: 100dvh !important;
-          min-height: 0 !important;
-          max-height: 100dvh !important;
-          margin: 0 !important;
-          padding: 0.375rem !important;
-          overflow: hidden !important;
-          transform: none !important;
-          translate: none !important;
-        }
-
-        .portrait-frame {
-          height: calc(100dvh - 0.75rem) !important;
-          min-height: 0 !important;
-          max-height: calc(100dvh - 0.75rem) !important;
-          overflow: hidden !important;
-          transform: none !important;
-          translate: none !important;
-          animation: none !important;
-        }
-
-        .portrait-stack-layout,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-side,
-        .portrait-queue-panel {
-          min-height: 0 !important;
-          overflow-anchor: none !important;
-          scroll-margin: 0 !important;
-          scroll-padding: 0 !important;
-          transform: none !important;
-          translate: none !important;
-        }
-
-        .portrait-board-wrap > .mb-2 {
-          height: 1.75rem !important;
-          min-height: 1.75rem !important;
-          max-height: 1.75rem !important;
-          overflow: hidden !important;
-        }
-
-        .portrait-board button,
-        .portrait-board button:focus,
-        .portrait-board button:focus-visible {
-          outline: none !important;
-          scroll-margin: 0 !important;
-        }
-
-        .micro-shake-overlay {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: 100dvh !important;
-          pointer-events: none !important;
-        }
-
-        @keyframes boardKick {
-          0%, 100% { transform: none; }
-        }
-`}</style>
+      `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
 
@@ -1669,7 +1455,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1.5 py-1.5">
+      <div className="relative z-10 mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-col justify-start overflow-hidden px-1.5 py-1.5">
         <section className="table-frame pixel-hard relative w-full overflow-hidden border-[6px] border-[#061811] p-3 shadow-[10px_10px_0_#03100b] backdrop-blur-sm">
           <header className="pixel-hard pixel-inner relative z-10 mb-3 grid gap-3 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-4 py-3 shadow-[6px_6px_0_#03100b] md:grid-cols-[minmax(260px,1fr)_minmax(420px,1.7fr)] md:items-center">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
@@ -1724,6 +1510,16 @@ export default function Home() {
                     BOARD
                   </p>
 
+                  <div
+                    className={[
+                      "rounded-full border-[3px] border-[#061811] bg-[#f5d06f] px-3 py-1 text-[10px] font-black text-[#061811] shadow-[3px_3px_0_#04120d]",
+                      isResolvingHand ? "opacity-100" : "opacity-0",
+                    ].join(" ")}
+                    style={{ animation: isResolvingHand ? "targetBanner 180ms ease-out" : undefined }}
+                    aria-hidden={!isResolvingHand}
+                  >
+                    CLEAR TARGETS
+                  </div>
                 </div>
 
                 <div className="pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-2 border-[5px] border-[#061811] bg-[#09231d] p-3 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] lg:aspect-auto lg:max-h-none">
