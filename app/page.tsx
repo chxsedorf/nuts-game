@@ -1548,6 +1548,56 @@ function HomeScreen({
           70% { opacity: 0.85; filter: brightness(1.05); transform: none; }
           100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
+
+        /* Gameplay viewport pin: prevents the entire game from sliding down during play. */
+        @media (min-width: 768px) {
+          html,
+          body,
+          #__next,
+          [data-nextjs-scroll-focus-boundary] {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            scroll-behavior: auto !important;
+          }
+
+          .game-fixed-viewport,
+          .balatro-inspired-bg {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+            transform: none !important;
+            translate: none !important;
+          }
+
+          .portrait-frame {
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+          }
+        }
+
+        .portrait-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid,
+        .portrait-stack-layout {
+          scroll-margin-top: 0 !important;
+          scroll-padding-top: 0 !important;
+        }
+
+        .portrait-board button,
+        .portrait-board button:focus,
+        .portrait-board button:focus-visible {
+          outline: none !important;
+          scroll-margin: 0 !important;
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -1703,6 +1753,62 @@ export default function Home() {
   const bgmTrackRef = useRef<string>("");
 
   useEffect(() => {
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+    if (screen !== "game") return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollingElement = document.scrollingElement || html;
+
+    const previousScrollTop = window.scrollY || scrollingElement.scrollTop || 0;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlHeight = html.style.height;
+    const previousBodyHeight = body.style.height;
+    const previousHtmlOverscroll = html.style.overscrollBehavior;
+    const previousBodyOverscroll = body.style.overscrollBehavior;
+    const previousBodyPosition = body.style.position;
+    const previousBodyTop = body.style.top;
+    const previousBodyLeft = body.style.left;
+    const previousBodyRight = body.style.right;
+    const previousBodyWidth = body.style.width;
+
+    window.scrollTo(0, 0);
+    scrollingElement.scrollTop = 0;
+
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    html.style.height = "100%";
+    body.style.height = "100%";
+    html.style.overscrollBehavior = "none";
+    body.style.overscrollBehavior = "none";
+
+    // Lock the body without preserving the old scroll offset.
+    // Preserving it with top:-scrollY would visually shift the whole game.
+    body.style.position = "fixed";
+    body.style.top = "0";
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+      html.style.height = previousHtmlHeight;
+      body.style.height = previousBodyHeight;
+      html.style.overscrollBehavior = previousHtmlOverscroll;
+      body.style.overscrollBehavior = previousBodyOverscroll;
+      body.style.position = previousBodyPosition;
+      body.style.top = previousBodyTop;
+      body.style.left = previousBodyLeft;
+      body.style.right = previousBodyRight;
+      body.style.width = previousBodyWidth;
+
+      window.scrollTo(0, previousScrollTop);
+    };
+  }, [screen]);
+
+  useEffect(() => {
     preloadCardImages();
 
     const savedHighScore = getSavedHighScore();
@@ -1718,6 +1824,26 @@ export default function Home() {
   const selectedCard = game.hand[0] ?? null;
 
   const isResolvingHand = highlightCells.size > 0;
+
+  function keepGameViewportAtTop(duration = 900) {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
+    const scrollingElement = document.scrollingElement || document.documentElement;
+    const endAt = performance.now() + duration;
+
+    const snap = () => {
+      window.scrollTo(0, 0);
+      scrollingElement.scrollTop = 0;
+
+      if (performance.now() < endAt) {
+        window.requestAnimationFrame(snap);
+      }
+    };
+
+    window.requestAnimationFrame(snap);
+  }
+
+
 
   function getSafeSfxGain(gainValue: number) {
     if (!soundEnabled || sfxVolume <= 0) return 0;
@@ -2664,7 +2790,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:fixed md:inset-0 md:h-[100dvh] md:overflow-hidden">
         <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
@@ -4364,6 +4490,56 @@ export default function Home() {
           70% { opacity: 0.85; filter: brightness(1.05); transform: none; }
           100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
+
+        /* Gameplay viewport pin: prevents the entire game from sliding down during play. */
+        @media (min-width: 768px) {
+          html,
+          body,
+          #__next,
+          [data-nextjs-scroll-focus-boundary] {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            scroll-behavior: auto !important;
+          }
+
+          .game-fixed-viewport,
+          .balatro-inspired-bg {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+            transform: none !important;
+            translate: none !important;
+          }
+
+          .portrait-frame {
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+          }
+        }
+
+        .portrait-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid,
+        .portrait-stack-layout {
+          scroll-margin-top: 0 !important;
+          scroll-padding-top: 0 !important;
+        }
+
+        .portrait-board button,
+        .portrait-board button:focus,
+        .portrait-board button:focus-visible {
+          outline: none !important;
+          scroll-margin: 0 !important;
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -4605,7 +4781,7 @@ export default function Home() {
   const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:fixed md:inset-0 md:h-[100dvh] md:overflow-hidden">
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
@@ -6766,6 +6942,56 @@ export default function Home() {
           35% { opacity: 1; filter: brightness(1.2); transform: none; }
           70% { opacity: 0.85; filter: brightness(1.05); transform: none; }
           100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+        }
+
+        /* Gameplay viewport pin: prevents the entire game from sliding down during play. */
+        @media (min-width: 768px) {
+          html,
+          body,
+          #__next,
+          [data-nextjs-scroll-focus-boundary] {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            scroll-behavior: auto !important;
+          }
+
+          .game-fixed-viewport,
+          .balatro-inspired-bg {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+            transform: none !important;
+            translate: none !important;
+          }
+
+          .portrait-frame {
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+          }
+        }
+
+        .portrait-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid,
+        .portrait-stack-layout {
+          scroll-margin-top: 0 !important;
+          scroll-padding-top: 0 !important;
+        }
+
+        .portrait-board button,
+        .portrait-board button:focus,
+        .portrait-board button:focus-visible {
+          outline: none !important;
+          scroll-margin: 0 !important;
         }
 `}</style>
 
