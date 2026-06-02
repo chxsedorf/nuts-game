@@ -1668,6 +1668,37 @@ function HomeScreen({
         @keyframes boardKick {
           0%, 100% { transform: none; }
         }
+
+        /* Anti-stuck fix: never lock the BODY with position: fixed; pin only the game root. */
+        body {
+          position: static !important;
+          top: auto !important;
+          left: auto !important;
+          right: auto !important;
+          width: auto !important;
+        }
+
+        .game-fixed-viewport {
+          position: fixed !important;
+          inset: 0 !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          min-height: 100dvh !important;
+          max-height: 100dvh !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+          margin: 0 !important;
+        }
+
+        .micro-shake-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -1830,19 +1861,15 @@ export default function Home() {
     const body = document.body;
     const scrollingElement = document.scrollingElement || html;
 
-    const previousScrollTop = window.scrollY || scrollingElement.scrollTop || 0;
     const previousHtmlOverflow = html.style.overflow;
     const previousBodyOverflow = body.style.overflow;
     const previousHtmlHeight = html.style.height;
     const previousBodyHeight = body.style.height;
     const previousHtmlOverscroll = html.style.overscrollBehavior;
     const previousBodyOverscroll = body.style.overscrollBehavior;
-    const previousBodyPosition = body.style.position;
-    const previousBodyTop = body.style.top;
-    const previousBodyLeft = body.style.left;
-    const previousBodyRight = body.style.right;
-    const previousBodyWidth = body.style.width;
 
+    // Always start gameplay at the very top.
+    // Do NOT use body position: fixed here. It can visually freeze the page at a shifted offset.
     window.scrollTo(0, 0);
     scrollingElement.scrollTop = 0;
 
@@ -1853,14 +1880,6 @@ export default function Home() {
     html.style.overscrollBehavior = "none";
     body.style.overscrollBehavior = "none";
 
-    // Lock the body without preserving the old scroll offset.
-    // Preserving it with top:-scrollY would visually shift the whole game.
-    body.style.position = "fixed";
-    body.style.top = "0";
-    body.style.left = "0";
-    body.style.right = "0";
-    body.style.width = "100%";
-
     return () => {
       html.style.overflow = previousHtmlOverflow;
       body.style.overflow = previousBodyOverflow;
@@ -1868,13 +1887,6 @@ export default function Home() {
       body.style.height = previousBodyHeight;
       html.style.overscrollBehavior = previousHtmlOverscroll;
       body.style.overscrollBehavior = previousBodyOverscroll;
-      body.style.position = previousBodyPosition;
-      body.style.top = previousBodyTop;
-      body.style.left = previousBodyLeft;
-      body.style.right = previousBodyRight;
-      body.style.width = previousBodyWidth;
-
-      window.scrollTo(0, previousScrollTop);
     };
   }, [screen]);
 
@@ -2860,7 +2872,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:fixed md:inset-0 md:h-[100dvh] md:overflow-hidden">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport fixed inset-0 h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#07120f] text-white">
         <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
@@ -4679,6 +4691,37 @@ export default function Home() {
 
         @keyframes boardKick {
           0%, 100% { transform: none; }
+        }
+
+        /* Anti-stuck fix: never lock the BODY with position: fixed; pin only the game root. */
+        body {
+          position: static !important;
+          top: auto !important;
+          left: auto !important;
+          right: auto !important;
+          width: auto !important;
+        }
+
+        .game-fixed-viewport {
+          position: fixed !important;
+          inset: 0 !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          min-height: 100dvh !important;
+          max-height: 100dvh !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+          margin: 0 !important;
+        }
+
+        .micro-shake-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
         }
 `}</style>
 
@@ -7202,6 +7245,37 @@ export default function Home() {
 
         @keyframes boardKick {
           0%, 100% { transform: none; }
+        }
+
+        /* Anti-stuck fix: never lock the BODY with position: fixed; pin only the game root. */
+        body {
+          position: static !important;
+          top: auto !important;
+          left: auto !important;
+          right: auto !important;
+          width: auto !important;
+        }
+
+        .game-fixed-viewport {
+          position: fixed !important;
+          inset: 0 !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          min-height: 100dvh !important;
+          max-height: 100dvh !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+          margin: 0 !important;
+        }
+
+        .micro-shake-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
         }
 `}</style>
 
