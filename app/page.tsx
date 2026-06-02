@@ -303,15 +303,29 @@ export default function Page() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     sound: false,
-    showDebug: true,
+    showDebug: false,
     reducedMotion: false,
   });
+  const [screen, setScreen] = useState<"HOME" | "GAME">("HOME");
 
   const emptyCells = useMemo(() => game.board.filter((cell) => cell === null).length, [game.board]);
+  const deckLeft = game.deck.length + 1;
+
+  function startGame() {
+    setGame(createInitialGame());
+    setSettingsOpen(false);
+    setScreen("GAME");
+  }
 
   function restart() {
     setGame(createInitialGame());
     setSettingsOpen(false);
+    setScreen("GAME");
+  }
+
+  function backToTitle() {
+    setSettingsOpen(false);
+    setScreen("HOME");
   }
 
   function placeCard(targetIndex: number) {
@@ -416,6 +430,33 @@ export default function Page() {
         </div>
       )}
 
+      {screen === "HOME" ? (
+        <section className="home-shell">
+          <div className="home-card">
+            <p className="eyebrow">Stable Rebuild</p>
+            <h1>NUTS</h1>
+            <p className="home-copy">
+              Place cards on a 5×5 board. Make hands only in rows and columns. Keep the combo alive within three turns.
+            </p>
+
+            <div className="home-actions">
+              <button className="primary-button start-button" type="button" onClick={startGame}>
+                Start Game
+              </button>
+              <button className="secondary-button" type="button" onClick={() => setSettingsOpen(true)}>
+                Settings
+              </button>
+            </div>
+          </div>
+
+          <div className="home-rules">
+            <RuleCard title="PAIR" score="Small" note="same rank ×2 / combo + small score" cards={[1, 1]} />
+            <RuleCard title="THREE" score="Base" note="same rank ×3 / combo + score + clear" cards={[2, 2, 2]} />
+            <RuleCard title="STRAIGHT" score="Middle" note="3 consecutive ranks / combo + middle score + clear" cards={[2, 3, 4]} />
+            <RuleCard title="FULL HOUSE" score="Big" note="3 + 2 in 5 cards / combo + big score + clear" cards={[3, 3, 3, 5, 5]} />
+          </div>
+        </section>
+      ) : (
       <section className="game-shell">
         <aside className="panel left-panel">
           <p className="eyebrow">Score</p>
@@ -430,6 +471,10 @@ export default function Page() {
               <span>Empty</span>
               <strong>{emptyCells}</strong>
             </div>
+            <div className="metric-card wide">
+              <span>Deck</span>
+              <strong>{deckLeft}</strong>
+            </div>
           </div>
 
           <div className="next-card-wrap">
@@ -437,9 +482,14 @@ export default function Page() {
             <CardView card={game.currentCard} large />
           </div>
 
-          <button className="primary-button" type="button" onClick={restart}>
-            Restart
-          </button>
+          <div className="button-stack">
+            <button className="primary-button" type="button" onClick={restart}>
+              Restart
+            </button>
+            <button className="secondary-button" type="button" onClick={backToTitle}>
+              Title
+            </button>
+          </div>
         </aside>
 
         <section className="board-section">
@@ -476,6 +526,9 @@ export default function Page() {
               <button className="primary-button" type="button" onClick={restart}>
                 Play Again
               </button>
+              <button className="secondary-button game-over-secondary" type="button" onClick={backToTitle}>
+                Title
+              </button>
             </div>
           )}
         </section>
@@ -507,6 +560,7 @@ export default function Page() {
           )}
         </aside>
       </section>
+      )}
 
       <style jsx>{`
         :global(*) {
@@ -559,6 +613,60 @@ export default function Page() {
             linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
           background-size: 42px 42px;
           mask-image: radial-gradient(circle at center, black, transparent 76%);
+        }
+
+        .home-shell {
+          position: relative;
+          z-index: 1;
+          width: min(1040px, 100%);
+          min-height: min(680px, calc(100svh - 24px));
+          display: grid;
+          grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
+          gap: clamp(14px, 2vw, 26px);
+          align-items: stretch;
+        }
+
+        .home-card,
+        .home-rules {
+          border: 1px solid rgba(255, 230, 190, 0.22);
+          background: rgba(17, 14, 10, 0.74);
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          backdrop-filter: blur(18px);
+          border-radius: 34px;
+          padding: clamp(22px, 3vw, 36px);
+        }
+
+        .home-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .home-card h1 {
+          text-align: left;
+          font-size: clamp(64px, 11vw, 132px);
+          margin-bottom: 18px;
+        }
+
+        .home-copy {
+          max-width: 560px;
+          color: #ead8bd;
+          font-size: clamp(16px, 2vw, 20px);
+          line-height: 1.7;
+          font-weight: 700;
+        }
+
+        .home-actions {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+          gap: 12px;
+          margin-top: 28px;
+        }
+
+        .home-rules {
+          display: grid;
+          align-content: center;
+          gap: 12px;
         }
 
         .game-shell {
@@ -693,6 +801,35 @@ export default function Page() {
           background: linear-gradient(180deg, #f4c36e, #c9822f);
           font-weight: 900;
           box-shadow: 0 10px 28px rgba(193, 117, 40, 0.28);
+        }
+
+        .secondary-button {
+          width: 100%;
+          border: 1px solid rgba(255, 230, 190, 0.2);
+          border-radius: 18px;
+          padding: 14px 16px;
+          color: #f7efe3;
+          background: rgba(255, 255, 255, 0.07);
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .secondary-button:hover {
+          background: rgba(244, 195, 110, 0.13);
+          border-color: rgba(244, 195, 110, 0.42);
+        }
+
+        .button-stack {
+          display: grid;
+          gap: 10px;
+        }
+
+        .metric-card.wide {
+          grid-column: 1 / -1;
+        }
+
+        .game-over-secondary {
+          margin-top: 10px;
         }
 
         .settings-button {
@@ -946,6 +1083,16 @@ export default function Page() {
         }
 
         @media (max-width: 980px) {
+          .home-shell {
+            grid-template-columns: 1fr;
+            min-height: auto;
+          }
+
+          .home-actions {
+            grid-template-columns: 1fr;
+          }
+
+
           :global(body) {
             overflow: auto;
           }
@@ -957,7 +1104,61 @@ export default function Page() {
             align-items: flex-start;
           }
 
-          .game-shell {
+          .home-shell {
+          position: relative;
+          z-index: 1;
+          width: min(1040px, 100%);
+          min-height: min(680px, calc(100svh - 24px));
+          display: grid;
+          grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
+          gap: clamp(14px, 2vw, 26px);
+          align-items: stretch;
+        }
+
+        .home-card,
+        .home-rules {
+          border: 1px solid rgba(255, 230, 190, 0.22);
+          background: rgba(17, 14, 10, 0.74);
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          backdrop-filter: blur(18px);
+          border-radius: 34px;
+          padding: clamp(22px, 3vw, 36px);
+        }
+
+        .home-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .home-card h1 {
+          text-align: left;
+          font-size: clamp(64px, 11vw, 132px);
+          margin-bottom: 18px;
+        }
+
+        .home-copy {
+          max-width: 560px;
+          color: #ead8bd;
+          font-size: clamp(16px, 2vw, 20px);
+          line-height: 1.7;
+          font-weight: 700;
+        }
+
+        .home-actions {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+          gap: 12px;
+          margin-top: 28px;
+        }
+
+        .home-rules {
+          display: grid;
+          align-content: center;
+          gap: 12px;
+        }
+
+        .game-shell {
             height: auto;
             min-height: calc(100svh - 24px);
             grid-template-columns: 1fr;
@@ -986,7 +1187,61 @@ export default function Page() {
             padding: 10px;
           }
 
-          .game-shell {
+          .home-shell {
+          position: relative;
+          z-index: 1;
+          width: min(1040px, 100%);
+          min-height: min(680px, calc(100svh - 24px));
+          display: grid;
+          grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
+          gap: clamp(14px, 2vw, 26px);
+          align-items: stretch;
+        }
+
+        .home-card,
+        .home-rules {
+          border: 1px solid rgba(255, 230, 190, 0.22);
+          background: rgba(17, 14, 10, 0.74);
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          backdrop-filter: blur(18px);
+          border-radius: 34px;
+          padding: clamp(22px, 3vw, 36px);
+        }
+
+        .home-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .home-card h1 {
+          text-align: left;
+          font-size: clamp(64px, 11vw, 132px);
+          margin-bottom: 18px;
+        }
+
+        .home-copy {
+          max-width: 560px;
+          color: #ead8bd;
+          font-size: clamp(16px, 2vw, 20px);
+          line-height: 1.7;
+          font-weight: 700;
+        }
+
+        .home-actions {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+          gap: 12px;
+          margin-top: 28px;
+        }
+
+        .home-rules {
+          display: grid;
+          align-content: center;
+          gap: 12px;
+        }
+
+        .game-shell {
             gap: 10px;
           }
 
