@@ -2987,6 +2987,97 @@ export default function Home() {
           }
         }
 
+
+        @media (min-width: 900px) {
+          .duel-shift-up {
+            transform: translateY(-48px) !important;
+            min-height: calc(100svh + 48px) !important;
+            height: calc(100svh + 48px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 34px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 106px) !important;
+            max-height: calc(100svh - 106px) !important;
+            align-items: stretch !important;
+          }
+
+          .duel-shift-up .portrait-board-wrap {
+            padding: 0.45rem !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+
+          .duel-shift-up .portrait-board {
+            width: auto !important;
+            height: min(calc(100svh - 150px), 100%) !important;
+            max-height: calc(100svh - 150px) !important;
+            max-width: 100% !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: 0 0 auto !important;
+            margin-inline: auto !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel {
+            gap: 0.45rem !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            height: 150px !important;
+            max-height: 150px !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 .duel-status-title {
+            font-size: 1.05rem !important;
+          }
+
+          .duel-control-buttons button {
+            min-height: 38px !important;
+            padding-block: 0.55rem !important;
+            font-size: 0.9rem !important;
+            line-height: 1 !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .duel-shift-up {
+            transform: translateY(-58px) !important;
+            min-height: calc(100svh + 58px) !important;
+            height: calc(100svh + 58px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 44px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 92px) !important;
+            max-height: calc(100svh - 92px) !important;
+          }
+
+          .duel-shift-up .portrait-board {
+            height: min(calc(100svh - 132px), 100%) !important;
+            max-height: calc(100svh - 132px) !important;
+            gap: 0.25rem !important;
+            padding: 0.35rem !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            height: 124px !important;
+            max-height: 124px !important;
+          }
+
+          .duel-control-buttons button {
+            min-height: 30px !important;
+            padding-block: 0.36rem !important;
+            font-size: 0.78rem !important;
+            border-width: 3px !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3197,13 +3288,28 @@ export default function Home() {
                       )}
                     </div>
 
-                    <div className="mt-1.5 grid gap-1.5">
-                      {duel.isGameOver && (
-                        <button onClick={restartDuelGame} className="rounded-xl border-[4px] border-[#061811] bg-[#f0a536] px-4 py-2 text-lg font-black text-[#2a1603] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
-                          REMATCH
-                        </button>
-                      )}
-                      <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-2 text-base font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
+                    <div className="duel-control-buttons mt-1.5 grid shrink-0 grid-cols-2 gap-1.5">
+                      <button
+                        onClick={restartDuelGame}
+                        className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset]"
+                        style={{ textShadow: "2px 2px 0 #03100b" }}
+                      >
+                        RESTART
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          playSound("select");
+                          setScreen("home");
+
+                          if (bgmVolume > 0) {
+                            setBgmEnabled(true);
+                            window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
+                          }
+                        }}
+                        className="rounded-xl border-[4px] border-[#061811] bg-[#d23a2f] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset]"
+                        style={{ textShadow: "2px 2px 0 #03100b" }}
+                      >
                         HOME
                       </button>
                     </div>
