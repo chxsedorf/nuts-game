@@ -571,34 +571,18 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
   return cards.some((item) => item.row === row && item.col === col);
 }
 
-/**
- * NUTS hand detection rebuilt from scratch.
- *
- * Rules are intentionally small and strict:
- * - Only horizontal and vertical contiguous card runs are checked.
- * - A is normalized to 1. J/Q/K are 11/12/13.
- * - Pair: exactly 2 same ranks, must include the newly placed card, scores only.
- * - Three Card: exactly 3 same ranks, must include the newly placed card, clears.
- * - Straight: exactly 3 consecutive ranks, must include the newly placed card, clears.
- * - Full House: exactly 5 cards with counts 3 + 2, must include the newly placed card, clears.
- *
- * This prevents the old false positives such as:
- * - 1,2 being treated as Pair
- * - 1,3 being treated as Pair
- * - 1,2,2 being treated as Three Card
- */
-type ExactHandKind = "Pair" | "Three Card" | "Straight" | "Full House";
+type DetectedHandKind = "Pair" | "Three Card" | "Straight" | "Full House";
 
-type ExactHandCandidate = {
-  kind: ExactHandKind;
+type DetectedHandCandidate = {
+  kind: DetectedHandKind;
   cards: LineCard[];
   scorePerCard: number;
   shouldClear: boolean;
   priority: number;
 };
 
-const exactHandConfig: Record<
-  ExactHandKind,
+const handConfig: Record<
+  DetectedHandKind,
   {
     scorePerCard: number;
     shouldClear: boolean;
@@ -627,11 +611,10 @@ const exactHandConfig: Record<
   },
 };
 
-function normalizeRankValue(card: Card): number {
+function getRankValueVariants(card: Card): number[] {
   const rankText = String(card.rank ?? "").trim().toUpperCase();
   const numericValue = Number(card.value);
 
-  // The game displays Ace as 1. Keep every Ace representation identical.
   if (
     rankText === "A" ||
     rankText === "1" ||
@@ -639,19 +622,23 @@ function normalizeRankValue(card: Card): number {
     numericValue === 14 ||
     numericValue === 1
   ) {
-    return 1;
+    return [1, 14];
   }
 
-  if (rankText === "J" || rankText === "JACK") return 11;
-  if (rankText === "Q" || rankText === "QUEEN") return 12;
-  if (rankText === "K" || rankText === "KING") return 13;
+  if (rankText === "J" || rankText === "JACK") return [11];
+  if (rankText === "Q" || rankText === "QUEEN") return [12];
+  if (rankText === "K" || rankText === "KING") return [13];
 
   const fromRankText = Number(rankText);
-  if (Number.isInteger(fromRankText)) return fromRankText;
+  if (Number.isInteger(fromRankText)) return [fromRankText];
 
-  if (Number.isInteger(numericValue)) return numericValue;
+  if (Number.isInteger(numericValue)) return [numericValue];
 
-  return Number.NaN;
+  return [];
+}
+
+function normalizeRankValue(card: Card): number {
+  return getRankValueVariants(card)[0] ?? Number.NaN;
 }
 
 function getRankCounts(cards: LineCard[]): Map<number, number> {
@@ -666,42 +653,46 @@ function getRankCounts(cards: LineCard[]): Map<number, number> {
   return counts;
 }
 
-function isExactPair(cards: LineCard[]): boolean {
-  if (cards.length !== 2) return false;
-
+function isPairHand(cards: LineCard[]): boolean {
   const counts = getRankCounts(cards);
-  return counts.size === 1 && [...counts.values()][0] === 2;
+  return cards.length === 2 && counts.size === 1 && [...counts.values()][0] === 2;
 }
 
-function isExactThreeCard(cards: LineCard[]): boolean {
+function isThreeCardHand(cards: LineCard[]): boolean {
+  const counts = getRankCounts(cards);
+  return cards.length === 3 && counts.size === 1 && [...counts.values()][0] === 3;
+}
+
+function isStraightHand(cards: LineCard[]): boolean {
   if (cards.length !== 3) return false;
 
-  const counts = getRankCounts(cards);
-  return counts.size === 1 && [...counts.values()][0] === 3;
+  const variantSets = cards.map((item) => getRankValueVariants(item.card));
+  if (variantSets.some((variants) => variants.length === 0)) return false;
+
+  for (const first of variantSets[0]) {
+    for (const second of variantSets[1]) {
+      for (const third of variantSets[2]) {
+        const values = [first, second, third].sort((a, b) => a - b);
+        if (new Set(values).size !== 3) continue;
+        if (values[1] === values[0] + 1 && values[2] === values[1] + 1) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
-function isExactStraight(cards: LineCard[]): boolean {
-  if (cards.length !== 3) return false;
-
-  const values = cards
-    .map((item) => normalizeRankValue(item.card))
-    .sort((a, b) => a - b);
-
-  if (values.some((value) => !Number.isInteger(value))) return false;
-  if (new Set(values).size !== 3) return false;
-
-  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
-}
-
-function isExactFullHouse(cards: LineCard[]): boolean {
+function isFullHouseHand(cards: LineCard[]): boolean {
   if (cards.length !== 5) return false;
 
   const counts = [...getRankCounts(cards).values()].sort((a, b) => a - b);
   return counts.length === 2 && counts[0] === 2 && counts[1] === 3;
 }
 
-function makeExactCandidate(kind: ExactHandKind, cards: LineCard[]): ExactHandCandidate {
-  const config = exactHandConfig[kind];
+function makeHandCandidate(kind: DetectedHandKind, cards: LineCard[]): DetectedHandCandidate {
+  const config = handConfig[kind];
 
   return {
     kind,
@@ -712,25 +703,25 @@ function makeExactCandidate(kind: ExactHandKind, cards: LineCard[]): ExactHandCa
   };
 }
 
-function classifyExactWindow(cards: LineCard[]): ExactHandCandidate | null {
-  if (cards.length === 5 && isExactFullHouse(cards)) {
-    return makeExactCandidate("Full House", cards);
+function classifyHandCards(cards: LineCard[]): DetectedHandCandidate | null {
+  if (cards.length === 5 && isFullHouseHand(cards)) {
+    return makeHandCandidate("Full House", cards);
   }
 
   if (cards.length === 3) {
-    if (isExactThreeCard(cards)) return makeExactCandidate("Three Card", cards);
-    if (isExactStraight(cards)) return makeExactCandidate("Straight", cards);
+    if (isThreeCardHand(cards)) return makeHandCandidate("Three Card", cards);
+    if (isStraightHand(cards)) return makeHandCandidate("Straight", cards);
     return null;
   }
 
-  if (cards.length === 2 && isExactPair(cards)) {
-    return makeExactCandidate("Pair", cards);
+  if (cards.length === 2 && isPairHand(cards)) {
+    return makeHandCandidate("Pair", cards);
   }
 
   return null;
 }
 
-function createHandResultFromCandidate(candidate: ExactHandCandidate): HandResult {
+function createHandResultFromCandidate(candidate: DetectedHandCandidate): HandResult {
   return {
     name: candidate.kind,
     score: candidate.scorePerCard * candidate.cards.length,
@@ -738,6 +729,25 @@ function createHandResultFromCandidate(candidate: ExactHandCandidate): HandResul
     shouldClear: candidate.shouldClear,
     priority: candidate.priority,
   };
+}
+
+function getCombinations<T>(items: T[], count: number): T[][] {
+  const combinations: T[][] = [];
+
+  function walk(startIndex: number, picked: T[]) {
+    if (picked.length === count) {
+      combinations.push(picked);
+      return;
+    }
+
+    const remainingNeeded = count - picked.length;
+    for (let index = startIndex; index <= items.length - remainingNeeded; index++) {
+      walk(index + 1, [...picked, items[index]]);
+    }
+  }
+
+  walk(0, []);
+  return combinations;
 }
 
 function getResultKey(result: HandResult): string {
@@ -882,19 +892,15 @@ function evaluateSegmentThroughPlacedCard(
   placedCol: number
 ): HandResult[] {
   const candidates: HandResult[] = [];
-  const windowSizes = [5, 3, 2];
+  const handSizes = [5, 3, 2];
 
-  for (const windowSize of windowSizes) {
-    if (segment.length < windowSize) continue;
+  for (const handSize of handSizes) {
+    if (segment.length < handSize) continue;
 
-    for (let startIndex = 0; startIndex + windowSize <= segment.length; startIndex++) {
-      const windowCards = segment.slice(startIndex, startIndex + windowSize);
+    for (const handCards of getCombinations(segment, handSize)) {
+      if (!includesPlaced(handCards, placedRow, placedCol)) continue;
 
-      // A move can only trigger a hand that actually contains the newly placed card.
-      // This eliminates repeated scoring from old pairs/triples elsewhere on the line.
-      if (!includesPlaced(windowCards, placedRow, placedCol)) continue;
-
-      const candidate = classifyExactWindow(windowCards);
+      const candidate = classifyHandCards(handCards);
       if (!candidate) continue;
 
       addUniqueResult(candidates, createHandResultFromCandidate(candidate));
@@ -5137,19 +5143,34 @@ export default function Home() {
         }
 
         @keyframes comboBadgeSlam {
-          0% { opacity: 0; transform: translate(-50%, -18px) scale(0.82) rotate(-4deg); }
-          36% { opacity: 1; transform: translate(-50%, 4px) scale(1.12) rotate(2deg); }
-          100% { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(-1deg); }
+          0% { opacity: 0; transform: translateX(-50%) scale(0.82) rotate(-4deg); }
+          36% { opacity: 1; transform: translateX(-50%) scale(1.08) rotate(2deg); }
+          100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(-1deg); }
         }
 
         @keyframes comboElectric {
-          0%, 100% { transform: translateY(0) rotate(-1deg); text-shadow: 4px 4px 0 #03100b, 0 0 12px rgba(245,208,111,0.55); }
-          50% { transform: translateY(-2px) rotate(1deg); text-shadow: 5px 5px 0 #03100b, 0 0 24px rgba(245,208,111,0.95), 0 0 38px rgba(110,231,255,0.55); }
+          0%, 100% { transform: rotate(-1deg); text-shadow: 4px 4px 0 #03100b, 0 0 12px rgba(245,208,111,0.55); }
+          50% { transform: rotate(1deg); text-shadow: 5px 5px 0 #03100b, 0 0 24px rgba(245,208,111,0.95), 0 0 38px rgba(110,231,255,0.55); }
         }
 
         @keyframes comboStripe {
           0% { background-position: 0 0; }
           100% { background-position: 64px 0; }
+        }
+
+        .combo-fixed-layer {
+          contain: strict;
+          height: 100svh !important;
+          max-height: 100svh !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .combo-status-badge {
+          contain: layout paint style;
+          transform: translateX(-50%);
+          will-change: transform, opacity;
         }
 
         @keyframes cardPop {
@@ -7517,7 +7538,10 @@ export default function Home() {
       )}
 
       {isComboAuraVisible && (
-        <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
+        <div
+          className="combo-fixed-layer pointer-events-none fixed inset-0 z-[1] overflow-hidden"
+          aria-hidden="true"
+        >
           <div
             className="absolute inset-[-18%] opacity-10"
             style={{
@@ -7534,26 +7558,24 @@ export default function Home() {
               animation: "comboStripe 720ms linear infinite",
             }}
           />
-        </div>
-      )}
 
-      {isComboAuraVisible && (
-        <div
-          className="pointer-events-none fixed left-1/2 top-[118px] z-[65] rounded-2xl border-[5px] border-[#061811] bg-[#0b2f27]/95 px-5 py-2 text-center shadow-[7px_7px_0_#020806]"
-          style={{
-            animation: "comboBadgeSlam 360ms cubic-bezier(.2,1.3,.25,1) both",
-            boxShadow: `7px 7px 0 #020806, 0 0 ${12 + game.combo * 1.8}px ${currentComboTier.glow}`,
-          }}
-        >
-          <p className={`text-[10px] font-black tracking-[0.35em] ${currentComboTier.text}`}>
-            {currentComboTier.label}
-          </p>
-          <p
-            className="mt-0.5 text-4xl font-black leading-none text-[#ffef7a]"
-            style={{ animation: "comboElectric 760ms ease-in-out infinite" }}
+          <div
+            className="combo-status-badge pointer-events-none fixed left-1/2 top-[118px] z-[65] rounded-2xl border-[5px] border-[#061811] bg-[#0b2f27]/95 px-5 py-2 text-center shadow-[7px_7px_0_#020806]"
+            style={{
+              animation: "comboBadgeSlam 360ms cubic-bezier(.2,1.3,.25,1) both",
+              boxShadow: `7px 7px 0 #020806, 0 0 ${12 + game.combo * 1.8}px ${currentComboTier.glow}`,
+            }}
           >
-            x{game.combo}
-          </p>
+            <p className={`text-[10px] font-black tracking-[0.35em] ${currentComboTier.text}`}>
+              {currentComboTier.label}
+            </p>
+            <p
+              className="mt-0.5 text-4xl font-black leading-none text-[#ffef7a]"
+              style={{ animation: "comboElectric 760ms ease-in-out infinite" }}
+            >
+              x{game.combo}
+            </p>
+          </div>
         </div>
       )}
 
