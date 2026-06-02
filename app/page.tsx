@@ -154,11 +154,17 @@ const suitNames: Record<Suit, string> = {
 };
 
 const scoreTable = {
-  pair: 12,
+  // Pair: combo + small score, no clear.
+  pair: 10,
+
+  // Three Card: combo + score + clear.
   three: 55,
-  straight: 75,
-  flush: 85,
-  fullHouse: 190,
+
+  // Straight: combo + medium score + clear.
+  straight: 85,
+
+  // Full House: combo + large score + clear.
+  fullHouse: 220,
 };
 
 const comboMilestones = [5, 10, 15, 25, 50, 100];
@@ -191,14 +197,14 @@ function getScoreDetailText(baseScore: number, combo: number, handCount: number)
   const milestoneBonus = getComboMilestoneBonus(combo);
 
   if (milestoneBonus > 0) {
-    return `BASE ${baseScore} ×${combo} ×${multiHandBonus.toFixed(2)} + ${milestoneBonus} BONUS`;
+    return `HAND ${baseScore} × COMBO ${combo} × ${multiHandBonus.toFixed(2)} + ${milestoneBonus} BONUS`;
   }
 
   if (handCount >= 2) {
-    return `BASE ${baseScore} ×${combo} ×${multiHandBonus.toFixed(2)}`;
+    return `HAND ${baseScore} × COMBO ${combo} × ${multiHandBonus.toFixed(2)}`;
   }
 
-  return `BASE ${baseScore} ×${combo}`;
+  return `HAND ${baseScore} × COMBO ${combo}`;
 }
 
 function getComboTier(combo: number) {
@@ -657,6 +663,50 @@ function isCleanFullHouse(cards: LineCard[]): boolean {
   return sortedCounts.length === 2 && sortedCounts[0] === 2 && sortedCounts[1] === 3;
 }
 
+type HandRuleName = "Pair" | "Three Card" | "Straight" | "Full House";
+
+const handRuleConfig: Record<
+  HandRuleName,
+  {
+    scorePerCard: number;
+    shouldClear: boolean;
+    priority: number;
+  }
+> = {
+  Pair: {
+    scorePerCard: scoreTable.pair,
+    shouldClear: false,
+    priority: 10,
+  },
+  "Three Card": {
+    scorePerCard: scoreTable.three,
+    shouldClear: true,
+    priority: 30,
+  },
+  Straight: {
+    scorePerCard: scoreTable.straight,
+    shouldClear: true,
+    priority: 40,
+  },
+  "Full House": {
+    scorePerCard: scoreTable.fullHouse,
+    shouldClear: true,
+    priority: 70,
+  },
+};
+
+function createConfiguredHandResult(name: HandRuleName, cards: LineCard[]): HandResult {
+  const config = handRuleConfig[name];
+
+  return createHandResult(
+    name,
+    config.scorePerCard * cards.length,
+    cards,
+    config.shouldClear,
+    config.priority
+  );
+}
+
 function createHandResult(
   name: string,
   score: number,
@@ -710,7 +760,7 @@ function evaluateWindow(
     if (touchesPlacedCard && isPairCards(windowCards)) {
       addUniqueResult(
         results,
-        createHandResult("Pair", scoreTable.pair * windowCards.length, windowCards, false, 10)
+        createConfiguredHandResult("Pair", windowCards)
       );
     }
 
@@ -724,7 +774,7 @@ function evaluateWindow(
     if (isThreeCard(windowCards)) {
       addUniqueResult(
         results,
-        createHandResult("Three Card", scoreTable.three * windowCards.length, windowCards, true, 30)
+        createConfiguredHandResult("Three Card", windowCards)
       );
       return;
     }
@@ -732,7 +782,7 @@ function evaluateWindow(
     if (isStraightCards(windowCards)) {
       addUniqueResult(
         results,
-        createHandResult("Straight", scoreTable.straight * windowCards.length, windowCards, true, 30)
+        createConfiguredHandResult("Straight", windowCards)
       );
     }
 
@@ -742,7 +792,7 @@ function evaluateWindow(
   if (windowCards.length === 5 && isCleanFullHouse(windowCards)) {
     addUniqueResult(
       results,
-      createHandResult("Full House", scoreTable.fullHouse * windowCards.length, windowCards, true, 50)
+      createConfiguredHandResult("Full House", windowCards)
     );
   }
 }
@@ -758,9 +808,11 @@ function evaluateLine(
   const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
-    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, false);
-    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, allowCatchUpClearHands);
+    // Higher-value clear hands are checked first.
+    // Pair is checked last and never clears.
     evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, allowCatchUpClearHands);
+    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, allowCatchUpClearHands);
+    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, false);
   }
 
   return filterDominatedResults(candidates);
