@@ -553,118 +553,34 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
   return cards.some((item) => item.row === row && item.col === col);
 }
 
-function getHandRankKey(card: Card): string {
-  const rankText = String(card.rank ?? "").trim().toUpperCase();
-  const numericValue = Number(card.value);
+/**
+ * NUTS hand detection rebuilt from scratch.
+ *
+ * Rules are intentionally small and strict:
+ * - Only horizontal and vertical contiguous card runs are checked.
+ * - A is normalized to 1. J/Q/K are 11/12/13.
+ * - Pair: exactly 2 same ranks, must include the newly placed card, scores only.
+ * - Three Card: exactly 3 same ranks, must include the newly placed card, clears.
+ * - Straight: exactly 3 consecutive ranks, must include the newly placed card, clears.
+ * - Full House: exactly 5 cards with counts 3 + 2, must include the newly placed card, clears.
+ *
+ * This prevents the old false positives such as:
+ * - 1,2 being treated as Pair
+ * - 1,3 being treated as Pair
+ * - 1,2,2 being treated as Three Card
+ */
+type ExactHandKind = "Pair" | "Three Card" | "Straight" | "Full House";
 
-  // In NUTS, Ace is the visible "1" card.
-  // Treat every possible Ace representation as the same rank.
-  if (
-    rankText === "A" ||
-    rankText === "1" ||
-    rankText === "ACE" ||
-    numericValue === 14 ||
-    numericValue === 1
-  ) {
-    return "1";
-  }
+type ExactHandCandidate = {
+  kind: ExactHandKind;
+  cards: LineCard[];
+  scorePerCard: number;
+  shouldClear: boolean;
+  priority: number;
+};
 
-  if (rankText === "J" || rankText === "JACK") return "11";
-  if (rankText === "Q" || rankText === "QUEEN") return "12";
-  if (rankText === "K" || rankText === "KING") return "13";
-
-  if (/^\d+$/.test(rankText)) return String(Number(rankText));
-
-  if (Number.isFinite(numericValue)) return String(numericValue);
-
-  return rankText;
-}
-
-function getStraightOrderValue(card: Card): number {
-  const rankKey = getHandRankKey(card);
-  const value = Number(rankKey);
-
-  return Number.isFinite(value) ? value : Number.NaN;
-}
-
-function getResultKey(result: HandResult): string {
-  return result.cards
-    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-    .sort()
-    .join("|");
-}
-
-function containsAllCardPositions(parent: HandResult, child: HandResult): boolean {
-  const parentKeys = new Set(
-    parent.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-  );
-
-  return child.cards.every((cardPosition) =>
-    parentKeys.has(keyOf(cardPosition.row, cardPosition.col))
-  );
-}
-
-function areSameRank(cards: LineCard[]): boolean {
-  if (cards.length === 0) return false;
-
-  const firstRank = getHandRankKey(cards[0].card);
-  return cards.every((item) => getHandRankKey(item.card) === firstRank);
-}
-
-function isPairCards(cards: LineCard[]): boolean {
-  if (cards.length !== 2) return false;
-
-  // Pair is exactly two cards with the same normalized rank.
-  // 1-1 / A-A works.
-  // 1-2 / 1-3 / 2-3 / 3-2 never works.
-  return areSameRank(cards);
-}
-
-function isThreeCard(cards: LineCard[]): boolean {
-  if (cards.length !== 3) return false;
-
-  // Three is exactly three cards with the same normalized rank.
-  // 1-1-1 / 2-2-2 / 3-3-3 work.
-  // 1-2-2 never works.
-  return areSameRank(cards);
-}
-
-function isStraightCards(cards: LineCard[]): boolean {
-  if (cards.length !== 3) return false;
-
-  const values = cards
-    .map((item) => getStraightOrderValue(item.card))
-    .sort((a, b) => a - b);
-
-  if (values.some((value) => Number.isNaN(value))) return false;
-
-  const uniqueValues = new Set(values);
-  if (uniqueValues.size !== 3) return false;
-
-  // Three-card straight only: n, n+1, n+2.
-  // 1-2-3 and 2-3-4 both work.
-  // 2-3-3 never works.
-  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
-}
-
-function isCleanFullHouse(cards: LineCard[]): boolean {
-  if (cards.length !== 5) return false;
-
-  const counts = new Map<string, number>();
-
-  for (const item of cards) {
-    const rank = getHandRankKey(item.card);
-    counts.set(rank, (counts.get(rank) ?? 0) + 1);
-  }
-
-  const sortedCounts = [...counts.values()].sort((a, b) => a - b);
-  return sortedCounts.length === 2 && sortedCounts[0] === 2 && sortedCounts[1] === 3;
-}
-
-type HandRuleName = "Pair" | "Three Card" | "Straight" | "Full House";
-
-const handRuleConfig: Record<
-  HandRuleName,
+const exactHandConfig: Record<
+  ExactHandKind,
   {
     scorePerCard: number;
     shouldClear: boolean;
@@ -693,19 +609,124 @@ const handRuleConfig: Record<
   },
 };
 
-function createHandResult(
-  name: HandRuleName,
-  cards: LineCard[]
-): HandResult {
-  const config = handRuleConfig[name];
+function normalizeRankValue(card: Card): number {
+  const rankText = String(card.rank ?? "").trim().toUpperCase();
+  const numericValue = Number(card.value);
+
+  // The game displays Ace as 1. Keep every Ace representation identical.
+  if (
+    rankText === "A" ||
+    rankText === "1" ||
+    rankText === "ACE" ||
+    numericValue === 14 ||
+    numericValue === 1
+  ) {
+    return 1;
+  }
+
+  if (rankText === "J" || rankText === "JACK") return 11;
+  if (rankText === "Q" || rankText === "QUEEN") return 12;
+  if (rankText === "K" || rankText === "KING") return 13;
+
+  const fromRankText = Number(rankText);
+  if (Number.isInteger(fromRankText)) return fromRankText;
+
+  if (Number.isInteger(numericValue)) return numericValue;
+
+  return Number.NaN;
+}
+
+function getRankCounts(cards: LineCard[]): Map<number, number> {
+  const counts = new Map<number, number>();
+
+  for (const item of cards) {
+    const rankValue = normalizeRankValue(item.card);
+    if (!Number.isInteger(rankValue)) continue;
+    counts.set(rankValue, (counts.get(rankValue) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+function isExactPair(cards: LineCard[]): boolean {
+  if (cards.length !== 2) return false;
+
+  const counts = getRankCounts(cards);
+  return counts.size === 1 && [...counts.values()][0] === 2;
+}
+
+function isExactThreeCard(cards: LineCard[]): boolean {
+  if (cards.length !== 3) return false;
+
+  const counts = getRankCounts(cards);
+  return counts.size === 1 && [...counts.values()][0] === 3;
+}
+
+function isExactStraight(cards: LineCard[]): boolean {
+  if (cards.length !== 3) return false;
+
+  const values = cards
+    .map((item) => normalizeRankValue(item.card))
+    .sort((a, b) => a - b);
+
+  if (values.some((value) => !Number.isInteger(value))) return false;
+  if (new Set(values).size !== 3) return false;
+
+  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
+}
+
+function isExactFullHouse(cards: LineCard[]): boolean {
+  if (cards.length !== 5) return false;
+
+  const counts = [...getRankCounts(cards).values()].sort((a, b) => a - b);
+  return counts.length === 2 && counts[0] === 2 && counts[1] === 3;
+}
+
+function makeExactCandidate(kind: ExactHandKind, cards: LineCard[]): ExactHandCandidate {
+  const config = exactHandConfig[kind];
 
   return {
-    name,
-    score: config.scorePerCard * cards.length,
-    cards: toPositions(cards),
+    kind,
+    cards,
+    scorePerCard: config.scorePerCard,
     shouldClear: config.shouldClear,
     priority: config.priority,
   };
+}
+
+function classifyExactWindow(cards: LineCard[]): ExactHandCandidate | null {
+  if (cards.length === 5 && isExactFullHouse(cards)) {
+    return makeExactCandidate("Full House", cards);
+  }
+
+  if (cards.length === 3) {
+    if (isExactThreeCard(cards)) return makeExactCandidate("Three Card", cards);
+    if (isExactStraight(cards)) return makeExactCandidate("Straight", cards);
+    return null;
+  }
+
+  if (cards.length === 2 && isExactPair(cards)) {
+    return makeExactCandidate("Pair", cards);
+  }
+
+  return null;
+}
+
+function createHandResultFromCandidate(candidate: ExactHandCandidate): HandResult {
+  return {
+    name: candidate.kind,
+    score: candidate.scorePerCard * candidate.cards.length,
+    cards: toPositions(candidate.cards),
+    shouldClear: candidate.shouldClear,
+    priority: candidate.priority,
+  };
+}
+
+function getResultKey(result: HandResult): string {
+  return result.cards
+    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+    .sort()
+    .join("|");
 }
 
 function addUniqueResult(results: HandResult[], result: HandResult) {
@@ -720,185 +741,149 @@ function addUniqueResult(results: HandResult[], result: HandResult) {
   }
 }
 
-function filterDominatedResults(results: HandResult[]): HandResult[] {
+function resultContains(parent: HandResult, child: HandResult): boolean {
+  const parentKeys = new Set(
+    parent.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+  );
+
+  return child.cards.every((cardPosition) =>
+    parentKeys.has(keyOf(cardPosition.row, cardPosition.col))
+  );
+}
+
+function resultOverlaps(a: HandResult, b: HandResult): boolean {
+  const aKeys = new Set(a.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col)));
+
+  return b.cards.some((cardPosition) => aKeys.has(keyOf(cardPosition.row, cardPosition.col)));
+}
+
+function removeContainedLowerPriorityResults(results: HandResult[]): HandResult[] {
   return results.filter((result) => {
     return !results.some((other) => {
       if (other === result) return false;
       if (other.priority <= result.priority) return false;
-      return containsAllCardPositions(other, result);
+      return resultContains(other, result);
     });
   });
 }
 
-function evaluateWindow(
-  windowCards: LineCard[],
-  placedRow: number,
-  placedCol: number,
-  results: HandResult[],
-  options: {
-    allowPair: boolean;
-    requirePlacedForClear: boolean;
-  }
-) {
-  const touchesPlacedCard = includesPlaced(windowCards, placedRow, placedCol);
+function keepBestNonOverlappingResults(results: HandResult[], placedRow: number, placedCol: number): HandResult[] {
+  const sortedResults = [...removeContainedLowerPriorityResults(results)].sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
 
-  // Pair: exactly 2 same-rank cards.
-  // It scores and continues combo, but never clears.
-  // Pair must include the newly placed card so old pairs never re-score.
-  if (windowCards.length === 2) {
-    if (options.allowPair && touchesPlacedCard && isPairCards(windowCards)) {
-      addUniqueResult(results, createHandResult("Pair", windowCards));
+    const aTouchesPlaced = a.cards.some(
+      (cardPosition) => cardPosition.row === placedRow && cardPosition.col === placedCol
+    );
+    const bTouchesPlaced = b.cards.some(
+      (cardPosition) => cardPosition.row === placedRow && cardPosition.col === placedCol
+    );
+
+    if (Number(bTouchesPlaced) !== Number(aTouchesPlaced)) {
+      return Number(bTouchesPlaced) - Number(aTouchesPlaced);
     }
 
-    return;
+    if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
+
+    return getResultKey(a).localeCompare(getResultKey(b));
+  });
+
+  const accepted: HandResult[] = [];
+
+  for (const result of sortedResults) {
+    if (accepted.some((existing) => resultOverlaps(existing, result))) continue;
+    accepted.push(result);
   }
 
-  const clearHandCanScore = !options.requirePlacedForClear || touchesPlacedCard;
-  if (!clearHandCanScore) return;
-
-  // Three / Straight: exactly 3 cards.
-  // Three clears. Straight clears.
-  if (windowCards.length === 3) {
-    if (isThreeCard(windowCards)) {
-      addUniqueResult(results, createHandResult("Three Card", windowCards));
-      return;
-    }
-
-    if (isStraightCards(windowCards)) {
-      addUniqueResult(results, createHandResult("Straight", windowCards));
-    }
-
-    return;
-  }
-
-  // Full House: exactly 5 cards, 3+2, clears.
-  if (windowCards.length === 5 && isCleanFullHouse(windowCards)) {
-    addUniqueResult(results, createHandResult("Full House", windowCards));
-  }
+  return accepted.sort((a, b) => b.priority - a.priority || getResultKey(a).localeCompare(getResultKey(b)));
 }
 
-function evaluateLine(
-  line: LineCard[],
-  placedRow: number,
-  placedCol: number,
-  options: {
-    allowPair: boolean;
-    requirePlacedForClear: boolean;
+function getContiguousSegmentThroughCell(
+  board: Board,
+  row: number,
+  col: number,
+  dRow: number,
+  dCol: number
+): LineCard[] {
+  const segment: LineCard[] = [];
+  let startRow = row;
+  let startCol = col;
+
+  while (
+    startRow - dRow >= 0 &&
+    startRow - dRow < BOARD_SIZE &&
+    startCol - dCol >= 0 &&
+    startCol - dCol < BOARD_SIZE &&
+    board[startRow - dRow][startCol - dCol]
+  ) {
+    startRow -= dRow;
+    startCol -= dCol;
   }
+
+  let currentRow = startRow;
+  let currentCol = startCol;
+
+  while (
+    currentRow >= 0 &&
+    currentRow < BOARD_SIZE &&
+    currentCol >= 0 &&
+    currentCol < BOARD_SIZE &&
+    board[currentRow][currentCol]
+  ) {
+    segment.push({
+      row: currentRow,
+      col: currentCol,
+      card: board[currentRow][currentCol] as Card,
+    });
+
+    currentRow += dRow;
+    currentCol += dCol;
+  }
+
+  return segment;
+}
+
+function evaluateSegmentThroughPlacedCard(
+  segment: LineCard[],
+  placedRow: number,
+  placedCol: number
 ): HandResult[] {
-  if (line.length < 2) return [];
-
   const candidates: HandResult[] = [];
+  const windowSizes = [5, 3, 2];
 
-  for (let start = 0; start < line.length; start++) {
-    // IMPORTANT:
-    // Only evaluate complete windows. `slice(start, start + 3)` can return
-    // two cards at the tail of a segment, and that makes a 3-card scan behave
-    // like an unintended Pair scan. Keeping each window exact prevents false
-    // detections such as 1-2, 1-3, or 1-2-2 being interpreted as a hand.
-    if (start + 5 <= line.length) {
-      evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, options);
-    }
+  for (const windowSize of windowSizes) {
+    if (segment.length < windowSize) continue;
 
-    if (start + 3 <= line.length) {
-      evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, options);
-    }
+    for (let startIndex = 0; startIndex + windowSize <= segment.length; startIndex++) {
+      const windowCards = segment.slice(startIndex, startIndex + windowSize);
 
-    if (start + 2 <= line.length) {
-      evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, options);
-    }
-  }
+      // A move can only trigger a hand that actually contains the newly placed card.
+      // This eliminates repeated scoring from old pairs/triples elsewhere on the line.
+      if (!includesPlaced(windowCards, placedRow, placedCol)) continue;
 
-  return filterDominatedResults(candidates);
-}
+      const candidate = classifyExactWindow(windowCards);
+      if (!candidate) continue;
 
-function getAxisSegments(board: Board, row: number, col: number, axis: "row" | "col"): LineCard[][] {
-  const segments: LineCard[][] = [];
-  let currentSegment: LineCard[] = [];
-
-  for (let index = 0; index < BOARD_SIZE; index++) {
-    const targetRow = axis === "row" ? row : index;
-    const targetCol = axis === "row" ? index : col;
-    const card = board[targetRow][targetCol];
-
-    if (card) {
-      currentSegment.push({
-        row: targetRow,
-        col: targetCol,
-        card,
-      });
-      continue;
-    }
-
-    if (currentSegment.length > 0) {
-      segments.push(currentSegment);
-      currentSegment = [];
+      addUniqueResult(candidates, createHandResultFromCandidate(candidate));
     }
   }
 
-  if (currentSegment.length > 0) {
-    segments.push(currentSegment);
-  }
-
-  return segments;
-}
-
-function getAllAxisSegments(board: Board): LineCard[][] {
-  const segments: LineCard[][] = [];
-
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    segments.push(...getAxisSegments(board, row, 0, "row"));
-  }
-
-  for (let col = 0; col < BOARD_SIZE; col++) {
-    segments.push(...getAxisSegments(board, 0, col, "col"));
-  }
-
-  return segments;
+  return keepBestNonOverlappingResults(candidates, placedRow, placedCol);
 }
 
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  const allResults: HandResult[] = [];
-  const touchedSegments = [
-    ...getAxisSegments(board, row, col, "row"),
-    ...getAxisSegments(board, row, col, "col"),
-  ];
+  const horizontalSegment = getContiguousSegmentThroughCell(board, row, col, 0, 1);
+  const verticalSegment = getContiguousSegmentThroughCell(board, row, col, 1, 0);
+  const results: HandResult[] = [];
 
-  // Pass 1:
-  // Evaluate the row/column touched by the newly placed card.
-  // Pair is allowed here only.
-  for (const segment of touchedSegments) {
-    if (!includesPlaced(segment, row, col)) continue;
-
-    const segmentResults = evaluateLine(segment, row, col, {
-      allowPair: true,
-      requirePlacedForClear: true,
-    });
-
-    for (const result of segmentResults) {
-      addUniqueResult(allResults, result);
-    }
+  for (const result of evaluateSegmentThroughPlacedCard(horizontalSegment, row, col)) {
+    addUniqueResult(results, result);
   }
 
-  // Pass 2:
-  // Safety net for clearable hands already visible on the board.
-  // This catches A-A-A / 2-2-2 / 3-3-3 / 2-3-4 even if the newly placed card
-  // was not inside that exact 3-card window.
-  //
-  // Pair is intentionally disabled here because Pair does not clear.
-  // This prevents old pairs from scoring again every turn.
-  for (const segment of getAllAxisSegments(board)) {
-    const segmentResults = evaluateLine(segment, row, col, {
-      allowPair: false,
-      requirePlacedForClear: false,
-    }).filter((result) => result.shouldClear);
-
-    for (const result of segmentResults) {
-      addUniqueResult(allResults, result);
-    }
+  for (const result of evaluateSegmentThroughPlacedCard(verticalSegment, row, col)) {
+    addUniqueResult(results, result);
   }
 
-  return filterDominatedResults(allResults);
+  return keepBestNonOverlappingResults(results, row, col);
 }
 
 function createInitialGame(highScore = 0): GameState {
