@@ -593,15 +593,41 @@ function areSameRank(cards: LineCard[]): boolean {
   if (cards.length === 0) return false;
 
   const firstRank = getHandRankKey(cards[0].card);
-  return cards.every((item) => getHandRankKey(item.card) === firstRank);
+  const firstValue = getStraightOrderValue(cards[0].card);
+
+  if (Number.isNaN(firstValue)) return false;
+
+  return cards.every((item) => {
+    const rank = getHandRankKey(item.card);
+    const value = getStraightOrderValue(item.card);
+
+    // Double-lock the judgement:
+    // 1. printed rank must match
+    // 2. normalized order value must match
+    // This guarantees 3-2 / 2-3 can never be treated as Pair.
+    return rank === firstRank && value === firstValue;
+  });
 }
 
 function isPairCards(cards: LineCard[]): boolean {
-  return cards.length === 2 && areSameRank(cards);
+  if (cards.length !== 2) return false;
+
+  const [first, second] = cards;
+  const firstRank = getHandRankKey(first.card);
+  const secondRank = getHandRankKey(second.card);
+  const firstValue = getStraightOrderValue(first.card);
+  const secondValue = getStraightOrderValue(second.card);
+
+  if (Number.isNaN(firstValue) || Number.isNaN(secondValue)) return false;
+
+  // Absolute guard: adjacent different ranks such as 3-2 / 2-3 do nothing.
+  return firstRank === secondRank && firstValue === secondValue;
 }
 
 function isThreeCard(cards: LineCard[]): boolean {
-  return cards.length === 3 && areSameRank(cards);
+  if (cards.length !== 3) return false;
+
+  return areSameRank(cards);
 }
 
 function isStraightCards(cards: LineCard[]): boolean {
@@ -680,6 +706,7 @@ function evaluateWindow(
   if (!includesPlaced(windowCards, placedRow, placedCol)) return;
 
   if (windowCards.length === 2 && isPairCards(windowCards)) {
+    // Strict Pair only. 3-2 / 2-3 / 1-2 / 1-3 must never reach here.
     addUniqueResult(
       results,
       createHandResult("Pair", scoreTable.pair * windowCards.length, windowCards, false, 10)
