@@ -1293,7 +1293,153 @@ function HomeScreen({
           text-shadow: 4px 4px 0 rgba(0,0,0,0.22);
           transform: rotate(var(--r));
         }
-      `}</style>
+      
+        /* NUTS unified pixel-art polish: stronger dot texture, chunky borders, casino-gold highlights. */
+        .nuts-pixel,
+        .nuts-pixel * {
+          image-rendering: pixelated;
+        }
+
+        .home-simple-screen,
+        .balatro-inspired-bg {
+          background-image:
+            radial-gradient(circle at 12px 12px, rgba(245,208,111,0.075) 1px, transparent 2px),
+            radial-gradient(circle at 32px 28px, rgba(53,182,106,0.055) 1px, transparent 2px),
+            repeating-linear-gradient(45deg, rgba(255,226,128,0.035) 0 2px, transparent 2px 14px),
+            linear-gradient(180deg, rgba(5,25,20,0.25), rgba(0,0,0,0.18));
+          background-size: 44px 44px, 52px 52px, 32px 32px, auto;
+        }
+
+        .home-simple-screen::after,
+        .balatro-inspired-bg::after {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 1;
+          opacity: 0.16;
+          background:
+            linear-gradient(rgba(255,244,207,0.14) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,244,207,0.10) 1px, transparent 1px);
+          background-size: 6px 6px;
+          mix-blend-mode: overlay;
+        }
+
+        .home-simple-screen > *,
+        .balatro-inspired-bg > * {
+          position: relative;
+          z-index: 2;
+        }
+
+        .pixel-hard,
+        .pixel-hard-sm,
+        .table-frame,
+        .home-card-panel,
+        .queue-panel,
+        .gameover-card,
+        .result-score-panel,
+        .result-score-window {
+          border-style: solid !important;
+          image-rendering: pixelated;
+        }
+
+        .table-frame,
+        .home-card-panel,
+        .queue-panel,
+        .gameover-card,
+        .result-score-panel {
+          background-image:
+            linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(240,165,54,0.10), transparent 34%) !important;
+          background-size: 8px 8px, 8px 8px, auto !important;
+        }
+
+        .table-frame::before,
+        .home-card-panel::before,
+        .queue-panel::before,
+        .gameover-card::before,
+        .result-score-panel::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 6px;
+          border: 2px dashed rgba(240,165,54,0.30);
+          opacity: 0.72;
+        }
+
+        .portrait-board {
+          background-image:
+            linear-gradient(90deg, rgba(245,208,111,0.07) 1px, transparent 1px),
+            linear-gradient(rgba(245,208,111,0.055) 1px, transparent 1px),
+            radial-gradient(circle at 50% 50%, rgba(11,72,55,0.72), rgba(3,16,12,0.98)) !important;
+          background-size: 10px 10px, 10px 10px, auto !important;
+          box-shadow:
+            inset 0 0 0 3px #1a4e3e,
+            inset 0 0 0 7px rgba(6,24,17,0.72),
+            inset 0 0 48px rgba(0,0,0,0.62),
+            7px 7px 0 #020806 !important;
+        }
+
+        .portrait-board > button,
+        .portrait-board > div {
+          image-rendering: pixelated;
+        }
+
+        .card-image-direct,
+        .card-image-shell,
+        .now-card-display img,
+        .control-image-button img,
+        .nuts-logo-img,
+        .home-wordmark-img {
+          image-rendering: pixelated !important;
+        }
+
+        .control-image-button img,
+        .home-main-button img,
+        .nuts-logo-img,
+        .home-wordmark-img,
+        .result-score-number {
+          filter:
+            drop-shadow(4px 4px 0 rgba(2,8,6,0.78))
+            drop-shadow(0 0 10px rgba(240,165,54,0.14));
+        }
+
+        .stat-score-pop,
+        .result-banner,
+        .combo-badge,
+        .duel-status-title,
+        .pixel-score-number {
+          text-rendering: geometricPrecision;
+          image-rendering: pixelated;
+        }
+
+        @media (max-width: 700px) {
+          .home-simple-screen::after,
+          .balatro-inspired-bg::after {
+            opacity: 0.10;
+            background-size: 7px 7px;
+          }
+
+          .table-frame::before,
+          .home-card-panel::before,
+          .queue-panel::before,
+          .gameover-card::before,
+          .result-score-panel::before {
+            inset: 5px;
+            border-width: 1px;
+            opacity: 0.52;
+          }
+
+          .portrait-board {
+            box-shadow:
+              inset 0 0 0 2px #1a4e3e,
+              inset 0 0 0 5px rgba(6,24,17,0.72),
+              inset 0 0 36px rgba(0,0,0,0.58),
+              5px 5px 0 #020806 !important;
+          }
+        }
+`}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
         <span style={{ left: "9%", top: "18%", fontSize: 72, "--r": "-12deg" } as Record<string, string | number>}>♣</span>
@@ -3880,6 +4026,152 @@ export default function Home() {
           outline: 0 !important;
           box-shadow: none !important;
         }
+
+        /* NUTS unified pixel-art polish: stronger dot texture, chunky borders, casino-gold highlights. */
+        .nuts-pixel,
+        .nuts-pixel * {
+          image-rendering: pixelated;
+        }
+
+        .home-simple-screen,
+        .balatro-inspired-bg {
+          background-image:
+            radial-gradient(circle at 12px 12px, rgba(245,208,111,0.075) 1px, transparent 2px),
+            radial-gradient(circle at 32px 28px, rgba(53,182,106,0.055) 1px, transparent 2px),
+            repeating-linear-gradient(45deg, rgba(255,226,128,0.035) 0 2px, transparent 2px 14px),
+            linear-gradient(180deg, rgba(5,25,20,0.25), rgba(0,0,0,0.18));
+          background-size: 44px 44px, 52px 52px, 32px 32px, auto;
+        }
+
+        .home-simple-screen::after,
+        .balatro-inspired-bg::after {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 1;
+          opacity: 0.16;
+          background:
+            linear-gradient(rgba(255,244,207,0.14) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,244,207,0.10) 1px, transparent 1px);
+          background-size: 6px 6px;
+          mix-blend-mode: overlay;
+        }
+
+        .home-simple-screen > *,
+        .balatro-inspired-bg > * {
+          position: relative;
+          z-index: 2;
+        }
+
+        .pixel-hard,
+        .pixel-hard-sm,
+        .table-frame,
+        .home-card-panel,
+        .queue-panel,
+        .gameover-card,
+        .result-score-panel,
+        .result-score-window {
+          border-style: solid !important;
+          image-rendering: pixelated;
+        }
+
+        .table-frame,
+        .home-card-panel,
+        .queue-panel,
+        .gameover-card,
+        .result-score-panel {
+          background-image:
+            linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(240,165,54,0.10), transparent 34%) !important;
+          background-size: 8px 8px, 8px 8px, auto !important;
+        }
+
+        .table-frame::before,
+        .home-card-panel::before,
+        .queue-panel::before,
+        .gameover-card::before,
+        .result-score-panel::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 6px;
+          border: 2px dashed rgba(240,165,54,0.30);
+          opacity: 0.72;
+        }
+
+        .portrait-board {
+          background-image:
+            linear-gradient(90deg, rgba(245,208,111,0.07) 1px, transparent 1px),
+            linear-gradient(rgba(245,208,111,0.055) 1px, transparent 1px),
+            radial-gradient(circle at 50% 50%, rgba(11,72,55,0.72), rgba(3,16,12,0.98)) !important;
+          background-size: 10px 10px, 10px 10px, auto !important;
+          box-shadow:
+            inset 0 0 0 3px #1a4e3e,
+            inset 0 0 0 7px rgba(6,24,17,0.72),
+            inset 0 0 48px rgba(0,0,0,0.62),
+            7px 7px 0 #020806 !important;
+        }
+
+        .portrait-board > button,
+        .portrait-board > div {
+          image-rendering: pixelated;
+        }
+
+        .card-image-direct,
+        .card-image-shell,
+        .now-card-display img,
+        .control-image-button img,
+        .nuts-logo-img,
+        .home-wordmark-img {
+          image-rendering: pixelated !important;
+        }
+
+        .control-image-button img,
+        .home-main-button img,
+        .nuts-logo-img,
+        .home-wordmark-img,
+        .result-score-number {
+          filter:
+            drop-shadow(4px 4px 0 rgba(2,8,6,0.78))
+            drop-shadow(0 0 10px rgba(240,165,54,0.14));
+        }
+
+        .stat-score-pop,
+        .result-banner,
+        .combo-badge,
+        .duel-status-title,
+        .pixel-score-number {
+          text-rendering: geometricPrecision;
+          image-rendering: pixelated;
+        }
+
+        @media (max-width: 700px) {
+          .home-simple-screen::after,
+          .balatro-inspired-bg::after {
+            opacity: 0.10;
+            background-size: 7px 7px;
+          }
+
+          .table-frame::before,
+          .home-card-panel::before,
+          .queue-panel::before,
+          .gameover-card::before,
+          .result-score-panel::before {
+            inset: 5px;
+            border-width: 1px;
+            opacity: 0.52;
+          }
+
+          .portrait-board {
+            box-shadow:
+              inset 0 0 0 2px #1a4e3e,
+              inset 0 0 0 5px rgba(6,24,17,0.72),
+              inset 0 0 36px rgba(0,0,0,0.58),
+              5px 5px 0 #020806 !important;
+          }
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -6066,6 +6358,152 @@ export default function Home() {
               3px 3px 0 #d28a23,
               6px 6px 0 #061811,
               9px 9px 0 #020806 !important;
+          }
+        }
+
+        /* NUTS unified pixel-art polish: stronger dot texture, chunky borders, casino-gold highlights. */
+        .nuts-pixel,
+        .nuts-pixel * {
+          image-rendering: pixelated;
+        }
+
+        .home-simple-screen,
+        .balatro-inspired-bg {
+          background-image:
+            radial-gradient(circle at 12px 12px, rgba(245,208,111,0.075) 1px, transparent 2px),
+            radial-gradient(circle at 32px 28px, rgba(53,182,106,0.055) 1px, transparent 2px),
+            repeating-linear-gradient(45deg, rgba(255,226,128,0.035) 0 2px, transparent 2px 14px),
+            linear-gradient(180deg, rgba(5,25,20,0.25), rgba(0,0,0,0.18));
+          background-size: 44px 44px, 52px 52px, 32px 32px, auto;
+        }
+
+        .home-simple-screen::after,
+        .balatro-inspired-bg::after {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 1;
+          opacity: 0.16;
+          background:
+            linear-gradient(rgba(255,244,207,0.14) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,244,207,0.10) 1px, transparent 1px);
+          background-size: 6px 6px;
+          mix-blend-mode: overlay;
+        }
+
+        .home-simple-screen > *,
+        .balatro-inspired-bg > * {
+          position: relative;
+          z-index: 2;
+        }
+
+        .pixel-hard,
+        .pixel-hard-sm,
+        .table-frame,
+        .home-card-panel,
+        .queue-panel,
+        .gameover-card,
+        .result-score-panel,
+        .result-score-window {
+          border-style: solid !important;
+          image-rendering: pixelated;
+        }
+
+        .table-frame,
+        .home-card-panel,
+        .queue-panel,
+        .gameover-card,
+        .result-score-panel {
+          background-image:
+            linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(240,165,54,0.10), transparent 34%) !important;
+          background-size: 8px 8px, 8px 8px, auto !important;
+        }
+
+        .table-frame::before,
+        .home-card-panel::before,
+        .queue-panel::before,
+        .gameover-card::before,
+        .result-score-panel::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 6px;
+          border: 2px dashed rgba(240,165,54,0.30);
+          opacity: 0.72;
+        }
+
+        .portrait-board {
+          background-image:
+            linear-gradient(90deg, rgba(245,208,111,0.07) 1px, transparent 1px),
+            linear-gradient(rgba(245,208,111,0.055) 1px, transparent 1px),
+            radial-gradient(circle at 50% 50%, rgba(11,72,55,0.72), rgba(3,16,12,0.98)) !important;
+          background-size: 10px 10px, 10px 10px, auto !important;
+          box-shadow:
+            inset 0 0 0 3px #1a4e3e,
+            inset 0 0 0 7px rgba(6,24,17,0.72),
+            inset 0 0 48px rgba(0,0,0,0.62),
+            7px 7px 0 #020806 !important;
+        }
+
+        .portrait-board > button,
+        .portrait-board > div {
+          image-rendering: pixelated;
+        }
+
+        .card-image-direct,
+        .card-image-shell,
+        .now-card-display img,
+        .control-image-button img,
+        .nuts-logo-img,
+        .home-wordmark-img {
+          image-rendering: pixelated !important;
+        }
+
+        .control-image-button img,
+        .home-main-button img,
+        .nuts-logo-img,
+        .home-wordmark-img,
+        .result-score-number {
+          filter:
+            drop-shadow(4px 4px 0 rgba(2,8,6,0.78))
+            drop-shadow(0 0 10px rgba(240,165,54,0.14));
+        }
+
+        .stat-score-pop,
+        .result-banner,
+        .combo-badge,
+        .duel-status-title,
+        .pixel-score-number {
+          text-rendering: geometricPrecision;
+          image-rendering: pixelated;
+        }
+
+        @media (max-width: 700px) {
+          .home-simple-screen::after,
+          .balatro-inspired-bg::after {
+            opacity: 0.10;
+            background-size: 7px 7px;
+          }
+
+          .table-frame::before,
+          .home-card-panel::before,
+          .queue-panel::before,
+          .gameover-card::before,
+          .result-score-panel::before {
+            inset: 5px;
+            border-width: 1px;
+            opacity: 0.52;
+          }
+
+          .portrait-board {
+            box-shadow:
+              inset 0 0 0 2px #1a4e3e,
+              inset 0 0 0 5px rgba(6,24,17,0.72),
+              inset 0 0 36px rgba(0,0,0,0.58),
+              5px 5px 0 #020806 !important;
           }
         }
 `}</style>
