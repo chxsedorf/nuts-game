@@ -3379,6 +3379,109 @@ export default function Home() {
           }
         }
 
+
+        /* PC only: make DUEL board larger and easier to read. */
+        @media (min-width: 1024px) and (pointer: fine) {
+          .duel-shift-up {
+            transform: translateY(-34px) !important;
+            min-height: calc(100svh + 34px) !important;
+            height: calc(100svh + 34px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 20px) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-frame > header {
+            margin-bottom: 0.35rem !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(780px, 1fr) 300px !important;
+            gap: 0.55rem !important;
+            height: calc(100svh - 108px) !important;
+            max-height: calc(100svh - 108px) !important;
+            align-items: stretch !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-board-wrap {
+            padding: 0.35rem !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            justify-content: center !important;
+            align-items: center !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit,
+          .duel-shift-up .portrait-board {
+            width: min(100%, calc(100svh - 136px), 760px) !important;
+            height: min(100%, calc(100svh - 148px), 720px) !important;
+            max-width: min(100%, calc(100svh - 136px), 760px) !important;
+            max-height: min(100%, calc(100svh - 148px), 720px) !important;
+            aspect-ratio: 1.06 / 1 !important;
+            flex: 0 0 auto !important;
+            margin: auto !important;
+            gap: 0.38rem !important;
+            padding: 0.48rem !important;
+            border-width: 5px !important;
+          }
+
+          .duel-shift-up .portrait-side,
+          .duel-shift-up .portrait-queue-panel {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel {
+            gap: 0.4rem !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            height: 146px !important;
+            max-height: 146px !important;
+          }
+        }
+
+        @media (min-width: 1024px) and (pointer: fine) and (max-height: 760px) {
+          .duel-shift-up {
+            transform: translateY(-42px) !important;
+            min-height: calc(100svh + 42px) !important;
+            height: calc(100svh + 42px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 28px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(720px, 1fr) 285px !important;
+            height: calc(100svh - 94px) !important;
+            max-height: calc(100svh - 94px) !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit,
+          .duel-shift-up .portrait-board {
+            width: min(100%, calc(100svh - 118px), 700px) !important;
+            height: min(100%, calc(100svh - 132px), 660px) !important;
+            max-width: min(100%, calc(100svh - 118px), 700px) !important;
+            max-height: min(100%, calc(100svh - 132px), 660px) !important;
+            gap: 0.28rem !important;
+            padding: 0.38rem !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            height: 124px !important;
+            max-height: 124px !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -4842,6 +4945,81 @@ export default function Home() {
 
           .solo-side .solo-now-card-display {
             width: clamp(90px, 26vw, 120px) !important;
+          }
+        }
+
+
+        /* Mobile SOLO NOW safety: never crop the current card. */
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-side .solo-queue-panel {
+            height: 272px !important;
+            min-height: 272px !important;
+            grid-template-rows: 38px minmax(0, 1fr) !important;
+            overflow: visible !important;
+          }
+
+          .solo-side .queue-card-well {
+            overflow: visible !important;
+            padding: 0.45rem 0.35rem 0.35rem !important;
+            justify-content: center !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(86px, 23vw, 112px) !important;
+            max-width: 70% !important;
+            transform: translateY(0) !important;
+          }
+
+          .solo-side .queue-card-well p {
+            margin-top: 0.25rem !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(1) {
+            font-size: 0.55rem !important;
+            line-height: 1 !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(2) {
+            font-size: 1.45rem !important;
+            line-height: 1 !important;
+          }
+
+          .solo-side .queue-card-well .mt-2.flex {
+            margin-top: 0.35rem !important;
+          }
+
+          .solo-control-buttons {
+            height: 272px !important;
+            min-height: 272px !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            height: 252px !important;
+            min-height: 252px !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(78px, 22vw, 98px) !important;
+            max-width: 68% !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(2) {
+            font-size: 1.32rem !important;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            height: 238px !important;
+            min-height: 238px !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(70px, 20vw, 88px) !important;
           }
         }
 
