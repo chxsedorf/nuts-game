@@ -791,10 +791,22 @@ function evaluateLine(
   const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
-    // Higher-value clear hands first, Pair last.
-    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, options);
-    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, options);
-    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, options);
+    // IMPORTANT:
+    // Only evaluate complete windows. `slice(start, start + 3)` can return
+    // two cards at the tail of a segment, and that makes a 3-card scan behave
+    // like an unintended Pair scan. Keeping each window exact prevents false
+    // detections such as 1-2, 1-3, or 1-2-2 being interpreted as a hand.
+    if (start + 5 <= line.length) {
+      evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, options);
+    }
+
+    if (start + 3 <= line.length) {
+      evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, options);
+    }
+
+    if (start + 2 <= line.length) {
+      evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, options);
+    }
   }
 
   return filterDominatedResults(candidates);
@@ -1744,6 +1756,39 @@ function HomeScreen({
           width: 100vw !important;
           height: 100dvh !important;
         }
+
+
+        /* Settings/Privacy must stay above the fixed game layer. */
+        .settings-floating-button,
+        .settings-modal-layer,
+        .privacy-modal-layer {
+          pointer-events: auto !important;
+        }
+
+        .settings-floating-button {
+          position: fixed !important;
+          left: 12px !important;
+          bottom: 12px !important;
+          z-index: 10000 !important;
+          transform: translateZ(0) !important;
+        }
+
+        .settings-modal-layer,
+        .privacy-modal-layer {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 10001 !important;
+        }
+
+        /* Stable play viewport: prevents mobile browser chrome/focus from pushing the board down. */
+        .game-fixed-viewport {
+          height: 100svh !important;
+          min-height: 100svh !important;
+          max-height: 100svh !important;
+          overflow: hidden !important;
+          overscroll-behavior: none !important;
+        }
+
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -2298,7 +2343,10 @@ export default function Home() {
     if (!privacyOpen) return null;
 
     return (
-      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/72 p-4">
+      <div
+        className="privacy-modal-layer fixed inset-0 z-[10001] flex items-center justify-center bg-black/72 p-4"
+        style={{ position: "fixed", inset: 0, zIndex: 10001, pointerEvents: "auto" }}
+      >
         <div className="max-h-[88svh] w-full max-w-2xl overflow-y-auto rounded-3xl border-[5px] border-[#d9912c] bg-[#09281f] p-5 text-[#fff4cf] shadow-[10px_10px_0_#020806,inset_0_0_0_3px_rgba(242,184,74,0.18)] sm:p-7">
           <div className="mb-5 flex items-center justify-between gap-4">
             <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a] sm:text-2xl">
@@ -2347,13 +2395,17 @@ export default function Home() {
           }}
           aria-label="Open settings"
           title="Settings"
-          className="fixed bottom-3 left-3 z-[70] grid h-12 w-12 place-items-center rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] text-2xl font-black text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1 hover:brightness-110 sm:bottom-4 sm:left-4 sm:h-14 sm:w-14 sm:text-3xl"
+          className="settings-floating-button fixed bottom-3 left-3 z-[10000] grid h-12 w-12 place-items-center rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] text-2xl font-black text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1 hover:brightness-110 sm:bottom-4 sm:left-4 sm:h-14 sm:w-14 sm:text-3xl"
+          style={{ position: "fixed", left: 12, bottom: 12, zIndex: 10000, pointerEvents: "auto", touchAction: "manipulation" }}
         >
           <span aria-hidden="true" className="drop-shadow-[2px_2px_0_#020806]">⚙</span>
         </button>
 
         {settingsOpen && (
-          <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 p-4">
+          <div
+            className="settings-modal-layer fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 p-4"
+            style={{ position: "fixed", inset: 0, zIndex: 10001, pointerEvents: "auto" }}
+          >
             <div className="max-h-[88svh] w-full max-w-2xl overflow-y-auto rounded-3xl border-[5px] border-[#d9912c] bg-[#08251d] p-5 text-[#fff4cf] shadow-[10px_10px_0_#020806,inset_0_0_0_3px_rgba(242,184,74,0.16)]">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <h2 className="text-xl font-black tracking-[0.18em] text-[#f2b84a]">SETTINGS</h2>
@@ -4771,6 +4823,39 @@ export default function Home() {
           width: 100vw !important;
           height: 100dvh !important;
         }
+
+
+        /* Settings/Privacy must stay above the fixed game layer. */
+        .settings-floating-button,
+        .settings-modal-layer,
+        .privacy-modal-layer {
+          pointer-events: auto !important;
+        }
+
+        .settings-floating-button {
+          position: fixed !important;
+          left: 12px !important;
+          bottom: 12px !important;
+          z-index: 10000 !important;
+          transform: translateZ(0) !important;
+        }
+
+        .settings-modal-layer,
+        .privacy-modal-layer {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 10001 !important;
+        }
+
+        /* Stable play viewport: prevents mobile browser chrome/focus from pushing the board down. */
+        .game-fixed-viewport {
+          height: 100svh !important;
+          min-height: 100svh !important;
+          max-height: 100svh !important;
+          overflow: hidden !important;
+          overscroll-behavior: none !important;
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -4857,6 +4942,8 @@ export default function Home() {
                             key={cellKey}
                             onClick={() => placeDuelCard(rowIndex, colIndex)}
                             disabled={!canPlace}
+                            tabIndex={-1}
+                            onMouseDown={(event) => event.preventDefault()}
                             className={[
                               "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                               cell
@@ -7344,6 +7431,39 @@ export default function Home() {
           outline: none !important;
           scroll-margin: 0 !important;
         }
+
+
+        /* Settings/Privacy must stay above the fixed game layer. */
+        .settings-floating-button,
+        .settings-modal-layer,
+        .privacy-modal-layer {
+          pointer-events: auto !important;
+        }
+
+        .settings-floating-button {
+          position: fixed !important;
+          left: 12px !important;
+          bottom: 12px !important;
+          z-index: 10000 !important;
+          transform: translateZ(0) !important;
+        }
+
+        .settings-modal-layer,
+        .privacy-modal-layer {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 10001 !important;
+        }
+
+        /* Stable play viewport: prevents mobile browser chrome/focus from pushing the board down. */
+        .game-fixed-viewport {
+          height: 100svh !important;
+          min-height: 100svh !important;
+          max-height: 100svh !important;
+          overflow: hidden !important;
+          overscroll-behavior: none !important;
+        }
+
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
