@@ -5853,6 +5853,37 @@ export default function Home() {
             letter-spacing: -0.055em;
           }
         }
+
+        /* FINAL SCORE banner size fix: keep the score number fully visible. */
+        .result-score-label-image {
+          width: min(54%, 330px) !important;
+          top: -6px !important;
+          filter: drop-shadow(4px 4px 0 #020806) drop-shadow(0 0 8px rgba(240,165,54,0.24)) !important;
+        }
+
+        .result-score-label-image img {
+          max-height: 92px !important;
+          object-fit: contain !important;
+        }
+
+        .result-score-window {
+          margin-top: 0.15rem !important;
+        }
+
+        @media (max-width: 640px) {
+          .result-score-label-image {
+            width: min(62%, 280px) !important;
+            top: -4px !important;
+          }
+
+          .result-score-label-image img {
+            max-height: 74px !important;
+          }
+
+          .result-score-panel {
+            padding-top: 4.75rem !important;
+          }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5965,7 +5996,7 @@ export default function Home() {
               <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
             </div>
 
-            <section className="result-score-panel relative z-10 mx-auto max-w-xl px-3 pb-4 pt-12 sm:px-5 sm:pb-5 sm:pt-14">
+            <section className="result-score-panel relative z-10 mx-auto max-w-xl px-3 pb-4 pt-16 sm:px-5 sm:pb-5 sm:pt-20">
               <div className="result-score-label-image absolute left-1/2 top-0 z-20 -translate-x-1/2">
                 <img
                   src={FINAL_SCORE_BANNER_SRC}
