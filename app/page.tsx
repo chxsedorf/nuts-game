@@ -1719,7 +1719,7 @@ export default function Home() {
           }}
           aria-label="Open settings"
           title="Settings"
-          className="fixed right-3 top-3 z-[70] grid h-12 w-12 place-items-center rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] text-2xl font-black text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1 hover:brightness-110 sm:right-4 sm:top-4 sm:h-14 sm:w-14 sm:text-3xl"
+          className="fixed bottom-3 left-3 z-[70] grid h-12 w-12 place-items-center rounded-xl border-[3px] border-[#06140f] bg-[#0e4a3a] text-2xl font-black text-[#f7d17a] shadow-[5px_5px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.18)] transition hover:-translate-y-1 hover:brightness-110 sm:bottom-4 sm:left-4 sm:h-14 sm:w-14 sm:text-3xl"
         >
           <span aria-hidden="true" className="drop-shadow-[2px_2px_0_#020806]">⚙</span>
         </button>
@@ -2936,7 +2936,33 @@ export default function Home() {
           }
         }
 
-      `}</style>
+      
+        @media (min-width: 900px) {
+          .duel-shift-up {
+            transform: translateY(-58px) !important;
+            min-height: calc(100svh + 58px) !important;
+            height: calc(100svh + 58px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            min-height: 0 !important;
+            height: calc(100svh + 46px) !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .duel-shift-up {
+            transform: translateY(-72px) !important;
+            min-height: calc(100svh + 72px) !important;
+            height: calc(100svh + 72px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 60px) !important;
+          }
+        }
+
+`}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
         <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
@@ -2949,7 +2975,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
-        <div className="portrait-outer relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
+        <div className="portrait-outer duel-shift-up relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
           <section className="portrait-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]">
             <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(250px,0.95fr)_minmax(260px,0.8fr)_minmax(360px,1.25fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
               <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
@@ -3178,6 +3204,7 @@ export default function Home() {
             </div>
           </section>
         </div>
+        {renderSettingsButtonAndModal()}
       </main>
     );
   }
