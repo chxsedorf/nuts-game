@@ -451,6 +451,8 @@ const UI_ASSET_VERSION = "v2";
 const NUTS_LOGO_SRC = `/logo/nuts-logo-sign.png?${LOGO_ASSET_VERSION}`;
 const SOLO_BUTTON_SRC = `/ui/solo-play-button.png?${UI_ASSET_VERSION}`;
 const DUEL_BUTTON_SRC = `/ui/duel-mode-button.png?${UI_ASSET_VERSION}`;
+const RESTART_BUTTON_SRC = `/ui/restart-pixel-button.png?${UI_ASSET_VERSION}`;
+const HOME_BUTTON_SRC = `/ui/home-pixel-button.png?${UI_ASSET_VERSION}`;
 const HOME_BGM_SRC = "/audio/home-bgm.mp3";
 const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
 const GAME_OVER_TITLE_SRC = "/ui/game-over-title.png";
@@ -3591,6 +3593,59 @@ export default function Home() {
           }
         }
 
+
+        /* Image-based casino buttons. */
+        .control-image-button {
+          display: grid !important;
+          place-items: center !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          height: auto !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          overflow: visible !important;
+          image-rendering: pixelated !important;
+        }
+
+        .control-image-button img {
+          display: block !important;
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+          pointer-events: none !important;
+          user-select: none !important;
+          image-rendering: pixelated !important;
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.72)) !important;
+        }
+
+        .duel-control-buttons,
+        .solo-control-buttons {
+          align-items: center !important;
+        }
+
+        .duel-control-buttons .restart-image-button,
+        .solo-control-buttons .restart-image-button {
+          aspect-ratio: 3.61 / 1 !important;
+        }
+
+        .duel-control-buttons .home-image-button,
+        .solo-control-buttons .home-image-button {
+          aspect-ratio: 2.89 / 1 !important;
+        }
+
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-control-buttons .control-image-button {
+            align-self: center !important;
+          }
+
+          .solo-control-buttons .control-image-button img {
+            max-height: 72px !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3804,10 +3859,10 @@ export default function Home() {
                     <div className="duel-control-buttons mt-1.5 grid shrink-0 grid-cols-2 gap-1.5">
                       <button
                         onClick={restartDuelGame}
-                        className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset]"
-                        style={{ textShadow: "2px 2px 0 #03100b" }}
+                        className="control-image-button restart-image-button transition hover:-translate-y-1 active:translate-y-0"
+                        aria-label="Restart duel game"
                       >
-                        RESTART
+                        <img src={RESTART_BUTTON_SRC} alt="RESTART" draggable={false} />
                       </button>
 
                       <button
@@ -3820,10 +3875,10 @@ export default function Home() {
                             window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
                           }
                         }}
-                        className="rounded-xl border-[4px] border-[#061811] bg-[#d23a2f] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset]"
-                        style={{ textShadow: "2px 2px 0 #03100b" }}
+                        className="control-image-button home-image-button transition hover:-translate-y-1 active:translate-y-0"
+                        aria-label="Go home"
                       >
-                        HOME
+                        <img src={HOME_BUTTON_SRC} alt="HOME" draggable={false} />
                       </button>
                     </div>
                   </div>
@@ -5249,6 +5304,59 @@ export default function Home() {
             transform: rotate(-2deg) translateY(5px) !important;
           }
         }
+
+        /* Image-based casino buttons. */
+        .control-image-button {
+          display: grid !important;
+          place-items: center !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          height: auto !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          overflow: visible !important;
+          image-rendering: pixelated !important;
+        }
+
+        .control-image-button img {
+          display: block !important;
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+          pointer-events: none !important;
+          user-select: none !important;
+          image-rendering: pixelated !important;
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.72)) !important;
+        }
+
+        .duel-control-buttons,
+        .solo-control-buttons {
+          align-items: center !important;
+        }
+
+        .duel-control-buttons .restart-image-button,
+        .solo-control-buttons .restart-image-button {
+          aspect-ratio: 3.61 / 1 !important;
+        }
+
+        .duel-control-buttons .home-image-button,
+        .solo-control-buttons .home-image-button {
+          aspect-ratio: 2.89 / 1 !important;
+        }
+
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-control-buttons .control-image-button {
+            align-self: center !important;
+          }
+
+          .solo-control-buttons .control-image-button img {
+            max-height: 72px !important;
+          }
+        }
+
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5644,10 +5752,10 @@ export default function Home() {
               <div className="solo-control-buttons grid shrink-0 grid-cols-2 gap-1.5 sm:gap-2">
                 <button
                   onClick={restartGame}
-                  className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset]"
-                  style={{ textShadow: "2px 2px 0 #03100b" }}
+                  className="control-image-button restart-image-button transition hover:-translate-y-1 active:translate-y-0"
+                  aria-label="Restart game"
                 >
-                  RESTART
+                  <img src={RESTART_BUTTON_SRC} alt="RESTART" draggable={false} />
                 </button>
 
                 <button
@@ -5660,10 +5768,10 @@ export default function Home() {
                       window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
                     }
                   }}
-                  className="rounded-xl border-[4px] border-[#061811] bg-[#d23a2f] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.14)_inset]"
-                  style={{ textShadow: "2px 2px 0 #03100b" }}
+                  className="control-image-button home-image-button transition hover:-translate-y-1 active:translate-y-0"
+                  aria-label="Go home"
                 >
-                  HOME
+                  <img src={HOME_BUTTON_SRC} alt="HOME" draggable={false} />
                 </button>
               </div>
             </aside>
