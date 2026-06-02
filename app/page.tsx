@@ -3357,6 +3357,28 @@ export default function Home() {
           }
         }
 
+
+        /* Make the NOW card easier to read in DUEL too. */
+        .now-card-display {
+          filter: drop-shadow(5px 5px 0 rgba(0,0,0,0.62));
+        }
+
+        @media (orientation: portrait), (max-width: 700px) {
+          .portrait-queue-panel .queue-card-well {
+            min-height: 240px !important;
+            padding: 0.85rem !important;
+            justify-content: center !important;
+          }
+
+          .portrait-queue-panel .queue-card-well .now-card-display {
+            width: clamp(92px, 20vw, 128px) !important;
+          }
+
+          .portrait-queue-panel .queue-card-well p:nth-of-type(2) {
+            font-size: 1.8rem !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3521,7 +3543,7 @@ export default function Home() {
 
                   <div className="queue-card-well mb-2 flex w-full shrink-0 flex-col items-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
                     <div
-                      className="w-20 shrink-0 rotate-[-2deg] bg-transparent p-0 sm:w-24 lg:w-28 xl:w-32"
+                      className="now-card-display w-24 shrink-0 rotate-[-2deg] bg-transparent p-0 sm:w-28 lg:w-32 xl:w-36"
                       style={{ aspectRatio: "5 / 7" }}
                     >
                       {duel.currentCard ? (
@@ -4579,7 +4601,49 @@ export default function Home() {
           }
         }
 
-      `}</style>
+      
+        /* Make the NOW card easier to read, especially on mobile. */
+        .now-card-display {
+          filter: drop-shadow(5px 5px 0 rgba(0,0,0,0.62));
+        }
+
+        @media (orientation: portrait), (max-width: 700px) {
+          .portrait-queue-panel .queue-card-well {
+            min-height: 240px !important;
+            padding: 0.85rem !important;
+            justify-content: center !important;
+          }
+
+          .portrait-queue-panel .queue-card-well .now-card-display {
+            width: clamp(92px, 20vw, 128px) !important;
+          }
+
+          .portrait-queue-panel .queue-card-well p {
+            margin-top: 0.45rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well p:nth-of-type(2) {
+            font-size: 1.8rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .portrait-queue-panel .queue-card-well {
+            min-height: 255px !important;
+          }
+
+          .portrait-queue-panel .queue-card-well .now-card-display {
+            width: clamp(96px, 24vw, 136px) !important;
+          }
+        }
+
+        @media (orientation: landscape) and (max-height: 540px) and (max-width: 1100px) {
+          .portrait-queue-panel .queue-card-well .now-card-display {
+            width: 58px !important;
+          }
+        }
+
+`}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
 
