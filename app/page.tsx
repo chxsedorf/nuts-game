@@ -1439,6 +1439,28 @@ function HomeScreen({
               5px 5px 0 #020806 !important;
           }
         }
+
+        /* Keep GAME OVER as an overlay above the play screen. */
+        .balatro-inspired-bg > .gameover-overlay,
+        .home-simple-screen > .gameover-overlay,
+        .gameover-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 9999 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          overflow-y: auto !important;
+        }
+
+        .gameover-overlay > * {
+          position: absolute;
+        }
+
+        .gameover-overlay > .gameover-card {
+          position: relative !important;
+          z-index: 3 !important;
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -4172,6 +4194,28 @@ export default function Home() {
               5px 5px 0 #020806 !important;
           }
         }
+
+        /* Keep GAME OVER as an overlay above the play screen. */
+        .balatro-inspired-bg > .gameover-overlay,
+        .home-simple-screen > .gameover-overlay,
+        .gameover-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 9999 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          overflow-y: auto !important;
+        }
+
+        .gameover-overlay > * {
+          position: absolute;
+        }
+
+        .gameover-overlay > .gameover-card {
+          position: relative !important;
+          z-index: 3 !important;
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -6506,6 +6550,28 @@ export default function Home() {
               5px 5px 0 #020806 !important;
           }
         }
+
+        /* Keep GAME OVER as an overlay above the play screen. */
+        .balatro-inspired-bg > .gameover-overlay,
+        .home-simple-screen > .gameover-overlay,
+        .gameover-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 9999 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          overflow-y: auto !important;
+        }
+
+        .gameover-overlay > * {
+          position: absolute;
+        }
+
+        .gameover-overlay > .gameover-card {
+          position: relative !important;
+          z-index: 3 !important;
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -6587,7 +6653,7 @@ export default function Home() {
       ))}
 
       {game.isGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/82 px-3 py-4 sm:px-4">
+        <div className="gameover-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/82 px-3 py-4 sm:px-4">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(245,208,111,0.22),transparent_26%),radial-gradient(circle_at_28%_72%,rgba(32,163,111,0.18),transparent_28%),radial-gradient(circle_at_74%_22%,rgba(210,58,47,0.18),transparent_26%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.13] [background-image:linear-gradient(#f5d06f_1px,transparent_1px),linear-gradient(90deg,#f5d06f_1px,transparent_1px)] [background-size:18px_18px]" />
 
