@@ -2887,7 +2887,6 @@ export default function Home() {
           }
         }
 
-      `}
         @media (min-width: 900px) {
           .portrait-outer {
             height: 100svh !important;
@@ -3092,6 +3091,7 @@ export default function Home() {
           }
         }
 
+        `}
 </style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
