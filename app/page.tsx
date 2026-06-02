@@ -443,6 +443,24 @@ function isBoardFull(board: Board): boolean {
   return board.every((row) => row.every((cell) => cell !== null));
 }
 
+function keepGameViewportAtTop(duration = 900) {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  const endAt = performance.now() + duration;
+
+  const snap = () => {
+    window.scrollTo(0, 0);
+    scrollingElement.scrollTop = 0;
+
+    if (performance.now() < endAt) {
+      window.requestAnimationFrame(snap);
+    }
+  };
+
+  window.requestAnimationFrame(snap);
+}
+
 function getCardColor(card: Card): string {
   if (card.suit === "heart" || card.suit === "diamond") {
     return "text-red-600";
@@ -751,10 +769,19 @@ function resultContains(parent: HandResult, child: HandResult): boolean {
   );
 }
 
-function resultOverlaps(a: HandResult, b: HandResult): boolean {
+function resultOverlapsBeyondPlacedCell(
+  a: HandResult,
+  b: HandResult,
+  placedRow: number,
+  placedCol: number
+): boolean {
+  const placedKey = keyOf(placedRow, placedCol);
   const aKeys = new Set(a.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col)));
 
-  return b.cards.some((cardPosition) => aKeys.has(keyOf(cardPosition.row, cardPosition.col)));
+  return b.cards.some((cardPosition) => {
+    const cardKey = keyOf(cardPosition.row, cardPosition.col);
+    return cardKey !== placedKey && aKeys.has(cardKey);
+  });
 }
 
 function removeContainedLowerPriorityResults(results: HandResult[]): HandResult[] {
@@ -790,7 +817,14 @@ function keepBestNonOverlappingResults(results: HandResult[], placedRow: number,
   const accepted: HandResult[] = [];
 
   for (const result of sortedResults) {
-    if (accepted.some((existing) => resultOverlaps(existing, result))) continue;
+    if (
+      accepted.some((existing) =>
+        resultOverlapsBeyondPlacedCell(existing, result, placedRow, placedCol)
+      )
+    ) {
+      continue;
+    }
+
     accepted.push(result);
   }
 
@@ -1767,11 +1801,20 @@ function HomeScreen({
 
         /* Stable play viewport: prevents mobile browser chrome/focus from pushing the board down. */
         .game-fixed-viewport {
+          position: fixed !important;
+          inset: 0 !important;
           height: 100svh !important;
           min-height: 100svh !important;
           max-height: 100svh !important;
           overflow: hidden !important;
           overscroll-behavior: none !important;
+          touch-action: manipulation;
+        }
+
+        .portrait-board button,
+        .queue-card-well,
+        .control-image-button {
+          touch-action: manipulation;
         }
 
 `}</style>
@@ -1981,26 +2024,6 @@ export default function Home() {
   const selectedCard = game.hand[0] ?? null;
 
   const isResolvingHand = highlightCells.size > 0;
-
-  function keepGameViewportAtTop(duration = 900) {
-    if (typeof window === "undefined" || typeof document === "undefined") return;
-
-    const scrollingElement = document.scrollingElement || document.documentElement;
-    const endAt = performance.now() + duration;
-
-    const snap = () => {
-      window.scrollTo(0, 0);
-      scrollingElement.scrollTop = 0;
-
-      if (performance.now() < endAt) {
-        window.requestAnimationFrame(snap);
-      }
-    };
-
-    window.requestAnimationFrame(snap);
-  }
-
-
 
   function getSafeSfxGain(gainValue: number) {
     if (!soundEnabled || sfxVolume <= 0) return 0;
@@ -2572,6 +2595,7 @@ export default function Home() {
     resetEffects();
     setGame((prev) => createInitialGame(prev.highScore));
     setScreen("game");
+    keepGameViewportAtTop();
 
     if (bgmVolume > 0) {
       setBgmEnabled(true);
@@ -2585,6 +2609,7 @@ export default function Home() {
     setMode("duel");
     setDuel(createInitialDuelGame());
     setScreen("game");
+    keepGameViewportAtTop();
 
     if (bgmVolume > 0) {
       setBgmEnabled(true);
@@ -2612,6 +2637,7 @@ export default function Home() {
     if (!duel.currentCard) return;
     if (duel.board[row][col]) return;
 
+    keepGameViewportAtTop();
     playSound("place");
 
     const selected = duel.currentCard;
@@ -2737,6 +2763,7 @@ export default function Home() {
     if (!game.hand[0]) return;
     if (game.board[row][col]) return;
 
+    keepGameViewportAtTop();
     playSound("place");
 
     const selected = game.hand[0];
@@ -2957,7 +2984,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport fixed inset-0 h-[100dvh] min-h-[100dvh] w-screen overflow-hidden bg-[#07120f] text-white">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport fixed inset-0 h-[100svh] min-h-[100svh] w-screen overflow-hidden bg-[#07120f] text-white">
         <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
@@ -4834,11 +4861,20 @@ export default function Home() {
 
         /* Stable play viewport: prevents mobile browser chrome/focus from pushing the board down. */
         .game-fixed-viewport {
+          position: fixed !important;
+          inset: 0 !important;
           height: 100svh !important;
           min-height: 100svh !important;
           max-height: 100svh !important;
           overflow: hidden !important;
           overscroll-behavior: none !important;
+          touch-action: manipulation;
+        }
+
+        .portrait-board button,
+        .queue-card-well,
+        .control-image-button {
+          touch-action: manipulation;
         }
 
 `}</style>
@@ -5084,7 +5120,7 @@ export default function Home() {
   const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:fixed md:inset-0 md:h-[100dvh] md:overflow-hidden">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:fixed md:inset-0 md:h-[100svh] md:overflow-hidden">
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
@@ -7442,11 +7478,20 @@ export default function Home() {
 
         /* Stable play viewport: prevents mobile browser chrome/focus from pushing the board down. */
         .game-fixed-viewport {
+          position: fixed !important;
+          inset: 0 !important;
           height: 100svh !important;
           min-height: 100svh !important;
           max-height: 100svh !important;
           overflow: hidden !important;
           overscroll-behavior: none !important;
+          touch-action: manipulation;
+        }
+
+        .portrait-board button,
+        .queue-card-well,
+        .control-image-button {
+          touch-action: manipulation;
         }
 
 `}</style>
