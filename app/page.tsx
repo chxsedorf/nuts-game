@@ -568,8 +568,16 @@ function getStraightOrderValue(card: Card): number {
   if (rankText === "Q") return 12;
   if (rankText === "K") return 13;
 
-  const numericValue = Number(rankText);
-  return Number.isFinite(numericValue) ? numericValue : Number.NaN;
+  const rankValue = Number(rankText);
+
+  if (Number.isFinite(rankValue)) return rankValue;
+
+  // Final fallback: use card.value if rank text ever mismatches the image/data.
+  // A can be stored as 14, but in Nuts it must work as 1 for A-2-3.
+  if (card.value === 14) return 1;
+  if (Number.isFinite(card.value)) return card.value;
+
+  return Number.NaN;
 }
 
 function getResultKey(result: HandResult): string {
@@ -638,11 +646,15 @@ function isStraightCards(cards: LineCard[]): boolean {
     .sort((a, b) => a - b);
 
   if (values.some((value) => Number.isNaN(value))) return false;
-  if (new Set(values).size !== 3) return false;
 
-  // 1,2,3 / A,2,3 and 2,3,4 are valid.
-  // 2,3,3 and 1,2,2 are invalid.
-  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
+  const straightKey = values.join("-");
+
+  // Explicit allow-list for 3-card straights.
+  // This guarantees 2-3-4 is accepted and duplicate hands such as 2-3-3 are rejected.
+  return straightKey === "1-2-3" || straightKey === "2-3-4" || straightKey === "3-4-5" ||
+    straightKey === "4-5-6" || straightKey === "5-6-7" || straightKey === "6-7-8" ||
+    straightKey === "7-8-9" || straightKey === "8-9-10" || straightKey === "9-10-11" ||
+    straightKey === "10-11-12" || straightKey === "11-12-13";
 }
 
 function isCleanFullHouse(cards: LineCard[]): boolean {
@@ -5689,6 +5701,56 @@ export default function Home() {
           outline: 0 !important;
           box-shadow: none !important;
         }
+
+        /* Result screen uses the same image buttons as play screen. */
+        .result-image-buttons {
+          background: transparent !important;
+          border: 0 !important;
+          box-shadow: none !important;
+          overflow: visible !important;
+        }
+
+        .result-image-buttons .control-image-button {
+          display: grid !important;
+          place-items: center !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          aspect-ratio: 2084 / 577 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          border: 0 !important;
+          outline: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          overflow: visible !important;
+          line-height: 0 !important;
+          image-rendering: pixelated !important;
+        }
+
+        .result-image-buttons .control-image-button img {
+          display: block !important;
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+          pointer-events: none !important;
+          user-select: none !important;
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          image-rendering: pixelated !important;
+          filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.62)) !important;
+        }
+
+        .result-image-buttons .restart-image-button,
+        .result-image-buttons .home-image-button {
+          aspect-ratio: 2084 / 577 !important;
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5817,12 +5879,13 @@ export default function Home() {
               </h3>
             </section>
 
-            <div className="relative z-10 mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="result-image-buttons relative z-10 mt-6 grid items-center gap-3 sm:grid-cols-2">
               <button
                 onClick={restartGame}
-                className="rounded-2xl border-[5px] border-[#061811] bg-[#f0b342] px-5 py-4 text-2xl font-black tracking-[0.06em] text-[#2a1603] shadow-[6px_6px_0_#020806,0_0_0_2px_#fff4cf_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806] sm:text-3xl"
+                className="control-image-button restart-image-button transition hover:-translate-y-0.5 active:translate-y-0"
+                aria-label="Replay"
               >
-                REPLAY
+                <img src={RESTART_BUTTON_SRC} alt="RESTART" draggable={false} />
               </button>
 
               <button
@@ -5835,10 +5898,10 @@ export default function Home() {
                     window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
                   }
                 }}
-                className="rounded-2xl border-[5px] border-[#061811] bg-[#1787d8] px-5 py-4 text-2xl font-black tracking-[0.06em] text-white shadow-[6px_6px_0_#020806,0_0_0_2px_rgba(255,255,255,0.18)_inset] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#020806] sm:text-3xl"
-                style={{ textShadow: "3px 3px 0 #03100b" }}
+                className="control-image-button home-image-button transition hover:-translate-y-0.5 active:translate-y-0"
+                aria-label="Home"
               >
-                HOME
+                <img src={HOME_BUTTON_SRC} alt="HOME" draggable={false} />
               </button>
             </div>
           </div>
