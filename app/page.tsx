@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type Suit = "♠" | "♥" | "♦" | "♣";
 type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
@@ -44,6 +44,8 @@ type Settings = {
   sound: boolean;
   showDebug: boolean;
   reducedMotion: boolean;
+  sfxVolume: number;
+  bgmVolume: number;
 };
 
 const BOARD_SIZE = 5;
@@ -313,6 +315,24 @@ function createEmptyBoard(): Board {
   return Array.from({ length: BOARD_CELLS }, () => null);
 }
 
+function safeLocalStorageGet(key: string) {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeLocalStorageSet(key: string, value: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore private-mode/local-storage failures.
+  }
+}
+
 function createInitialGame() {
   const deck = newDeck();
   const drawn = drawCard(deck);
@@ -338,12 +358,42 @@ export default function Page() {
   const [game, setGame] = useState(() => createInitialGame());
   const [savedBestScore, setSavedBestScore] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>({
-    sound: false,
+    sound: true,
     showDebug: false,
     reducedMotion: false,
+    sfxVolume: 0.55,
+    bgmVolume: 0,
   });
   const [screen, setScreen] = useState<"HOME" | "GAME">("HOME");
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    const savedBest = Number(safeLocalStorageGet("nuts-best-score") ?? "0");
+    if (Number.isFinite(savedBest) && savedBest > 0) {
+      setSavedBestScore(savedBest);
+      setGame((current) => ({ ...current, bestScore: Math.max(current.bestScore, savedBest) }));
+    }
+
+    const savedSettings = safeLocalStorageGet("nuts-settings-v6");
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings) as Partial<Settings>;
+        setSettings((current) => ({ ...current, ...parsed }));
+      } catch {
+        // Ignore invalid saved settings.
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    safeLocalStorageSet("nuts-best-score", String(savedBestScore));
+  }, [savedBestScore]);
+
+  useEffect(() => {
+    safeLocalStorageSet("nuts-settings-v6", JSON.stringify(settings));
+  }, [settings]);
 
   const emptyCells = useMemo(() => game.board.filter((cell) => cell === null).length, [game.board]);
   const deckLeft = game.deck.length + 1;
@@ -351,6 +401,38 @@ export default function Page() {
   const currentMultiplier = comboMultiplier(game.combo);
   const pressure = pressureLabel(emptyCells);
   const lastHandClass = handClassName(game.lastHand?.kind);
+
+  function playTone(type: "start" | "place" | "hit" | "miss" | "button" | "gameover") {
+    if (!settings.sound || settings.sfxVolume <= 0) return;
+    if (typeof window === "undefined") return;
+
+    const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const context = audioContextRef.current ?? new AudioContextClass();
+    audioContextRef.current = context;
+
+    const now = context.currentTime;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const frequency =
+      type === "hit" ? 740 :
+      type === "start" ? 520 :
+      type === "gameover" ? 130 :
+      type === "miss" ? 190 :
+      type === "button" ? 420 :
+      310;
+
+    oscillator.type = type === "gameover" ? "sawtooth" : "square";
+    oscillator.frequency.setValueAtTime(frequency, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.001, settings.sfxVolume * 0.08), now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.14);
+  }
 
   function createFreshGame() {
     return {
@@ -360,18 +442,21 @@ export default function Page() {
   }
 
   function startGame() {
+    playTone("start");
     setGame(createFreshGame());
     setSettingsOpen(false);
     setScreen("GAME");
   }
 
   function restart() {
+    playTone("button");
     setGame(createFreshGame());
     setSettingsOpen(false);
     setScreen("GAME");
   }
 
   function backToTitle() {
+    playTone("button");
     setSettingsOpen(false);
     setScreen("HOME");
   }
@@ -380,6 +465,8 @@ export default function Page() {
     setGame((currentGame) => {
       if (currentGame.status !== "PLAYING") return currentGame;
       if (currentGame.board[targetIndex]) return currentGame;
+
+      playTone("place");
 
       const placedBoard = [...currentGame.board];
       placedBoard[targetIndex] = currentGame.currentCard;
@@ -430,6 +517,16 @@ export default function Page() {
         setSavedBestScore(nextBestScore);
       }
 
+      if (hand) {
+        window.setTimeout(() => playTone("hit"), 80);
+      } else {
+        window.setTimeout(() => playTone("miss"), 80);
+      }
+
+      if (nextStatus === "GAME_OVER") {
+        window.setTimeout(() => playTone("gameover"), 170);
+      }
+
       return {
         ...currentGame,
         board: nextBoard,
@@ -452,8 +549,9 @@ export default function Page() {
   return (
     <main className={`nuts-root ${settings.reducedMotion ? "motion-off" : ""}`}>
       <div className="bg-grid" />
+      <div className="casino-glow" aria-hidden="true" />
 
-      <button className="settings-button" type="button" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
+      <button className="settings-button" type="button" onClick={() => { playTone("button"); setSettingsOpen(true); }} aria-label="Open settings" title="Settings">
         ⚙
       </button>
 
@@ -479,6 +577,30 @@ export default function Page() {
               />
             </label>
 
+            <label className="range-row">
+              <span>SFX Volume <b>{Math.round(settings.sfxVolume * 100)}%</b></span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={settings.sfxVolume}
+                onChange={(event) => setSettings((value) => ({ ...value, sfxVolume: Number(event.target.value) }))}
+              />
+            </label>
+
+            <label className="range-row">
+              <span>BGM Volume <b>{settings.bgmVolume <= 0 ? "OFF" : `${Math.round(settings.bgmVolume * 100)}%`}</b></span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={settings.bgmVolume}
+                onChange={(event) => setSettings((value) => ({ ...value, bgmVolume: Number(event.target.value) }))}
+              />
+            </label>
+
             <label className="setting-row">
               <span>Show Debug</span>
               <input
@@ -496,6 +618,43 @@ export default function Page() {
                 onChange={(event) => setSettings((value) => ({ ...value, reducedMotion: event.target.checked }))}
               />
             </label>
+
+            <div className="settings-help">
+              <h3>HOW TO PLAY</h3>
+              <p>Place one card into an empty cell. Hands are checked only in rows and columns. Pair keeps the card. Three, Straight, and Full House clear the exact hand cards.</p>
+            </div>
+
+            <button
+              className="secondary-button privacy-button"
+              type="button"
+              onClick={() => { setSettingsOpen(false); setPrivacyOpen(true); }}
+            >
+              Privacy Policy
+            </button>
+          </div>
+        </div>
+      )}
+
+      {privacyOpen && (
+        <div className="modal-layer" role="dialog" aria-modal="true" aria-label="Privacy Policy">
+          <div className="modal-card privacy-card">
+            <div className="modal-head">
+              <div>
+                <p className="eyebrow">NUTS</p>
+                <h2>Privacy Policy</h2>
+              </div>
+              <button className="modal-close" type="button" onClick={() => setPrivacyOpen(false)} aria-label="Close privacy policy">
+                ×
+              </button>
+            </div>
+            <div className="privacy-body">
+              <h3>Local Data</h3>
+              <p>Best score and settings are saved only in this browser when local storage is available.</p>
+              <h3>No Account Required</h3>
+              <p>NUTS does not require account registration and does not intentionally collect personal information.</p>
+              <h3>Gameplay</h3>
+              <p>The game may store simple gameplay preferences such as sound, debug view, and reduced motion.</p>
+            </div>
           </div>
         </div>
       )}
@@ -507,10 +666,10 @@ export default function Page() {
               <span>N</span>
               <i />
             </div>
-            <p className="eyebrow">Stable Rebuild v5</p>
+            <p className="eyebrow">Grid Poker / Restored Spec v6</p>
             <h1>NUTS</h1>
             <p className="home-copy">
-              Build rows and columns, chain hands within three turns, clear space, and survive the pressure.
+              A compact grid-poker puzzle. Place cards, make row/column hands, chain combos, and keep the board alive.
             </p>
 
             <div className="home-stats">
@@ -520,10 +679,10 @@ export default function Page() {
 
             <div className="home-actions">
               <button className="primary-button start-button" type="button" onClick={startGame}>
-                Start Game
+                PLAY SOLO
               </button>
-              <button className="secondary-button" type="button" onClick={() => setSettingsOpen(true)}>
-                Settings
+              <button className="secondary-button" type="button" onClick={() => { playTone("button"); setSettingsOpen(true); }}>
+                SETTINGS
               </button>
             </div>
           </div>
@@ -608,7 +767,7 @@ export default function Page() {
 
           <section className="board-section">
             <header className="title-area">
-              <p className="eyebrow">Stable Build v5</p>
+              <p className="eyebrow">Grid Poker / Restored Spec v6</p>
               <h1>NUTS</h1>
               <div className="status-bar">
                 <span className={`hand-badge ${game.lastHand ? "active" : ""} ${lastHandClass}`}>
@@ -664,7 +823,7 @@ export default function Page() {
           </section>
 
           <aside className="panel right-panel">
-            <p className="eyebrow">Hands</p>
+            <p className="eyebrow">Hand Board</p>
 
             <div className="hand-list">
               <RuleCard title="PAIR" score="Small" note="same rank ×2 / no clear" cards={[1, 1]} />
@@ -720,7 +879,7 @@ export default function Page() {
         :global(body) {
           margin: 0;
           min-height: 100%;
-          background: #080706;
+          background: #06140f;
           overscroll-behavior: none;
         }
 
@@ -745,9 +904,9 @@ export default function Page() {
           padding: clamp(12px, 2vw, 24px);
           color: #f7efe3;
           background:
-            radial-gradient(circle at 50% 15%, rgba(233, 176, 92, 0.18), transparent 34%),
-            radial-gradient(circle at 15% 80%, rgba(110, 70, 34, 0.2), transparent 28%),
-            linear-gradient(145deg, #16110d 0%, #0b0907 54%, #17110c 100%);
+            radial-gradient(circle at 50% 10%, rgba(242, 184, 74, 0.22), transparent 32%),
+            radial-gradient(circle at 18% 86%, rgba(32, 208, 181, 0.12), transparent 30%),
+            linear-gradient(145deg, #0b3328 0%, #06140f 52%, #102117 100%);
           font-family:
             Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           user-select: none;
@@ -761,7 +920,7 @@ export default function Page() {
           background-image:
             linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-          background-size: 42px 42px;
+          background-size: 18px 18px;
           mask-image: radial-gradient(circle at center, black, transparent 76%);
         }
 
@@ -769,6 +928,16 @@ export default function Page() {
         .game-shell {
           position: relative;
           z-index: 1;
+        }
+
+        .casino-glow {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image:
+            radial-gradient(circle at 25% 20%, rgba(242, 184, 74, 0.16), transparent 22%),
+            radial-gradient(circle at 80% 72%, rgba(32, 208, 181, 0.12), transparent 24%);
+          filter: blur(1px);
         }
 
         .home-shell {
@@ -1224,8 +1393,8 @@ export default function Page() {
 
         .settings-button {
           position: fixed;
-          top: max(14px, env(safe-area-inset-top));
-          right: max(14px, env(safe-area-inset-right));
+          bottom: max(14px, env(safe-area-inset-bottom));
+          left: max(14px, env(safe-area-inset-left));
           z-index: 50;
           width: 46px;
           height: 46px;
@@ -1577,6 +1746,135 @@ export default function Page() {
         .result-best {
           color: #c89d63;
           font-weight: 900;
+        }
+
+
+        .home-card,
+        .home-rules,
+        .panel,
+        .board-section,
+        .game-over-card,
+        .modal-card {
+          border-width: 4px;
+          border-color: #d9912c;
+          background: rgba(8, 37, 29, 0.88);
+          box-shadow: 8px 8px 0 #020806, inset 0 0 0 3px rgba(242, 184, 74, 0.12), 0 20px 80px rgba(0, 0, 0, 0.42);
+          backdrop-filter: blur(10px);
+        }
+
+        .primary-button,
+        .secondary-button,
+        .settings-button,
+        .modal-close {
+          border: 3px solid #06140f;
+          box-shadow: 5px 5px 0 #020806, inset 0 0 0 2px rgba(255, 244, 207, 0.14);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .primary-button:hover,
+        .secondary-button:hover,
+        .settings-button:hover {
+          transform: translate(-1px, -1px);
+          filter: brightness(1.08);
+        }
+
+        .settings-help {
+          margin-top: 12px;
+          border: 3px solid #06140f;
+          border-radius: 18px;
+          padding: 14px;
+          background: #071b15;
+          box-shadow: 4px 4px 0 #020806;
+        }
+
+        .settings-help h3,
+        .privacy-body h3 {
+          margin: 0 0 8px;
+          color: #f2b84a;
+          font-size: 13px;
+          font-weight: 1000;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .settings-help p,
+        .privacy-body p {
+          margin: 0 0 14px;
+          color: #d9efe4;
+          font-size: 13px;
+          font-weight: 750;
+          line-height: 1.65;
+        }
+
+        .privacy-button {
+          margin-top: 12px;
+        }
+
+        .range-row {
+          display: grid;
+          gap: 9px;
+          padding: 14px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          color: #ead8bd;
+          font-weight: 900;
+        }
+
+        .range-row span {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .range-row input {
+          width: 100%;
+          accent-color: #20d0b5;
+        }
+
+        .board {
+          border-width: 4px;
+          border-color: #06140f;
+          background:
+            linear-gradient(135deg, rgba(242, 184, 74, 0.11), transparent 38%),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 8px),
+            #08251d;
+          box-shadow: 6px 6px 0 #020806, inset 0 0 0 3px rgba(242, 184, 74, 0.14);
+        }
+
+        .cell {
+          border-width: 3px;
+          border-color: #06140f;
+          background:
+            radial-gradient(circle at 50% 20%, rgba(242, 184, 74, 0.18), transparent 52%),
+            #123f32;
+          box-shadow: 3px 3px 0 #020806, inset 0 0 0 2px rgba(255,255,255,0.04);
+        }
+
+        .cell.filled {
+          background: #0a221b;
+        }
+
+        .cell.hit {
+          border-color: #f2b84a;
+          box-shadow: 4px 4px 0 #020806, 0 0 0 3px rgba(242, 184, 74, 0.24), 0 0 28px rgba(242, 184, 74, 0.24);
+        }
+
+        .card {
+          border: 3px solid #06140f;
+          border-radius: 10px;
+          background: linear-gradient(145deg, #fff4cf, #e8cf94);
+          box-shadow: 4px 4px 0 rgba(2, 8, 6, 0.8);
+        }
+
+        .rule-card,
+        .metric-card,
+        .combo-card,
+        .pressure-card,
+        .history-item {
+          border: 3px solid #06140f;
+          background: #071b15;
+          box-shadow: 4px 4px 0 #020806;
         }
 
         @media (max-width: 980px) {
