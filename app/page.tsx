@@ -750,18 +750,27 @@ function evaluateWindow(
   windowCards: LineCard[],
   placedRow: number,
   placedCol: number,
-  results: HandResult[]
+  results: HandResult[],
+  allowCatchUpClearHands = false
 ) {
-  if (!includesPlaced(windowCards, placedRow, placedCol)) return;
+  const touchesPlacedCard = includesPlaced(windowCards, placedRow, placedCol);
 
-  if (windowCards.length === 2 && isPairCards(windowCards)) {
-    // Strict Pair only. A-A works, but A-2 / 3-2 / 2-3 never reach here.
-    addUniqueResult(
-      results,
-      createHandResult("Pair", scoreTable.pair * windowCards.length, windowCards, false, 10)
-    );
+  // Pair must be newly made by the placed card.
+  // Because Pair does not clear, this prevents old pairs from scoring repeatedly.
+  if (windowCards.length === 2) {
+    if (touchesPlacedCard && isPairCards(windowCards)) {
+      addUniqueResult(
+        results,
+        createHandResult("Pair", scoreTable.pair * windowCards.length, windowCards, false, 10)
+      );
+    }
+
     return;
   }
+
+  const canScoreClearHand = touchesPlacedCard || allowCatchUpClearHands;
+
+  if (!canScoreClearHand) return;
 
   if (windowCards.length === 3) {
     if (isThreeCard(windowCards)) {
@@ -790,15 +799,20 @@ function evaluateWindow(
   }
 }
 
-function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+function evaluateLine(
+  line: LineCard[],
+  placedRow: number,
+  placedCol: number,
+  allowCatchUpClearHands = false
+): HandResult[] {
   if (line.length < 2) return [];
 
   const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
-    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates);
-    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates);
-    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates);
+    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, false);
+    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, allowCatchUpClearHands);
+    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, allowCatchUpClearHands);
   }
 
   return filterDominatedResults(candidates);
@@ -835,17 +849,44 @@ function getAxisSegments(board: Board, row: number, col: number, axis: "row" | "
   return segments;
 }
 
+function getAllAxisSegments(board: Board): LineCard[][] {
+  const segments: LineCard[][] = [];
+
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    segments.push(...getAxisSegments(board, row, 0, "row"));
+  }
+
+  for (let col = 0; col < BOARD_SIZE; col++) {
+    segments.push(...getAxisSegments(board, 0, col, "col"));
+  }
+
+  return segments;
+}
+
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   const allResults: HandResult[] = [];
-  const segments = [
+  const primarySegments = [
     ...getAxisSegments(board, row, col, "row"),
     ...getAxisSegments(board, row, col, "col"),
   ];
 
-  for (const segment of segments) {
+  // 1. Normal rule: score hands touched by the newly placed card.
+  for (const segment of primarySegments) {
     if (!includesPlaced(segment, row, col)) continue;
 
-    const segmentResults = evaluateLine(segment, row, col);
+    const segmentResults = evaluateLine(segment, row, col, false);
+
+    for (const result of segmentResults) {
+      addUniqueResult(allResults, result);
+    }
+  }
+
+  // 2. Safety net: scan the whole board for missed clearable hands only.
+  // Pair is still restricted to the placed card, so old Pair hands cannot repeat-score.
+  for (const segment of getAllAxisSegments(board)) {
+    const segmentResults = evaluateLine(segment, row, col, true).filter(
+      (result) => result.shouldClear
+    );
 
     for (const result of segmentResults) {
       addUniqueResult(allResults, result);
@@ -1845,6 +1886,32 @@ function HomeScreen({
         .result-score-panel {
           overflow-anchor: none !important;
         }
+
+        /* Final viewport stability: board clicks/results must never scroll the page on desktop. */
+        @media (min-width: 768px) {
+          html,
+          body {
+            overflow: hidden !important;
+            height: 100% !important;
+          }
+
+          .balatro-inspired-bg {
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            overflow: hidden !important;
+          }
+        }
+
+        .portrait-board button {
+          scroll-margin: 0 !important;
+          outline: none !important;
+        }
+
+        .portrait-board button:focus,
+        .portrait-board button:focus-visible {
+          outline: none !important;
+          box-shadow: inherit;
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -2033,6 +2100,16 @@ export default function Home() {
   const selectedCard = game.hand[0] ?? null;
 
   const isResolvingHand = highlightCells.size > 0;
+
+  function blurActiveControl() {
+    if (typeof document === "undefined") return;
+
+    const activeElement = document.activeElement;
+
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  }
 
   function lockScrollPositionDuringResult(duration = 760) {
     if (typeof window === "undefined") return;
@@ -5001,6 +5078,32 @@ export default function Home() {
         .result-score-panel {
           overflow-anchor: none !important;
         }
+
+        /* Final viewport stability: board clicks/results must never scroll the page on desktop. */
+        @media (min-width: 768px) {
+          html,
+          body {
+            overflow: hidden !important;
+            height: 100% !important;
+          }
+
+          .balatro-inspired-bg {
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            overflow: hidden !important;
+          }
+        }
+
+        .portrait-board button {
+          scroll-margin: 0 !important;
+          outline: none !important;
+        }
+
+        .portrait-board button:focus,
+        .portrait-board button:focus-visible {
+          outline: none !important;
+          box-shadow: inherit;
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -7728,6 +7831,32 @@ export default function Home() {
         .result-score-panel {
           overflow-anchor: none !important;
         }
+
+        /* Final viewport stability: board clicks/results must never scroll the page on desktop. */
+        @media (min-width: 768px) {
+          html,
+          body {
+            overflow: hidden !important;
+            height: 100% !important;
+          }
+
+          .balatro-inspired-bg {
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            overflow: hidden !important;
+          }
+        }
+
+        .portrait-board button {
+          scroll-margin: 0 !important;
+          outline: none !important;
+        }
+
+        .portrait-board button:focus,
+        .portrait-board button:focus-visible {
+          outline: none !important;
+          box-shadow: inherit;
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -8027,6 +8156,9 @@ export default function Home() {
                           key={cellKey}
                           onClick={() => placeCard(rowIndex, colIndex)}
                           disabled={!!cell || game.isGameOver}
+                          tabIndex={-1}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onPointerDown={() => lockScrollPositionDuringResult(900)}
                           className={[
                             "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                             cell
