@@ -1708,10 +1708,9 @@ export default function Home() {
     );
   }
 
-  function renderSettingsButtonAndModal(showFloatingButton = true) {
+  function renderSettingsButtonAndModal() {
     return (
       <>
-        {showFloatingButton && (
         <button
           type="button"
           onClick={() => {
@@ -1724,7 +1723,6 @@ export default function Home() {
         >
           <span aria-hidden="true" className="drop-shadow-[2px_2px_0_#020806]">⚙</span>
         </button>
-        )}
 
         {settingsOpen && (
           <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/70 p-4">
@@ -2291,7 +2289,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative h-[100svh] overflow-hidden bg-[#07120f] text-white">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
         <style>{`
         @media (orientation: portrait), (max-aspect-ratio: 1/1) {
           .portrait-outer {
@@ -2938,543 +2936,7 @@ export default function Home() {
           }
         }
 
-        @media (min-width: 900px) {
-          .portrait-outer {
-            height: 100svh !important;
-            min-height: 0 !important;
-            max-height: 100svh !important;
-            padding: 0.35rem 0.45rem !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-frame {
-            height: calc(100svh - 0.7rem) !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            padding: 0.45rem !important;
-          }
-
-          .portrait-frame > header {
-            min-height: 0 !important;
-            margin-bottom: 0.45rem !important;
-            padding-block: 0.45rem !important;
-            gap: 0.45rem !important;
-          }
-
-          .portrait-frame > header .nuts-logo-img {
-            max-height: 64px !important;
-            width: 250px !important;
-          }
-
-          .portrait-frame > header .min-h-\[58px\],
-          .portrait-frame > header .sm\:min-h-\[68px\] {
-            min-height: 52px !important;
-          }
-
-          .portrait-frame > header .text-3xl {
-            font-size: 1.55rem !important;
-            line-height: 1 !important;
-          }
-
-          .portrait-frame > header .text-\[10px\] {
-            font-size: 0.56rem !important;
-          }
-
-          .portrait-stack-layout {
-            height: calc(100svh - 102px) !important;
-            min-height: 0 !important;
-            align-items: stretch !important;
-            gap: 0.55rem !important;
-          }
-
-          .portrait-stack-layout > div:first-child,
-          .portrait-board-wrap,
-          .portrait-side,
-          .portrait-queue-panel {
-            min-height: 0 !important;
-            height: 100% !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-board-wrap {
-            padding: 0.45rem !important;
-          }
-
-          .portrait-board-wrap > .mb-2 {
-            height: 24px !important;
-            margin-bottom: 0.3rem !important;
-          }
-
-          .portrait-board-wrap > .mb-2 p {
-            padding: 0.18rem 0.7rem !important;
-            font-size: 0.65rem !important;
-          }
-
-          .portrait-board {
-            width: auto !important;
-            height: min(calc(100svh - 158px), 100%) !important;
-            max-height: calc(100svh - 158px) !important;
-            max-width: 100% !important;
-            aspect-ratio: 1 / 1 !important;
-            flex: 0 1 auto !important;
-            gap: 0.35rem !important;
-            padding: 0.45rem !important;
-          }
-
-          .portrait-side {
-            gap: 0.45rem !important;
-          }
-
-          .portrait-queue-panel {
-            display: grid !important;
-            grid-template-rows: 34px minmax(178px, 0.52fr) minmax(170px, 0.48fr) !important;
-            gap: 0.45rem !important;
-            padding: 0.45rem !important;
-          }
-
-          .portrait-queue-panel > :first-child {
-            margin-bottom: 0 !important;
-            padding-block: 0.25rem !important;
-          }
-
-          .portrait-queue-panel > :first-child p {
-            font-size: 1rem !important;
-            line-height: 1 !important;
-          }
-
-          .portrait-queue-panel .queue-card-well {
-            min-height: 0 !important;
-            height: auto !important;
-            margin-bottom: 0 !important;
-            padding: 0.45rem !important;
-            justify-content: center !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-queue-panel .queue-card-well > div:first-child {
-            width: clamp(70px, 8vw, 94px) !important;
-          }
-
-          .portrait-queue-panel .queue-card-well p {
-            margin-top: 0.25rem !important;
-          }
-
-          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
-            min-height: 0 !important;
-            height: auto !important;
-            overflow: hidden !important;
-            padding: 0.45rem !important;
-          }
-
-          .duel-status-title {
-            font-size: 1.35rem !important;
-            line-height: 1 !important;
-          }
-
-          .duel-status-result {
-            margin-top: 0.35rem !important;
-            font-size: 0.92rem !important;
-          }
-
-          .portrait-queue-panel button {
-            padding: 0.48rem 0.7rem !important;
-            font-size: 0.95rem !important;
-            line-height: 1 !important;
-          }
-        }
-
-        @media (min-width: 900px) and (max-height: 760px) {
-          .portrait-frame > header {
-            padding-block: 0.3rem !important;
-            margin-bottom: 0.3rem !important;
-          }
-
-          .portrait-frame > header .nuts-logo-img {
-            max-height: 54px !important;
-            width: 220px !important;
-          }
-
-          .portrait-stack-layout {
-            height: calc(100svh - 82px) !important;
-            gap: 0.4rem !important;
-          }
-
-          .portrait-board {
-            height: min(calc(100svh - 132px), 100%) !important;
-            max-height: calc(100svh - 132px) !important;
-            gap: 0.25rem !important;
-            padding: 0.35rem !important;
-          }
-
-          .portrait-board-wrap {
-            padding: 0.35rem !important;
-          }
-
-          .portrait-board-wrap > .mb-2 {
-            display: none !important;
-          }
-
-          .portrait-queue-panel {
-            grid-template-rows: 28px minmax(135px, 0.50fr) minmax(130px, 0.50fr) !important;
-            gap: 0.3rem !important;
-            padding: 0.35rem !important;
-          }
-
-          .portrait-queue-panel .queue-card-well > div:first-child {
-            width: clamp(54px, 7vw, 76px) !important;
-          }
-
-          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
-            padding: 0.35rem !important;
-          }
-
-          .duel-status-title {
-            font-size: 1.05rem !important;
-          }
-
-          .duel-status-result {
-            display: none !important;
-          }
-
-          .portrait-queue-panel button {
-            padding: 0.32rem 0.55rem !important;
-            font-size: 0.82rem !important;
-          }
-        }
-
-        @media (min-width: 900px) {
-          .portrait-frame {
-            padding: 0.3rem !important;
-          }
-
-          .portrait-frame > header {
-            margin-bottom: 0.25rem !important;
-            padding: 0.28rem 0.5rem !important;
-            grid-template-columns: minmax(180px,0.7fr) minmax(210px,0.7fr) minmax(420px,1.45fr) !important;
-          }
-
-          .portrait-frame > header .nuts-logo-img {
-            max-height: 48px !important;
-            width: 205px !important;
-          }
-
-          .portrait-frame > header .min-h-\[58px\],
-          .portrait-frame > header .sm\:min-h-\[68px\] {
-            min-height: 46px !important;
-          }
-
-          .duel-empty-settings {
-            gap: 0.18rem !important;
-          }
-
-          .duel-empty-settings button {
-            height: 26px !important;
-            min-height: 26px !important;
-            padding: 0 !important;
-            font-size: 1rem !important;
-            line-height: 1 !important;
-          }
-
-          .portrait-stack-layout {
-            height: calc(100svh - 78px) !important;
-            grid-template-columns: minmax(520px, 0.92fr) 310px !important;
-            gap: 0.45rem !important;
-          }
-
-          .portrait-board-wrap {
-            padding: 0.3rem !important;
-          }
-
-          .portrait-board-wrap > .mb-2 {
-            height: 20px !important;
-            margin-bottom: 0.22rem !important;
-          }
-
-          .portrait-board {
-            height: calc(100svh - 125px) !important;
-            max-height: calc(100svh - 125px) !important;
-            gap: 0.25rem !important;
-            padding: 0.35rem !important;
-          }
-
-          .portrait-queue-panel {
-            grid-template-rows: 28px minmax(132px, 0.46fr) minmax(126px, 0.54fr) !important;
-            gap: 0.25rem !important;
-            padding: 0.3rem !important;
-          }
-
-          .portrait-queue-panel > :first-child {
-            padding-block: 0.16rem !important;
-          }
-
-          .portrait-queue-panel > :first-child p {
-            font-size: 0.92rem !important;
-          }
-
-          .portrait-queue-panel .queue-card-well {
-            padding: 0.3rem !important;
-          }
-
-          .portrait-queue-panel .queue-card-well > div:first-child {
-            width: clamp(54px, 6.7vw, 78px) !important;
-          }
-
-          .portrait-queue-panel .queue-card-well p {
-            margin-top: 0.15rem !important;
-          }
-
-          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
-            padding: 0.3rem !important;
-          }
-
-          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 > .mb-2 {
-            margin-bottom: 0.25rem !important;
-            padding-block: 0.15rem !important;
-          }
-
-          .duel-status-title {
-            font-size: 1.02rem !important;
-          }
-
-          .portrait-queue-panel button {
-            min-height: 28px !important;
-            padding: 0.25rem 0.55rem !important;
-            font-size: 0.8rem !important;
-          }
-        }
-
-        @media (min-width: 900px) and (max-height: 700px) {
-          .portrait-stack-layout {
-            height: calc(100svh - 70px) !important;
-            grid-template-columns: minmax(500px, 0.92fr) 285px !important;
-          }
-
-          .portrait-frame > header {
-            padding-block: 0.18rem !important;
-          }
-
-          .portrait-frame > header .nuts-logo-img {
-            max-height: 42px !important;
-            width: 185px !important;
-          }
-
-          .portrait-board {
-            height: calc(100svh - 112px) !important;
-            max-height: calc(100svh - 112px) !important;
-          }
-
-          .portrait-board-wrap > .mb-2 {
-            display: none !important;
-          }
-
-          .portrait-queue-panel {
-            grid-template-rows: 24px minmax(105px, 0.45fr) minmax(104px, 0.55fr) !important;
-          }
-
-          .portrait-queue-panel .queue-card-well > div:first-child {
-            width: clamp(44px, 5.8vw, 62px) !important;
-          }
-
-          .duel-status-title {
-            font-size: 0.92rem !important;
-          }
-        }
-
-        
-        /* Final DUEL fit override: keep the full screen visible without scrolling. */
-        @media (min-width: 900px) {
-          .portrait-outer {
-            height: 100svh !important;
-            max-height: 100svh !important;
-            min-height: 0 !important;
-            padding: 0.25rem 0.35rem !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-frame {
-            height: calc(100svh - 0.5rem) !important;
-            max-height: calc(100svh - 0.5rem) !important;
-            min-height: 0 !important;
-            padding: 0.25rem !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-frame > header {
-            min-height: 54px !important;
-            max-height: 64px !important;
-            margin-bottom: 0.25rem !important;
-            padding: 0.25rem 0.45rem !important;
-            gap: 0.35rem !important;
-            grid-template-columns: 190px 260px minmax(430px,1fr) !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-frame > header .nuts-logo-img {
-            width: 185px !important;
-            max-height: 48px !important;
-          }
-
-          .portrait-frame > header .min-h-\[58px\],
-          .portrait-frame > header .sm\:min-h-\[68px\] {
-            min-height: 44px !important;
-          }
-
-          .duel-empty-settings {
-            grid-template-rows: minmax(34px,1fr) 24px !important;
-            gap: 0.12rem !important;
-          }
-
-          .duel-empty-settings button {
-            height: 24px !important;
-            min-height: 24px !important;
-            padding: 0 !important;
-            font-size: 0.95rem !important;
-          }
-
-          .duel-stack-fit {
-            height: calc(100svh - 76px) !important;
-            max-height: calc(100svh - 76px) !important;
-            min-height: 0 !important;
-            grid-template-columns: minmax(490px, 0.92fr) 292px !important;
-            gap: 0.35rem !important;
-            align-items: stretch !important;
-            overflow: hidden !important;
-          }
-
-          .duel-stack-fit > div:first-child,
-          .portrait-board-wrap,
-          .duel-side-fit,
-          .duel-panel-fit {
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-          }
-
-          .portrait-board-wrap {
-            padding: 0.28rem !important;
-          }
-
-          .portrait-board-wrap > .mb-2 {
-            display: none !important;
-          }
-
-          .duel-board-fit {
-            height: 100% !important;
-            max-height: 100% !important;
-            width: auto !important;
-            max-width: 100% !important;
-            aspect-ratio: 1 / 1 !important;
-            flex: 0 1 auto !important;
-            gap: 0.25rem !important;
-            padding: 0.32rem !important;
-            margin-inline: auto !important;
-          }
-
-          .duel-panel-fit {
-            display: grid !important;
-            grid-template-rows: 28px minmax(130px,0.44fr) minmax(126px,0.56fr) !important;
-            gap: 0.25rem !important;
-            padding: 0.3rem !important;
-          }
-
-          .duel-panel-fit > :first-child {
-            margin-bottom: 0 !important;
-            padding: 0.16rem 0.35rem !important;
-          }
-
-          .duel-panel-fit > :first-child p {
-            font-size: 0.92rem !important;
-            line-height: 1 !important;
-          }
-
-          .duel-panel-fit .queue-card-well {
-            min-height: 0 !important;
-            height: auto !important;
-            margin-bottom: 0 !important;
-            padding: 0.25rem !important;
-            overflow: hidden !important;
-            justify-content: center !important;
-          }
-
-          .duel-panel-fit .queue-card-well > div:first-child {
-            width: clamp(48px, 6vw, 68px) !important;
-          }
-
-          .duel-panel-fit .queue-card-well p {
-            margin-top: 0.1rem !important;
-          }
-
-          .duel-panel-fit > .pixel-hard.flex.min-h-0.flex-1 {
-            min-height: 0 !important;
-            height: auto !important;
-            padding: 0.25rem !important;
-            overflow: hidden !important;
-          }
-
-          .duel-panel-fit > .pixel-hard.flex.min-h-0.flex-1 > .mb-2 {
-            margin-bottom: 0.2rem !important;
-            padding: 0.12rem 0.35rem !important;
-          }
-
-          .duel-panel-fit > .pixel-hard.flex.min-h-0.flex-1 > .mb-2 p {
-            font-size: 0.9rem !important;
-            line-height: 1 !important;
-          }
-
-          .duel-status-title {
-            font-size: 0.96rem !important;
-            line-height: 1 !important;
-          }
-
-          .duel-status-result {
-            display: none !important;
-          }
-
-          .duel-panel-fit button {
-            min-height: 24px !important;
-            padding: 0.22rem 0.45rem !important;
-            font-size: 0.76rem !important;
-            line-height: 1 !important;
-            border-width: 3px !important;
-          }
-        }
-
-        @media (min-width: 900px) and (max-height: 760px) {
-          .portrait-frame > header {
-            min-height: 48px !important;
-            max-height: 56px !important;
-          }
-
-          .portrait-frame > header .nuts-logo-img {
-            width: 165px !important;
-            max-height: 42px !important;
-          }
-
-          .duel-stack-fit {
-            height: calc(100svh - 66px) !important;
-            max-height: calc(100svh - 66px) !important;
-            grid-template-columns: minmax(450px, 0.92fr) 270px !important;
-          }
-
-          .duel-panel-fit {
-            grid-template-rows: 24px minmax(98px,0.42fr) minmax(102px,0.58fr) !important;
-            gap: 0.18rem !important;
-            padding: 0.24rem !important;
-          }
-
-          .duel-panel-fit .queue-card-well > div:first-child {
-            width: clamp(40px, 5.2vw, 56px) !important;
-          }
-
-          .duel-board-fit {
-            gap: 0.18rem !important;
-            padding: 0.25rem !important;
-          }
-        }
-
-`}
-</style>
+      `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
         <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
@@ -3487,7 +2949,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
-        <div className="portrait-outer relative z-10 mx-auto flex h-[100svh] min-h-0 w-full max-w-[1920px] flex-col overflow-hidden px-1 py-1">
+        <div className="portrait-outer relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
           <section className="portrait-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]">
             <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(250px,0.95fr)_minmax(260px,0.8fr)_minmax(360px,1.25fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
               <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
@@ -3530,25 +2992,11 @@ export default function Home() {
                 <StatBox label="TURN" value={duel.isGameOver ? winnerText : `P${duel.currentPlayer}`} accent pulse={!duel.isGameOver} />
                 <StatBox label="CARD" value={`${duel.placedCount}/52`} />
                 <StatBox label="DECK" value={duel.deck.length} />
-                <div className="duel-empty-settings grid min-h-0 grid-rows-[1fr_auto] gap-1">
-                  <StatBox label="EMPTY" value={emptyCells} />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playSound("select");
-                      setSettingsOpen(true);
-                    }}
-                    aria-label="Open settings"
-                    title="Settings"
-                    className="pixel-hard-sm grid h-8 place-items-center border-[3px] border-[#061811] bg-[#0e4a3a] text-lg font-black text-[#f7d17a] shadow-[4px_4px_0_#03100b,0_0_0_2px_rgba(242,184,74,0.18)_inset] transition hover:-translate-y-0.5 hover:brightness-110"
-                  >
-                    ⚙
-                  </button>
-                </div>
+                <StatBox label="EMPTY" value={emptyCells} />
               </div>
             </header>
 
-            <div className="portrait-stack-layout duel-stack-fit relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
+            <div className="portrait-stack-layout relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
               <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
                 <section className="portrait-board-wrap pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                   <div className="mb-2 flex h-7 items-center justify-between">
@@ -3561,7 +3009,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="portrait-board duel-board-fit pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                  <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                     {resultBanner && (
                       <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
                         <div
@@ -3652,8 +3100,8 @@ export default function Home() {
                 </section>
               </div>
 
-              <aside className="portrait-side duel-side-fit flex min-h-0 flex-col gap-2 overflow-visible md:overflow-visible">
-                <div className="portrait-queue-panel duel-panel-fit queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+              <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+                <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                   <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                       NOW
@@ -3720,18 +3168,7 @@ export default function Home() {
                           REMATCH
                         </button>
                       )}
-                      <button
-                        onClick={() => {
-                          playSound("select");
-                          setScreen("home");
-
-                          if (bgmVolume > 0) {
-                            setBgmEnabled(true);
-                            window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
-                          }
-                        }}
-                        className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1"
-                      >
+                      <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
                         HOME
                       </button>
                     </div>
@@ -3741,7 +3178,6 @@ export default function Home() {
             </div>
           </section>
         </div>
-        {renderSettingsButtonAndModal(false)}
       </main>
     );
   }
