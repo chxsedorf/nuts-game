@@ -457,7 +457,6 @@ const HOME_BUTTON_SRC = `/ui/home-pixel-button-uniform.png?${UI_ASSET_VERSION}`;
 const HOME_BGM_SRC = "/audio/home-bgm.mp3";
 const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
 const GAME_OVER_TITLE_SRC = "/ui/game-over-title.png";
-const FINAL_SCORE_BANNER_SRC = `/ui/final-score-banner-luxury.png?${UI_ASSET_VERSION}`;
 const BGM_OUTPUT_GAIN = 0.62;
 
 const suitCodeMap: Record<Suit, string> = {
@@ -5884,6 +5883,81 @@ export default function Home() {
             padding-top: 4.75rem !important;
           }
         }
+
+        /* Result screen: remove FINAL SCORE label and make the score number more pixel-art. */
+        .result-score-label-image,
+        .result-score-label {
+          display: none !important;
+        }
+
+        .result-score-panel-no-label {
+          padding-top: 1.1rem !important;
+          padding-bottom: 1.1rem !important;
+        }
+
+        .result-score-panel-no-label .result-score-window {
+          min-height: 190px !important;
+          margin-top: 0 !important;
+          padding: 1.15rem 1rem !important;
+          border-radius: 1.2rem !important;
+          background:
+            radial-gradient(circle at 50% 28%, rgba(245,208,111,0.12), transparent 38%),
+            linear-gradient(180deg, rgba(15,84,65,0.98), rgba(4,25,20,0.99)) !important;
+          box-shadow:
+            inset 0 0 0 3px #1f6b50,
+            inset 0 0 0 8px #062017,
+            inset 0 0 48px rgba(0,0,0,0.62),
+            7px 7px 0 #020806 !important;
+        }
+
+        .pixel-score-number {
+          font-family: "Courier New", "Consolas", "Menlo", monospace !important;
+          font-size: clamp(5.6rem, 11vw, 10.5rem) !important;
+          font-weight: 900 !important;
+          line-height: 0.9 !important;
+          letter-spacing: -0.08em !important;
+          color: #ffe88f !important;
+          -webkit-text-stroke: 0 !important;
+          background: none !important;
+          -webkit-background-clip: initial !important;
+          background-clip: initial !important;
+          image-rendering: pixelated !important;
+          text-rendering: geometricPrecision !important;
+          filter: none !important;
+          text-shadow:
+            0 -4px 0 #fff7cc,
+            4px 0 0 #fff7cc,
+            -4px 0 0 #7b3f0b,
+            0 4px 0 #8d4a10,
+            4px 4px 0 #c77718,
+            8px 8px 0 #061811,
+            13px 13px 0 #020806 !important;
+        }
+
+        @media (max-width: 640px) {
+          .result-score-panel-no-label {
+            padding-top: 0.85rem !important;
+            padding-bottom: 0.85rem !important;
+          }
+
+          .result-score-panel-no-label .result-score-window {
+            min-height: 142px !important;
+            padding: 0.85rem 0.65rem !important;
+          }
+
+          .pixel-score-number {
+            font-size: clamp(4rem, 18vw, 6.4rem) !important;
+            letter-spacing: -0.07em !important;
+            text-shadow:
+              0 -2px 0 #fff7cc,
+              2px 0 0 #fff7cc,
+              -2px 0 0 #7b3f0b,
+              0 2px 0 #8d4a10,
+              3px 3px 0 #c77718,
+              6px 6px 0 #061811,
+              9px 9px 0 #020806 !important;
+          }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5996,18 +6070,7 @@ export default function Home() {
               <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
             </div>
 
-            <section className="result-score-panel relative z-10 mx-auto max-w-xl px-3 pb-4 pt-16 sm:px-5 sm:pb-5 sm:pt-20">
-              <div className="result-score-label-image absolute left-1/2 top-0 z-20 -translate-x-1/2">
-                <img
-                  src={FINAL_SCORE_BANNER_SRC}
-                  alt="FINAL SCORE"
-                  draggable={false}
-                  className="h-auto w-full select-none object-contain"
-                  loading="eager"
-                  decoding="sync"
-                />
-              </div>
-
+            <section className="result-score-panel result-score-panel-no-label relative z-10 mx-auto max-w-xl px-3 py-4 sm:px-5 sm:py-5">
               <div className="pointer-events-none absolute left-5 right-5 top-8 h-[3px] bg-[#f0a536] shadow-[0_2px_0_#3c2108]" />
               <div className="pointer-events-none absolute left-1/2 top-8 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
 
@@ -6020,7 +6083,7 @@ export default function Home() {
                 <div className="pointer-events-none absolute bottom-3 right-3 h-8 w-8 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#f0a536]" />
 
                 <h3
-                  className="result-score-number relative z-10 text-7xl font-black leading-none sm:text-8xl lg:text-9xl"
+                  className="result-score-number pixel-score-number relative z-10 font-black leading-none"
                   style={{
                     textShadow:
                       "0 4px 0 #f0a536, 8px 8px 0 #061811, 13px 13px 0 #020806, -2px -2px 0 #fff8d8",
