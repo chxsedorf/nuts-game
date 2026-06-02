@@ -3280,7 +3280,200 @@ export default function Home() {
           }
         }
 
-        `}
+        
+        /* Final DUEL fit override: keep the full screen visible without scrolling. */
+        @media (min-width: 900px) {
+          .portrait-outer {
+            height: 100svh !important;
+            max-height: 100svh !important;
+            min-height: 0 !important;
+            padding: 0.25rem 0.35rem !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-frame {
+            height: calc(100svh - 0.5rem) !important;
+            max-height: calc(100svh - 0.5rem) !important;
+            min-height: 0 !important;
+            padding: 0.25rem !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-frame > header {
+            min-height: 54px !important;
+            max-height: 64px !important;
+            margin-bottom: 0.25rem !important;
+            padding: 0.25rem 0.45rem !important;
+            gap: 0.35rem !important;
+            grid-template-columns: 190px 260px minmax(430px,1fr) !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-frame > header .nuts-logo-img {
+            width: 185px !important;
+            max-height: 48px !important;
+          }
+
+          .portrait-frame > header .min-h-\[58px\],
+          .portrait-frame > header .sm\:min-h-\[68px\] {
+            min-height: 44px !important;
+          }
+
+          .duel-empty-settings {
+            grid-template-rows: minmax(34px,1fr) 24px !important;
+            gap: 0.12rem !important;
+          }
+
+          .duel-empty-settings button {
+            height: 24px !important;
+            min-height: 24px !important;
+            padding: 0 !important;
+            font-size: 0.95rem !important;
+          }
+
+          .duel-stack-fit {
+            height: calc(100svh - 76px) !important;
+            max-height: calc(100svh - 76px) !important;
+            min-height: 0 !important;
+            grid-template-columns: minmax(490px, 0.92fr) 292px !important;
+            gap: 0.35rem !important;
+            align-items: stretch !important;
+            overflow: hidden !important;
+          }
+
+          .duel-stack-fit > div:first-child,
+          .portrait-board-wrap,
+          .duel-side-fit,
+          .duel-panel-fit {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-board-wrap {
+            padding: 0.28rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 {
+            display: none !important;
+          }
+
+          .duel-board-fit {
+            height: 100% !important;
+            max-height: 100% !important;
+            width: auto !important;
+            max-width: 100% !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: 0 1 auto !important;
+            gap: 0.25rem !important;
+            padding: 0.32rem !important;
+            margin-inline: auto !important;
+          }
+
+          .duel-panel-fit {
+            display: grid !important;
+            grid-template-rows: 28px minmax(130px,0.44fr) minmax(126px,0.56fr) !important;
+            gap: 0.25rem !important;
+            padding: 0.3rem !important;
+          }
+
+          .duel-panel-fit > :first-child {
+            margin-bottom: 0 !important;
+            padding: 0.16rem 0.35rem !important;
+          }
+
+          .duel-panel-fit > :first-child p {
+            font-size: 0.92rem !important;
+            line-height: 1 !important;
+          }
+
+          .duel-panel-fit .queue-card-well {
+            min-height: 0 !important;
+            height: auto !important;
+            margin-bottom: 0 !important;
+            padding: 0.25rem !important;
+            overflow: hidden !important;
+            justify-content: center !important;
+          }
+
+          .duel-panel-fit .queue-card-well > div:first-child {
+            width: clamp(48px, 6vw, 68px) !important;
+          }
+
+          .duel-panel-fit .queue-card-well p {
+            margin-top: 0.1rem !important;
+          }
+
+          .duel-panel-fit > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 0 !important;
+            height: auto !important;
+            padding: 0.25rem !important;
+            overflow: hidden !important;
+          }
+
+          .duel-panel-fit > .pixel-hard.flex.min-h-0.flex-1 > .mb-2 {
+            margin-bottom: 0.2rem !important;
+            padding: 0.12rem 0.35rem !important;
+          }
+
+          .duel-panel-fit > .pixel-hard.flex.min-h-0.flex-1 > .mb-2 p {
+            font-size: 0.9rem !important;
+            line-height: 1 !important;
+          }
+
+          .duel-status-title {
+            font-size: 0.96rem !important;
+            line-height: 1 !important;
+          }
+
+          .duel-status-result {
+            display: none !important;
+          }
+
+          .duel-panel-fit button {
+            min-height: 24px !important;
+            padding: 0.22rem 0.45rem !important;
+            font-size: 0.76rem !important;
+            line-height: 1 !important;
+            border-width: 3px !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .portrait-frame > header {
+            min-height: 48px !important;
+            max-height: 56px !important;
+          }
+
+          .portrait-frame > header .nuts-logo-img {
+            width: 165px !important;
+            max-height: 42px !important;
+          }
+
+          .duel-stack-fit {
+            height: calc(100svh - 66px) !important;
+            max-height: calc(100svh - 66px) !important;
+            grid-template-columns: minmax(450px, 0.92fr) 270px !important;
+          }
+
+          .duel-panel-fit {
+            grid-template-rows: 24px minmax(98px,0.42fr) minmax(102px,0.58fr) !important;
+            gap: 0.18rem !important;
+            padding: 0.24rem !important;
+          }
+
+          .duel-panel-fit .queue-card-well > div:first-child {
+            width: clamp(40px, 5.2vw, 56px) !important;
+          }
+
+          .duel-board-fit {
+            gap: 0.18rem !important;
+            padding: 0.25rem !important;
+          }
+        }
+
+`}
 </style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3355,7 +3548,7 @@ export default function Home() {
               </div>
             </header>
 
-            <div className="portrait-stack-layout relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
+            <div className="portrait-stack-layout duel-stack-fit relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
               <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
                 <section className="portrait-board-wrap pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                   <div className="mb-2 flex h-7 items-center justify-between">
@@ -3368,7 +3561,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                  <div className="portrait-board duel-board-fit pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                     {resultBanner && (
                       <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
                         <div
@@ -3459,8 +3652,8 @@ export default function Home() {
                 </section>
               </div>
 
-              <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-visible">
-                <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
+              <aside className="portrait-side duel-side-fit flex min-h-0 flex-col gap-2 overflow-visible md:overflow-visible">
+                <div className="portrait-queue-panel duel-panel-fit queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                   <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
                       NOW
