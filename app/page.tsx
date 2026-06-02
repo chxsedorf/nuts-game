@@ -2411,6 +2411,9 @@ export default function Home() {
     return (
       <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
         <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+        
+        
         @media (orientation: portrait), (max-aspect-ratio: 1/1) {
           .portrait-outer {
             width: 100vw !important;
@@ -4130,6 +4133,9 @@ export default function Home() {
   return (
     <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
       <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+        
+        
         @keyframes floatScore {
           0% { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-3deg); }
           15% { opacity: 1; transform: translateY(0) scale(1.08) rotate(2deg); }
@@ -6005,6 +6011,53 @@ export default function Home() {
             font-size: clamp(4.25rem, 18vw, 6.7rem) !important;
             letter-spacing: 0 !important;
             transform: scaleX(0.9) !important;
+            text-shadow:
+              0 -2px 0 #fff8d6,
+              2px 0 0 #fff8d6,
+              -2px 0 0 #6f3b0b,
+              0 2px 0 #8a4b10,
+              3px 3px 0 #d28a23,
+              6px 6px 0 #061811,
+              9px 9px 0 #020806 !important;
+          }
+        }
+
+        /* External pixel font for result score. */
+        .pixel-score-number {
+          font-family:
+            "Press Start 2P",
+            "NutsBalatroScore",
+            "m6x11plus",
+            "m6x11",
+            "Courier New",
+            monospace !important;
+          font-size: clamp(4.2rem, 8.6vw, 8.6rem) !important;
+          font-weight: 400 !important;
+          letter-spacing: -0.03em !important;
+          transform: scaleX(0.96) !important;
+          color: #fff2a8 !important;
+          -webkit-text-stroke: 0 !important;
+          background: none !important;
+          -webkit-background-clip: initial !important;
+          background-clip: initial !important;
+          text-rendering: geometricPrecision !important;
+          image-rendering: pixelated !important;
+          filter: none !important;
+          text-shadow:
+            0 -3px 0 #fff8d6,
+            3px 0 0 #fff8d6,
+            -3px 0 0 #6f3b0b,
+            0 3px 0 #8a4b10,
+            3px 3px 0 #d28a23,
+            7px 7px 0 #061811,
+            11px 11px 0 #020806 !important;
+        }
+
+        @media (max-width: 640px) {
+          .pixel-score-number {
+            font-size: clamp(3rem, 13.5vw, 5rem) !important;
+            letter-spacing: -0.04em !important;
+            transform: scaleX(0.96) !important;
             text-shadow:
               0 -2px 0 #fff8d6,
               2px 0 0 #fff8d6,
