@@ -5209,6 +5209,46 @@ export default function Home() {
           }
         }
 
+
+
+        /* Mobile SOLO NOW card uncropped fix */
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-side .queue-card-well {
+            justify-content: flex-start !important;
+            padding-top: 0.7rem !important;
+            padding-bottom: 0.45rem !important;
+            overflow: visible !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(76px, 19vw, 96px) !important;
+            max-width: 64% !important;
+            margin-top: 0.18rem !important;
+            transform: rotate(-2deg) translateY(4px) !important;
+            transform-origin: center center !important;
+          }
+
+          .solo-side .queue-card-well > p:first-of-type {
+            margin-top: 0.3rem !important;
+          }
+
+          .solo-side .queue-card-well > p:nth-of-type(2) {
+            margin-top: 0.1rem !important;
+            font-size: 1.85rem !important;
+          }
+
+          .solo-side .queue-card-well > div:last-child {
+            margin-top: 0.32rem !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .solo-side .solo-now-card-display {
+            width: clamp(72px, 18vw, 88px) !important;
+            max-width: 60% !important;
+            transform: rotate(-2deg) translateY(5px) !important;
+          }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
