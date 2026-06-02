@@ -1821,6 +1821,30 @@ function HomeScreen({
           70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
           100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
+
+        /* Scroll-jump fix: prevent browser scroll anchoring while result effects appear/disappear. */
+        html,
+        body,
+        .nuts-pixel,
+        .balatro-inspired-bg,
+        .home-simple-screen,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel,
+        .gameover-overlay {
+          overflow-anchor: none !important;
+          scroll-behavior: auto !important;
+        }
+
+        .hand-impact-layer,
+        .hand-impact-card,
+        .pixel-hit-cell,
+        .floating-score,
+        .result-score-panel {
+          overflow-anchor: none !important;
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -1965,6 +1989,7 @@ export default function Home() {
   const [resultPulse, setResultPulse] = useState(false);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
   const [resultBanner, setResultBanner] = useState<ResultBanner | null>(null);
+  const resultScrollLockRef = useRef<number | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -1974,6 +1999,23 @@ export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgmTrackRef = useRef<string>("");
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflowAnchor = html.style.overflowAnchor;
+    const previousBodyOverflowAnchor = body.style.overflowAnchor;
+
+    html.style.overflowAnchor = "none";
+    body.style.overflowAnchor = "none";
+
+    return () => {
+      html.style.overflowAnchor = previousHtmlOverflowAnchor;
+      body.style.overflowAnchor = previousBodyOverflowAnchor;
+    };
+  }, []);
 
   useEffect(() => {
     preloadCardImages();
@@ -1991,6 +2033,38 @@ export default function Home() {
   const selectedCard = game.hand[0] ?? null;
 
   const isResolvingHand = highlightCells.size > 0;
+
+  function lockScrollPositionDuringResult(duration = 760) {
+    if (typeof window === "undefined") return;
+
+    const scrollingElement = document.scrollingElement || document.documentElement;
+    const lockedY = window.scrollY || scrollingElement.scrollTop || 0;
+    const lockUntil = performance.now() + duration;
+
+    resultScrollLockRef.current = lockedY;
+
+    const keepLocked = () => {
+      if (resultScrollLockRef.current === null) return;
+
+      const targetY = resultScrollLockRef.current;
+
+      if (Math.abs((window.scrollY || scrollingElement.scrollTop || 0) - targetY) > 0.5) {
+        window.scrollTo({ left: 0, top: targetY, behavior: "auto" });
+        scrollingElement.scrollTop = targetY;
+      }
+
+      if (performance.now() < lockUntil) {
+        window.requestAnimationFrame(keepLocked);
+        return;
+      }
+
+      resultScrollLockRef.current = null;
+    };
+
+    window.requestAnimationFrame(keepLocked);
+  }
+
+
 
   function getSafeSfxGain(gainValue: number) {
     if (!soundEnabled || sfxVolume <= 0) return 0;
@@ -2812,6 +2886,10 @@ export default function Home() {
 
     if (nextGameOver) {
       window.setTimeout(() => playSound("gameover"), 220);
+    }
+
+    if (hasHand || resultText === "COMBO BROKEN") {
+      lockScrollPositionDuringResult(820);
     }
 
     setPlacedCell(keyOf(row, col));
@@ -4898,6 +4976,30 @@ export default function Home() {
           35% { opacity: 1; filter: brightness(1.25); transform: none; }
           70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
           100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+        }
+
+        /* Scroll-jump fix: prevent browser scroll anchoring while result effects appear/disappear. */
+        html,
+        body,
+        .nuts-pixel,
+        .balatro-inspired-bg,
+        .home-simple-screen,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel,
+        .gameover-overlay {
+          overflow-anchor: none !important;
+          scroll-behavior: auto !important;
+        }
+
+        .hand-impact-layer,
+        .hand-impact-card,
+        .pixel-hit-cell,
+        .floating-score,
+        .result-score-panel {
+          overflow-anchor: none !important;
         }
 `}</style>
 
@@ -7601,6 +7703,30 @@ export default function Home() {
           35% { opacity: 1; filter: brightness(1.25); transform: none; }
           70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
           100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+        }
+
+        /* Scroll-jump fix: prevent browser scroll anchoring while result effects appear/disappear. */
+        html,
+        body,
+        .nuts-pixel,
+        .balatro-inspired-bg,
+        .home-simple-screen,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel,
+        .gameover-overlay {
+          overflow-anchor: none !important;
+          scroll-behavior: auto !important;
+        }
+
+        .hand-impact-layer,
+        .hand-impact-card,
+        .pixel-hit-cell,
+        .floating-score,
+        .result-score-panel {
+          overflow-anchor: none !important;
         }
 `}</style>
 
