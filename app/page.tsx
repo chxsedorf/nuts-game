@@ -3078,6 +3078,106 @@ export default function Home() {
           }
         }
 
+
+        /* Final DUEL board fit: show the full bottom frame like SOLO. */
+        @media (min-width: 900px) {
+          .duel-shift-up {
+            transform: translateY(-42px) !important;
+            min-height: calc(100svh + 42px) !important;
+            height: calc(100svh + 42px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 28px) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 126px) !important;
+            max-height: calc(100svh - 126px) !important;
+            min-height: 0 !important;
+            align-items: stretch !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-board-wrap {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            padding: 0.45rem !important;
+            overflow: hidden !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+
+          .duel-shift-up .portrait-board {
+            width: auto !important;
+            height: min(calc(100svh - 176px), 100%) !important;
+            max-height: calc(100svh - 176px) !important;
+            max-width: 100% !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: 0 0 auto !important;
+            margin: 0 auto !important;
+            gap: 0.28rem !important;
+            padding: 0.42rem !important;
+            border-width: 5px !important;
+          }
+
+          .duel-shift-up .portrait-side,
+          .duel-shift-up .portrait-queue-panel {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .duel-shift-up {
+            transform: translateY(-50px) !important;
+            min-height: calc(100svh + 50px) !important;
+            height: calc(100svh + 50px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 36px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 112px) !important;
+            max-height: calc(100svh - 112px) !important;
+          }
+
+          .duel-shift-up .portrait-board {
+            height: min(calc(100svh - 154px), 100%) !important;
+            max-height: calc(100svh - 154px) !important;
+            gap: 0.22rem !important;
+            padding: 0.34rem !important;
+            border-width: 4px !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 690px) {
+          .duel-shift-up {
+            transform: translateY(-54px) !important;
+            min-height: calc(100svh + 54px) !important;
+            height: calc(100svh + 54px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 102px) !important;
+            max-height: calc(100svh - 102px) !important;
+          }
+
+          .duel-shift-up .portrait-board {
+            height: min(calc(100svh - 142px), 100%) !important;
+            max-height: calc(100svh - 142px) !important;
+            gap: 0.18rem !important;
+            padding: 0.28rem !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
