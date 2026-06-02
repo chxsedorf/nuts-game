@@ -3533,7 +3533,7 @@ export default function Home() {
                 </section>
               </div>
 
-              <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+              <aside className="portrait-side solo-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
                 <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                   <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
@@ -4643,6 +4643,84 @@ export default function Home() {
           }
         }
 
+
+        /* Mobile SOLO: match DUEL-style lower layout and enlarge the NOW card. */
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-side {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+            align-items: stretch !important;
+            gap: 0.5rem !important;
+            width: calc(100vw - 1rem) !important;
+            max-width: calc(100vw - 1rem) !important;
+          }
+
+          .solo-side .solo-queue-panel {
+            grid-column: 1 / 2 !important;
+            min-height: 260px !important;
+            height: 100% !important;
+            display: grid !important;
+            grid-template-rows: auto minmax(0, 1fr) !important;
+            gap: 0.5rem !important;
+            padding: 0.55rem !important;
+          }
+
+          .solo-side .solo-queue-panel > .pixel-hard-sm {
+            margin-bottom: 0 !important;
+          }
+
+          .solo-side .queue-card-well {
+            min-height: 0 !important;
+            height: 100% !important;
+            padding: 0.75rem !important;
+            justify-content: center !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(118px, 30vw, 158px) !important;
+          }
+
+          .solo-side .queue-card-well p {
+            margin-top: 0.5rem !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(2) {
+            font-size: 2rem !important;
+          }
+
+          .solo-control-buttons {
+            grid-column: 2 / 3 !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            grid-template-rows: 1fr 1fr !important;
+            height: 100% !important;
+            min-height: 260px !important;
+            gap: 0.55rem !important;
+          }
+
+          .solo-control-buttons button {
+            min-height: 0 !important;
+            height: 100% !important;
+            padding: 0.75rem 0.65rem !important;
+            font-size: 1rem !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            min-height: 238px !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(104px, 28vw, 138px) !important;
+          }
+
+          .solo-side .queue-card-well p:nth-of-type(2) {
+            font-size: 1.75rem !important;
+          }
+        }
+
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5003,7 +5081,7 @@ export default function Home() {
                   className="queue-card-well mb-0 flex w-full min-h-0 flex-1 flex-col items-center justify-center rounded-xl border-[4px] border-[#061811] p-2 text-center shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] transition hover:-translate-y-1 hover:brightness-110 hover:shadow-[6px_6px_0_#04120d]"
                 >
                   <div
-                    className="w-16 shrink-0 rotate-[-2deg] bg-transparent p-0 sm:w-20 lg:w-24 xl:w-28"
+                    className="now-card-display solo-now-card-display w-24 shrink-0 rotate-[-2deg] bg-transparent p-0 sm:w-28 lg:w-32 xl:w-36"
                     style={{ aspectRatio: "5 / 7" }}
                   >
                     {game.hand[0] ? (
@@ -5035,7 +5113,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="grid shrink-0 grid-cols-2 gap-1.5 sm:gap-2">
+              <div className="solo-control-buttons grid shrink-0 grid-cols-2 gap-1.5 sm:gap-2">
                 <button
                   onClick={restartGame}
                   className="rounded-xl border-[4px] border-[#061811] bg-[#1787d8] px-2 py-2.5 text-sm font-black text-white shadow-[4px_4px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset] transition hover:-translate-y-1 hover:shadow-[7px_7px_0_#04120d] sm:border-[5px] sm:px-3 sm:py-3 sm:text-base sm:shadow-[5px_5px_0_#04120d,0_0_0_2px_rgba(255,255,255,0.15)_inset]"
