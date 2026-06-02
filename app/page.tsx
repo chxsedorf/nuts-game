@@ -457,6 +457,7 @@ const HOME_BUTTON_SRC = `/ui/home-pixel-button-uniform.png?${UI_ASSET_VERSION}`;
 const HOME_BGM_SRC = "/audio/home-bgm.mp3";
 const PLAY_BGM_SRC = "/audio/play-bgm.mp3";
 const GAME_OVER_TITLE_SRC = "/ui/game-over-title.png";
+const FINAL_SCORE_BANNER_SRC = `/ui/final-score-banner-luxury.png?${UI_ASSET_VERSION}`;
 const BGM_OUTPUT_GAIN = 0.62;
 
 const suitCodeMap: Record<Suit, string> = {
@@ -5814,6 +5815,44 @@ export default function Home() {
             font-size: clamp(4.4rem, 18vw, 6rem) !important;
           }
         }
+
+        /* Luxury FINAL SCORE image banner and gold score typography. */
+        .result-score-label-image {
+          width: min(82%, 500px);
+          filter: drop-shadow(5px 5px 0 #020806) drop-shadow(0 0 10px rgba(240,165,54,0.30));
+          image-rendering: pixelated;
+        }
+
+        .result-score-label-image img {
+          display: block;
+          background: transparent;
+          image-rendering: pixelated;
+        }
+
+        .result-score-number {
+          font-family: Georgia, "Times New Roman", serif;
+          font-weight: 900;
+          color: transparent;
+          background:
+            linear-gradient(180deg, #fff9d9 0%, #fff0a8 22%, #f6c75a 47%, #d98720 70%, #fff0a8 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-stroke: 2px #fff7c9;
+          letter-spacing: -0.065em;
+          filter: drop-shadow(0 4px 0 #9b5415) drop-shadow(8px 8px 0 #061811) drop-shadow(13px 13px 0 #020806);
+          text-shadow: none !important;
+        }
+
+        @media (max-width: 640px) {
+          .result-score-label-image {
+            width: min(88%, 390px);
+          }
+
+          .result-score-number {
+            -webkit-text-stroke: 1px #fff7c9;
+            letter-spacing: -0.055em;
+          }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5926,11 +5965,16 @@ export default function Home() {
               <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[3px] border-[#f0a536] bg-[#0b2f27]" />
             </div>
 
-            <section className="result-score-panel relative z-10 mx-auto max-w-xl px-3 pb-4 pt-8 sm:px-5 sm:pb-5 sm:pt-9">
-              <div className="result-score-label pixel-hard absolute left-1/2 top-0 z-20 -translate-x-1/2 px-6 py-2 text-center shadow-[5px_5px_0_#020806]">
-                <p className="text-base font-black tracking-[0.13em] text-[#fff4cf] sm:text-xl">
-                  FINAL SCORE
-                </p>
+            <section className="result-score-panel relative z-10 mx-auto max-w-xl px-3 pb-4 pt-12 sm:px-5 sm:pb-5 sm:pt-14">
+              <div className="result-score-label-image absolute left-1/2 top-0 z-20 -translate-x-1/2">
+                <img
+                  src={FINAL_SCORE_BANNER_SRC}
+                  alt="FINAL SCORE"
+                  draggable={false}
+                  className="h-auto w-full select-none object-contain"
+                  loading="eager"
+                  decoding="sync"
+                />
               </div>
 
               <div className="pointer-events-none absolute left-5 right-5 top-8 h-[3px] bg-[#f0a536] shadow-[0_2px_0_#3c2108]" />
@@ -5945,7 +5989,7 @@ export default function Home() {
                 <div className="pointer-events-none absolute bottom-3 right-3 h-8 w-8 rounded-tl-xl border-l-[4px] border-t-[4px] border-[#f0a536]" />
 
                 <h3
-                  className="result-score-number relative z-10 text-7xl font-black leading-none text-[#fff1a8] sm:text-8xl lg:text-9xl"
+                  className="result-score-number relative z-10 text-7xl font-black leading-none sm:text-8xl lg:text-9xl"
                   style={{
                     textShadow:
                       "0 4px 0 #f0a536, 8px 8px 0 #061811, 13px 13px 0 #020806, -2px -2px 0 #fff8d8",
