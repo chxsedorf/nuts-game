@@ -1907,18 +1907,29 @@ export default function Home() {
 
     const results = evaluateBoard(newBoard, row, col);
     const hasHand = results.length > 0;
+    const claimResults = results.filter((result) => result.shouldClear);
+    const hasClaim = claimResults.length > 0;
     const handTargets = new Set<string>();
+    const claimTargets = new Set<string>();
 
     for (const result of results) {
       for (const cardPosition of result.cards) {
+        handTargets.add(keyOf(cardPosition.row, cardPosition.col));
+      }
+    }
+
+    // DUEL claims follow the same rule as SOLO clearing:
+    // Pair gives feedback only. Three Card / Straight / Full House claim cells.
+    for (const result of claimResults) {
+      for (const cardPosition of result.cards) {
         const targetKey = keyOf(cardPosition.row, cardPosition.col);
-        handTargets.add(targetKey);
+        claimTargets.add(targetKey);
         newOwners[cardPosition.row][cardPosition.col] = duel.currentPlayer;
       }
     }
 
-    if (hasHand) {
-      for (const targetKey of handTargets) {
+    if (hasClaim) {
+      for (const targetKey of claimTargets) {
         const [targetRow, targetCol] = targetKey.split("-").map(Number);
         newBoard[targetRow][targetCol] = null;
       }
@@ -1931,6 +1942,7 @@ export default function Home() {
     const p2Owned = countOwnedCells(newOwners, 2);
     const winnerText =
       p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
+    const handNameText = hasHand ? results.map((result) => result.name).join(" + ") : "";
 
     const nextBase: DuelState = {
       board: newBoard,
@@ -1939,10 +1951,12 @@ export default function Home() {
       currentCard: nextCard ?? null,
       currentPlayer: nextPlayer,
       placedCount,
-      lastResult: hasHand
-        ? `P${duel.currentPlayer} CLAIMED ${handTargets.size}`
+      lastResult: hasClaim
+        ? `P${duel.currentPlayer} CLAIMED ${claimTargets.size}`
+        : hasHand
+        ? `${handNameText} · NO CLAIM`
         : `P${nextPlayer} TURN`,
-      lastHandName: hasHand ? results.map((result) => result.name).join(" + ") : "",
+      lastHandName: handNameText,
       isGameOver: false,
     };
 
@@ -1960,15 +1974,15 @@ export default function Home() {
 
     setPlacedCell(keyOf(row, col));
     setHighlightCells(handTargets);
-    setClearingCells(hasHand ? handTargets : new Set());
+    setClearingCells(hasClaim ? claimTargets : new Set());
     setResultPulse(hasHand);
 
     if (hasHand) {
       const bannerId = Date.now() + 1;
       setResultBanner({
         id: bannerId,
-        text: nextBase.lastHandName,
-        score: handTargets.size,
+        text: hasClaim ? nextBase.lastHandName : `${nextBase.lastHandName} · NO CLAIM`,
+        score: hasClaim ? claimTargets.size : 0,
         combo: duel.currentPlayer,
         comboNext: undefined,
       });
@@ -2226,7 +2240,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:h-screen md:overflow-hidden">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg relative h-[100svh] overflow-hidden bg-[#07120f] text-white">
         <style>{`
         @media (orientation: portrait), (max-aspect-ratio: 1/1) {
           .portrait-outer {
@@ -2873,7 +2887,212 @@ export default function Home() {
           }
         }
 
-      `}</style>
+      `}
+        @media (min-width: 900px) {
+          .portrait-outer {
+            height: 100svh !important;
+            min-height: 0 !important;
+            max-height: 100svh !important;
+            padding: 0.35rem 0.45rem !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-frame {
+            height: calc(100svh - 0.7rem) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            padding: 0.45rem !important;
+          }
+
+          .portrait-frame > header {
+            min-height: 0 !important;
+            margin-bottom: 0.45rem !important;
+            padding-block: 0.45rem !important;
+            gap: 0.45rem !important;
+          }
+
+          .portrait-frame > header .nuts-logo-img {
+            max-height: 64px !important;
+            width: 250px !important;
+          }
+
+          .portrait-frame > header .min-h-\[58px\],
+          .portrait-frame > header .sm\:min-h-\[68px\] {
+            min-height: 52px !important;
+          }
+
+          .portrait-frame > header .text-3xl {
+            font-size: 1.55rem !important;
+            line-height: 1 !important;
+          }
+
+          .portrait-frame > header .text-\[10px\] {
+            font-size: 0.56rem !important;
+          }
+
+          .portrait-stack-layout {
+            height: calc(100svh - 102px) !important;
+            min-height: 0 !important;
+            align-items: stretch !important;
+            gap: 0.55rem !important;
+          }
+
+          .portrait-stack-layout > div:first-child,
+          .portrait-board-wrap,
+          .portrait-side,
+          .portrait-queue-panel {
+            min-height: 0 !important;
+            height: 100% !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-board-wrap {
+            padding: 0.45rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 {
+            height: 24px !important;
+            margin-bottom: 0.3rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 p {
+            padding: 0.18rem 0.7rem !important;
+            font-size: 0.65rem !important;
+          }
+
+          .portrait-board {
+            width: auto !important;
+            height: min(calc(100svh - 158px), 100%) !important;
+            max-height: calc(100svh - 158px) !important;
+            max-width: 100% !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: 0 1 auto !important;
+            gap: 0.35rem !important;
+            padding: 0.45rem !important;
+          }
+
+          .portrait-side {
+            gap: 0.45rem !important;
+          }
+
+          .portrait-queue-panel {
+            display: grid !important;
+            grid-template-rows: 34px minmax(178px, 0.52fr) minmax(170px, 0.48fr) !important;
+            gap: 0.45rem !important;
+            padding: 0.45rem !important;
+          }
+
+          .portrait-queue-panel > :first-child {
+            margin-bottom: 0 !important;
+            padding-block: 0.25rem !important;
+          }
+
+          .portrait-queue-panel > :first-child p {
+            font-size: 1rem !important;
+            line-height: 1 !important;
+          }
+
+          .portrait-queue-panel .queue-card-well {
+            min-height: 0 !important;
+            height: auto !important;
+            margin-bottom: 0 !important;
+            padding: 0.45rem !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: clamp(70px, 8vw, 94px) !important;
+          }
+
+          .portrait-queue-panel .queue-card-well p {
+            margin-top: 0.25rem !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            min-height: 0 !important;
+            height: auto !important;
+            overflow: hidden !important;
+            padding: 0.45rem !important;
+          }
+
+          .duel-status-title {
+            font-size: 1.35rem !important;
+            line-height: 1 !important;
+          }
+
+          .duel-status-result {
+            margin-top: 0.35rem !important;
+            font-size: 0.92rem !important;
+          }
+
+          .portrait-queue-panel button {
+            padding: 0.48rem 0.7rem !important;
+            font-size: 0.95rem !important;
+            line-height: 1 !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .portrait-frame > header {
+            padding-block: 0.3rem !important;
+            margin-bottom: 0.3rem !important;
+          }
+
+          .portrait-frame > header .nuts-logo-img {
+            max-height: 54px !important;
+            width: 220px !important;
+          }
+
+          .portrait-stack-layout {
+            height: calc(100svh - 82px) !important;
+            gap: 0.4rem !important;
+          }
+
+          .portrait-board {
+            height: min(calc(100svh - 132px), 100%) !important;
+            max-height: calc(100svh - 132px) !important;
+            gap: 0.25rem !important;
+            padding: 0.35rem !important;
+          }
+
+          .portrait-board-wrap {
+            padding: 0.35rem !important;
+          }
+
+          .portrait-board-wrap > .mb-2 {
+            display: none !important;
+          }
+
+          .portrait-queue-panel {
+            grid-template-rows: 28px minmax(135px, 0.50fr) minmax(130px, 0.50fr) !important;
+            gap: 0.3rem !important;
+            padding: 0.35rem !important;
+          }
+
+          .portrait-queue-panel .queue-card-well > div:first-child {
+            width: clamp(54px, 7vw, 76px) !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.flex-1 {
+            padding: 0.35rem !important;
+          }
+
+          .duel-status-title {
+            font-size: 1.05rem !important;
+          }
+
+          .duel-status-result {
+            display: none !important;
+          }
+
+          .portrait-queue-panel button {
+            padding: 0.32rem 0.55rem !important;
+            font-size: 0.82rem !important;
+          }
+        }
+
+</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
         <span style={{ left: "7%", top: "12%", fontSize: "44px", ["--r" as string]: "-12deg" }}>♠</span>
@@ -2886,7 +3105,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(240,179,66,0.12),transparent_28%),radial-gradient(circle_at_20%_70%,rgba(10,74,57,0.45),transparent_36%),radial-gradient(circle_at_80%_62%,rgba(55,10,52,0.55),transparent_38%)]" />
 
-        <div className="portrait-outer relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
+        <div className="portrait-outer relative z-10 mx-auto flex h-[100svh] min-h-0 w-full max-w-[1920px] flex-col overflow-hidden px-1 py-1">
           <section className="portrait-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]">
             <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(250px,0.95fr)_minmax(260px,0.8fr)_minmax(360px,1.25fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
               <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
@@ -3037,7 +3256,7 @@ export default function Home() {
                 </section>
               </div>
 
-              <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-hidden">
+              <aside className="portrait-side flex min-h-0 flex-col gap-2 overflow-visible md:overflow-visible">
                 <div className="portrait-queue-panel queue-panel pixel-hard flex min-h-0 flex-col overflow-hidden border-[5px] border-[#061811] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset] sm:border-[6px] sm:p-2 md:flex-1 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.34)_inset]">
                   <div className="pixel-hard-sm mb-2 shrink-0 border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
                     <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
