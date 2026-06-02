@@ -546,51 +546,51 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
   return cards.some((item) => item.row === row && item.col === col);
 }
 
-function isOrderedStraight(values: number[]): boolean {
-  const isNormalAscending = values.every(
-    (value, index) => index === 0 || value === values[index - 1] + 1
-  );
+function getHandValue(card: Card): number {
+  return card.rank === "A" ? 1 : card.value;
+}
 
-  const isNormalDescending = values.every(
-    (value, index) => index === 0 || value === values[index - 1] - 1
-  );
+function areSameRank(cards: LineCard[]): boolean {
+  if (cards.length === 0) return false;
 
-  const aceLowValues = values.map((value) => (value === 14 ? 1 : value));
+  const firstValue = getHandValue(cards[0].card);
+  return cards.every((item) => getHandValue(item.card) === firstValue);
+}
 
-  const isAceLowAscending = aceLowValues.every(
-    (value, index) => index === 0 || value === aceLowValues[index - 1] + 1
-  );
+function isThreeCard(cards: LineCard[]): boolean {
+  return cards.length === 3 && areSameRank(cards);
+}
 
-  const isAceLowDescending = aceLowValues.every(
-    (value, index) => index === 0 || value === aceLowValues[index - 1] - 1
-  );
+function isPairCards(cards: LineCard[]): boolean {
+  return cards.length === 2 && areSameRank(cards);
+}
 
-  return (
-    isNormalAscending ||
-    isNormalDescending ||
-    isAceLowAscending ||
-    isAceLowDescending
-  );
+function isStraightCards(cards: LineCard[]): boolean {
+  if (cards.length !== 3) return false;
+
+  const values = cards
+    .map((item) => getHandValue(item.card))
+    .sort((a, b) => a - b);
+
+  const uniqueValues = new Set(values);
+
+  if (uniqueValues.size !== 3) return false;
+
+  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
 }
 
 function isCleanFullHouse(cards: LineCard[]): boolean {
   if (cards.length !== 5) return false;
 
-  const values = cards.map((item) => item.card.value);
+  const counts = new Map<number, number>();
 
-  const firstThree =
-    values[0] === values[1] &&
-    values[1] === values[2] &&
-    values[3] === values[4] &&
-    values[2] !== values[3];
+  for (const item of cards) {
+    const value = getHandValue(item.card);
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
 
-  const firstTwo =
-    values[0] === values[1] &&
-    values[2] === values[3] &&
-    values[3] === values[4] &&
-    values[1] !== values[2];
-
-  return firstThree || firstTwo;
+  const sortedCounts = [...counts.values()].sort((a, b) => a - b);
+  return sortedCounts.length === 2 && sortedCounts[0] === 2 && sortedCounts[1] === 3;
 }
 
 function addUniqueResult(results: HandResult[], result: HandResult) {
@@ -618,13 +618,16 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
 
   const results: HandResult[] = [];
 
+  // Evaluate only exact contiguous windows.
+  // A is treated as 1 for all hand checks, so A-A / A-A-A / A-2-3 work correctly.
+  // Pair never fires for 1-2 / 1-3, and Three never fires for 1-2-2.
   for (let start = 0; start < line.length; start++) {
     const pairCards = line.slice(start, start + 2);
 
     if (
       pairCards.length === 2 &&
       includesPlaced(pairCards, placedRow, placedCol) &&
-      pairCards[0].card.value === pairCards[1].card.value
+      isPairCards(pairCards)
     ) {
       addUniqueResult(results, {
         name: "Pair",
@@ -640,19 +643,14 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
       threeCards.length === 3 &&
       includesPlaced(threeCards, placedRow, placedCol)
     ) {
-      const values = threeCards.map((item) => item.card.value);
-      const suitsInThree = threeCards.map((item) => item.card.suit);
-
-      if (values.every((value) => value === values[0])) {
+      if (isThreeCard(threeCards)) {
         addUniqueResult(results, {
           name: "Three Card",
           score: scoreTable.three * threeCards.length,
           cards: toPositions(threeCards),
           shouldClear: true,
         });
-      }
-
-      if (isOrderedStraight(values)) {
+      } else if (isStraightCards(threeCards)) {
         addUniqueResult(results, {
           name: "Straight",
           score: scoreTable.straight * threeCards.length,
@@ -660,24 +658,21 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
           shouldClear: true,
         });
       }
-
     }
 
     const fiveCards = line.slice(start, start + 5);
 
     if (
       fiveCards.length === 5 &&
-      includesPlaced(fiveCards, placedRow, placedCol)
+      includesPlaced(fiveCards, placedRow, placedCol) &&
+      isCleanFullHouse(fiveCards)
     ) {
-      if (isCleanFullHouse(fiveCards)) {
-        addUniqueResult(results, {
-          name: "Full House",
-          score: scoreTable.fullHouse * fiveCards.length,
-          cards: toPositions(fiveCards),
-          shouldClear: true,
-        });
-      }
-
+      addUniqueResult(results, {
+        name: "Full House",
+        score: scoreTable.fullHouse * fiveCards.length,
+        cards: toPositions(fiveCards),
+        shouldClear: true,
+      });
     }
   }
 
