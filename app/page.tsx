@@ -548,11 +548,17 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
 }
 
 function getHandRankKey(card: Card): string {
-  const rankText = String(card.rank).toUpperCase();
+  const rankText = String(card.rank).trim().toUpperCase();
 
-  // The UI treats A as 1. Accept "1" as well for safety.
+  // In Nuts, the A card is displayed/played as 1.
+  // Accept both "A" and "1" to prevent asset/data mismatch.
   if (rankText === "A" || rankText === "1") return "1";
-  return rankText;
+
+  // Prefer the printed rank, but fall back to value if a malformed card slips in.
+  if (rankText) return rankText;
+
+  if (card.value === 14 || card.value === 1) return "1";
+  return String(card.value);
 }
 
 function getStraightOrderValue(card: Card): number {
@@ -605,16 +611,11 @@ function isStraightCards(cards: LineCard[]): boolean {
     .map((item) => getStraightOrderValue(item.card))
     .sort((a, b) => a - b);
 
-  // Duplicates and invalid ranks must never become Straight.
-  // Examples:
-  // A,2,3 => true
-  // 1,2,3 => true
-  // 2,3,4 => true
-  // 2,3,3 => false
-  // A,2,2 => false
   if (values.some((value) => Number.isNaN(value))) return false;
   if (new Set(values).size !== 3) return false;
 
+  // 1,2,3 / A,2,3 and 2,3,4 are valid.
+  // 2,3,3 and 1,2,2 are invalid.
   return values[1] === values[0] + 1 && values[2] === values[1] + 1;
 }
 
@@ -661,10 +662,6 @@ function addUniqueResult(results: HandResult[], result: HandResult) {
 }
 
 function filterDominatedResults(results: HandResult[]): HandResult[] {
-  // Prevent confusing double-counts:
-  // - Three Card should not also show its internal Pair.
-  // - Full House should not also show its internal Pair / Three Card.
-  // - Pair remains valid when it is the only hand, but Pair never clears.
   return results.filter((result) => {
     return !results.some((other) => {
       if (other === result) return false;
@@ -674,75 +671,112 @@ function filterDominatedResults(results: HandResult[]): HandResult[] {
   });
 }
 
+function evaluateWindow(
+  windowCards: LineCard[],
+  placedRow: number,
+  placedCol: number,
+  results: HandResult[]
+) {
+  if (!includesPlaced(windowCards, placedRow, placedCol)) return;
+
+  if (windowCards.length === 2 && isPairCards(windowCards)) {
+    addUniqueResult(
+      results,
+      createHandResult("Pair", scoreTable.pair * windowCards.length, windowCards, false, 10)
+    );
+    return;
+  }
+
+  if (windowCards.length === 3) {
+    if (isThreeCard(windowCards)) {
+      addUniqueResult(
+        results,
+        createHandResult("Three Card", scoreTable.three * windowCards.length, windowCards, true, 30)
+      );
+      return;
+    }
+
+    if (isStraightCards(windowCards)) {
+      addUniqueResult(
+        results,
+        createHandResult("Straight", scoreTable.straight * windowCards.length, windowCards, true, 30)
+      );
+    }
+
+    return;
+  }
+
+  if (windowCards.length === 5 && isCleanFullHouse(windowCards)) {
+    addUniqueResult(
+      results,
+      createHandResult("Full House", scoreTable.fullHouse * windowCards.length, windowCards, true, 50)
+    );
+  }
+}
+
 function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
   if (line.length < 2) return [];
 
   const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
-    const pairCards = line.slice(start, start + 2);
-
-    if (
-      pairCards.length === 2 &&
-      includesPlaced(pairCards, placedRow, placedCol) &&
-      isPairCards(pairCards)
-    ) {
-      addUniqueResult(
-        candidates,
-        createHandResult("Pair", scoreTable.pair * pairCards.length, pairCards, false, 10)
-      );
-    }
-
-    const threeCards = line.slice(start, start + 3);
-
-    if (
-      threeCards.length === 3 &&
-      includesPlaced(threeCards, placedRow, placedCol)
-    ) {
-      if (isThreeCard(threeCards)) {
-        addUniqueResult(
-          candidates,
-          createHandResult("Three Card", scoreTable.three * threeCards.length, threeCards, true, 30)
-        );
-      } else if (isStraightCards(threeCards)) {
-        addUniqueResult(
-          candidates,
-          createHandResult("Straight", scoreTable.straight * threeCards.length, threeCards, true, 30)
-        );
-      }
-    }
-
-    const fiveCards = line.slice(start, start + 5);
-
-    if (
-      fiveCards.length === 5 &&
-      includesPlaced(fiveCards, placedRow, placedCol) &&
-      isCleanFullHouse(fiveCards)
-    ) {
-      addUniqueResult(
-        candidates,
-        createHandResult("Full House", scoreTable.fullHouse * fiveCards.length, fiveCards, true, 50)
-      );
-    }
+    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates);
+    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates);
+    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates);
   }
 
   return filterDominatedResults(candidates);
 }
 
-function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  const directions = [
-    [0, 1],
-    [1, 0],
-  ];
+function getAxisSegments(board: Board, row: number, col: number, axis: "row" | "col"): LineCard[][] {
+  const segments: LineCard[][] = [];
+  let currentSegment: LineCard[] = [];
 
-  const allResults: HandResult[] = [];
+  for (let index = 0; index < BOARD_SIZE; index++) {
+    const targetRow = axis === "row" ? row : index;
+    const targetCol = axis === "row" ? index : col;
+    const card = board[targetRow][targetCol];
 
-  for (const [dRow, dCol] of directions) {
-    const line = getLine(board, row, col, dRow, dCol);
-    allResults.push(...evaluateLine(line, row, col));
+    if (card) {
+      currentSegment.push({
+        row: targetRow,
+        col: targetCol,
+        card,
+      });
+      continue;
+    }
+
+    if (currentSegment.length > 0) {
+      segments.push(currentSegment);
+      currentSegment = [];
+    }
   }
 
-  return allResults;
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment);
+  }
+
+  return segments;
+}
+
+function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
+  const allResults: HandResult[] = [];
+  const segments = [
+    ...getAxisSegments(board, row, col, "row"),
+    ...getAxisSegments(board, row, col, "col"),
+  ];
+
+  for (const segment of segments) {
+    if (!includesPlaced(segment, row, col)) continue;
+
+    const segmentResults = evaluateLine(segment, row, col);
+
+    for (const result of segmentResults) {
+      addUniqueResult(allResults, result);
+    }
+  }
+
+  return filterDominatedResults(allResults);
 }
 
 function createInitialGame(highScore = 0): GameState {
