@@ -3178,6 +3178,125 @@ export default function Home() {
           }
         }
 
+
+        /* DUEL: show the entire 5x5 board frame like SOLO. */
+        @media (min-width: 900px) {
+          .duel-shift-up {
+            transform: translateY(-38px) !important;
+            min-height: calc(100svh + 38px) !important;
+            height: calc(100svh + 38px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 24px) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-frame > header {
+            margin-bottom: 0.45rem !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 122px) !important;
+            max-height: calc(100svh - 122px) !important;
+            min-height: 0 !important;
+            align-items: center !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout > div:first-child {
+            height: 100% !important;
+            min-height: 0 !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-board-wrap {
+            height: 100% !important;
+            min-height: 0 !important;
+            max-height: 100% !important;
+            padding: 0.55rem !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit {
+            width: min(100%, calc(100svh - 218px), 620px) !important;
+            height: min(100%, calc(100svh - 218px), 620px) !important;
+            max-width: min(100%, calc(100svh - 218px), 620px) !important;
+            max-height: min(100%, calc(100svh - 218px), 620px) !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            aspect-ratio: 1 / 1 !important;
+            flex: 0 0 auto !important;
+            margin: auto !important;
+            gap: 0.35rem !important;
+            padding: 0.55rem !important;
+            border-width: 5px !important;
+          }
+
+          .duel-shift-up .portrait-side,
+          .duel-shift-up .portrait-queue-panel {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .duel-shift-up {
+            transform: translateY(-46px) !important;
+            min-height: calc(100svh + 46px) !important;
+            height: calc(100svh + 46px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 32px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 106px) !important;
+            max-height: calc(100svh - 106px) !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit {
+            width: min(100%, calc(100svh - 196px), 560px) !important;
+            height: min(100%, calc(100svh - 196px), 560px) !important;
+            max-width: min(100%, calc(100svh - 196px), 560px) !important;
+            max-height: min(100%, calc(100svh - 196px), 560px) !important;
+            gap: 0.28rem !important;
+            padding: 0.45rem !important;
+            border-width: 5px !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 690px) {
+          .duel-shift-up {
+            transform: translateY(-50px) !important;
+            min-height: calc(100svh + 50px) !important;
+            height: calc(100svh + 50px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            height: calc(100svh - 96px) !important;
+            max-height: calc(100svh - 96px) !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit {
+            width: min(100%, calc(100svh - 182px), 520px) !important;
+            height: min(100%, calc(100svh - 182px), 520px) !important;
+            max-width: min(100%, calc(100svh - 182px), 520px) !important;
+            max-height: min(100%, calc(100svh - 182px), 520px) !important;
+            gap: 0.22rem !important;
+            padding: 0.36rem !important;
+            border-width: 4px !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3241,7 +3360,7 @@ export default function Home() {
             <div className="portrait-stack-layout relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
               <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
                 <section className="portrait-board-wrap pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
-                  <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
+                  <div className="portrait-board duel-board-solo-fit pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                     {resultBanner && (
                       <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
                         <div
