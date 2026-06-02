@@ -30,7 +30,15 @@ type HandResult = {
   ranks: number[];
 };
 
-type GameStatus = "READY" | "PLAYING" | "GAME_OVER";
+type HandHistoryItem = {
+  id: string;
+  label: string;
+  score: number;
+  combo: number;
+  cleared: boolean;
+};
+
+type GameStatus = "PLAYING" | "GAME_OVER";
 
 type Settings = {
   sound: boolean;
@@ -40,6 +48,7 @@ type Settings = {
 
 const BOARD_SIZE = 5;
 const BOARD_CELLS = BOARD_SIZE * BOARD_SIZE;
+const COMBO_GRACE_TURNS = 3;
 const SUITS: Suit[] = ["♠", "♥", "♦", "♣"];
 const RANKS: Rank[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
@@ -82,13 +91,21 @@ function posOf(index: number): Pos {
   };
 }
 
+function makeId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function newDeck(): Card[] {
   const cards: Card[] = [];
 
   for (const suit of SUITS) {
     for (const rank of RANKS) {
       cards.push({
-        id: `${suit}-${rank}-${crypto.randomUUID()}`,
+        id: `${suit}-${rank}-${makeId()}`,
         rank,
         suit,
       });
@@ -124,7 +141,7 @@ function rankLabel(rank: Rank) {
 }
 
 function rankValue(card: Card) {
-  // Aは完全に1として扱う。J/Q/Kは11/12/13として扱う。
+  // A is treated strictly as 1. J/Q/K are 11/12/13.
   return card.rank;
 }
 
@@ -215,7 +232,6 @@ function getWindowsIncludingPlaced(segment: number[], placedIndex: number, lengt
   for (let start = 0; start <= segment.length - length; start += 1) {
     const window = segment.slice(start, start + length);
 
-    // 短いsliceを絶対に評価しない。指定長ぴったりの窓だけ判定する。
     if (window.length === length && window.includes(placedIndex)) {
       windows.push(window);
     }
@@ -276,6 +292,11 @@ function comboMultiplier(combo: number) {
   return Math.max(1, combo);
 }
 
+function comboGraceLeft(combo: number, turnsSinceHand: number) {
+  if (combo <= 0) return 0;
+  return Math.max(0, COMBO_GRACE_TURNS - turnsSinceHand);
+}
+
 function createEmptyBoard(): Board {
   return Array.from({ length: BOARD_CELLS }, () => null);
 }
@@ -289,17 +310,21 @@ function createInitialGame() {
     deck: drawn.deck,
     currentCard: drawn.card,
     score: 0,
+    bestScore: 0,
     combo: 0,
     turnsSinceHand: 0,
     status: "PLAYING" as GameStatus,
     lastHand: null as HandResult | null,
     lastMessage: "Place a card.",
+    lastScoreDelta: 0,
     selectedCells: [] as number[],
+    history: [] as HandHistoryItem[],
   };
 }
 
 export default function Page() {
   const [game, setGame] = useState(() => createInitialGame());
+  const [savedBestScore, setSavedBestScore] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     sound: false,
@@ -310,15 +335,23 @@ export default function Page() {
 
   const emptyCells = useMemo(() => game.board.filter((cell) => cell === null).length, [game.board]);
   const deckLeft = game.deck.length + 1;
+  const graceLeft = comboGraceLeft(game.combo, game.turnsSinceHand);
+
+  function createFreshGame() {
+    return {
+      ...createInitialGame(),
+      bestScore: savedBestScore,
+    };
+  }
 
   function startGame() {
-    setGame(createInitialGame());
+    setGame(createFreshGame());
     setSettingsOpen(false);
     setScreen("GAME");
   }
 
   function restart() {
-    setGame(createInitialGame());
+    setGame(createFreshGame());
     setSettingsOpen(false);
     setScreen("GAME");
   }
@@ -345,9 +378,10 @@ export default function Page() {
       let gainedScore = 0;
       let message = "No hand.";
       let selectedCells: number[] = [targetIndex];
+      let nextHistory = currentGame.history;
 
       if (hand) {
-        const comboContinues = currentGame.combo > 0 && currentGame.turnsSinceHand <= 3;
+        const comboContinues = currentGame.combo > 0 && currentGame.turnsSinceHand <= COMBO_GRACE_TURNS;
         nextCombo = comboContinues ? currentGame.combo + 1 : 1;
         nextTurnsSinceHand = 0;
         gainedScore = hand.score * comboMultiplier(nextCombo);
@@ -357,24 +391,45 @@ export default function Page() {
         if (hand.remove) {
           nextBoard = removeCells(placedBoard, hand.cells);
         }
-      } else if (currentGame.turnsSinceHand >= 3) {
+
+        nextHistory = [
+          {
+            id: makeId(),
+            label: hand.label,
+            score: gainedScore,
+            combo: nextCombo,
+            cleared: hand.remove,
+          },
+          ...currentGame.history,
+        ].slice(0, 6);
+      } else if (currentGame.turnsSinceHand >= COMBO_GRACE_TURNS) {
         nextCombo = 0;
+        message = currentGame.combo > 0 ? "Combo lost." : "No hand.";
       }
 
+      const nextScore = currentGame.score + gainedScore;
+      const nextBestScore = Math.max(currentGame.bestScore, savedBestScore, nextScore);
       const nextStatus: GameStatus = isBoardFull(nextBoard) ? "GAME_OVER" : "PLAYING";
+
+      if (nextBestScore > savedBestScore) {
+        setSavedBestScore(nextBestScore);
+      }
 
       return {
         ...currentGame,
         board: nextBoard,
         deck: drawn.deck,
         currentCard: drawn.card,
-        score: currentGame.score + gainedScore,
+        score: nextScore,
+        bestScore: nextBestScore,
         combo: nextCombo,
         turnsSinceHand: nextTurnsSinceHand,
         status: nextStatus,
         lastHand: hand,
         lastMessage: nextStatus === "GAME_OVER" ? "Game Over" : message,
+        lastScoreDelta: gainedScore,
         selectedCells,
+        history: nextHistory,
       };
     });
   }
@@ -437,11 +492,16 @@ export default function Page() {
               <span>N</span>
               <i />
             </div>
-            <p className="eyebrow">Stable Rebuild</p>
+            <p className="eyebrow">Stable Rebuild v4</p>
             <h1>NUTS</h1>
             <p className="home-copy">
-              Place cards on a 5×5 board. Make hands only in rows and columns. Keep the combo alive within three turns.
+              Build rows and columns, chain hands within three turns, and keep the board alive as long as possible.
             </p>
+
+            <div className="home-stats">
+              <span>Best Score</span>
+              <strong>{savedBestScore}</strong>
+            </div>
 
             <div className="home-actions">
               <button className="primary-button start-button" type="button" onClick={startGame}>
@@ -461,119 +521,161 @@ export default function Page() {
           </div>
         </section>
       ) : (
-      <section className="game-shell">
-        <aside className="panel left-panel">
-          <p className="eyebrow">Score</p>
-          <div className="score">{game.score}</div>
+        <section className="game-shell">
+          <aside className="panel left-panel">
+            <p className="eyebrow">Score</p>
+            <div className="score">{game.score}</div>
 
-          <div className="metric-grid">
-            <div className="metric-card">
-              <span>Combo</span>
-              <strong>{game.combo}</strong>
+            <div className="score-subline">
+              <span>Best {Math.max(savedBestScore, game.bestScore)}</span>
+              {game.lastScoreDelta > 0 && <strong>+{game.lastScoreDelta}</strong>}
             </div>
-            <div className="metric-card">
-              <span>Empty</span>
-              <strong>{emptyCells}</strong>
+
+            <div className="metric-grid">
+              <div className="metric-card">
+                <span>Combo</span>
+                <strong>{game.combo}</strong>
+              </div>
+              <div className="metric-card">
+                <span>Empty</span>
+                <strong>{emptyCells}</strong>
+              </div>
+              <div className="metric-card wide">
+                <span>Deck</span>
+                <strong>{deckLeft}</strong>
+              </div>
             </div>
-            <div className="metric-card wide">
-              <span>Deck</span>
-              <strong>{deckLeft}</strong>
+
+            <div className={`combo-card ${game.combo > 0 ? "combo-active" : ""}`}>
+              <div className="combo-card-top">
+                <span>Combo Grace</span>
+                <strong>{game.combo > 0 ? graceLeft : "-"}</strong>
+              </div>
+              <div className="grace-dots" aria-hidden="true">
+                {[0, 1, 2].map((dot) => (
+                  <i key={dot} className={game.combo > 0 && dot < graceLeft ? "on" : ""} />
+                ))}
+              </div>
+              <p>Make the next hand within 3 turns to continue the chain.</p>
             </div>
-          </div>
 
-          <div className="next-card-wrap">
-            <p className="eyebrow">Next Card</p>
-            <CardView card={game.currentCard} large />
-            <div className="deck-stack" aria-hidden="true">
-              <span />
-              <span />
-              <span />
+            <div className="next-card-wrap">
+              <p className="eyebrow">Next Card</p>
+              <CardView card={game.currentCard} large />
+              <div className="deck-stack" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
-          </div>
 
-          <div className="button-stack">
-            <button className="primary-button" type="button" onClick={restart}>
-              Restart
-            </button>
-            <button className="secondary-button" type="button" onClick={backToTitle}>
-              Title
-            </button>
-          </div>
-        </aside>
-
-        <section className="board-section">
-          <header className="title-area">
-            <p className="eyebrow">Minimal Stable Build</p>
-            <h1>NUTS</h1>
-            <div className="status-bar">
-              <span className={`hand-badge ${game.lastHand ? "active" : ""}`}>
-                {game.lastHand ? game.lastHand.label : "NO HAND"}
-              </span>
-              <p className="status-text">{game.lastMessage}</p>
-            </div>
-          </header>
-
-          <div className="board" aria-label="NUTS board">
-            {game.board.map((cell, index) => {
-              const isHit = game.selectedCells.includes(index);
-
-              return (
-                <button
-                  key={index}
-                  type="button"
-                  className={`cell ${cell ? "filled" : "empty"} ${isHit ? "hit" : ""}`}
-                  onClick={() => placeCard(index)}
-                  disabled={game.status !== "PLAYING" || cell !== null}
-                  aria-label={`cell ${index + 1}`}
-                >
-                  {cell ? <CardView card={cell} /> : <span className="empty-dot" />}
-                </button>
-              );
-            })}
-          </div>
-
-          {game.status === "GAME_OVER" && (
-            <div className="game-over-card">
-              <p className="eyebrow">Result</p>
-              <h2>GAME OVER</h2>
-              <p>Final Score: {game.score}</p>
+            <div className="button-stack">
               <button className="primary-button" type="button" onClick={restart}>
-                Play Again
+                Restart
               </button>
-              <button className="secondary-button game-over-secondary" type="button" onClick={backToTitle}>
+              <button className="secondary-button" type="button" onClick={backToTitle}>
                 Title
               </button>
             </div>
-          )}
-        </section>
+          </aside>
 
-        <aside className="panel right-panel">
-          <p className="eyebrow">Hands</p>
+          <section className="board-section">
+            <header className="title-area">
+              <p className="eyebrow">Stable Build v4</p>
+              <h1>NUTS</h1>
+              <div className="status-bar">
+                <span className={`hand-badge ${game.lastHand ? "active" : ""}`}>
+                  {game.lastHand ? game.lastHand.label : "NO HAND"}
+                </span>
+                <p className="status-text">{game.lastMessage}</p>
+              </div>
+            </header>
 
-          <div className="hand-list">
-            <RuleCard title="PAIR" score="Small" note="same rank ×2 / no clear" cards={[1, 1]} />
-            <RuleCard title="THREE" score="Base" note="same rank ×3 / clear" cards={[2, 2, 2]} />
-            <RuleCard title="STRAIGHT" score="Middle" note="3 consecutive ranks / clear" cards={[2, 3, 4]} />
-            <RuleCard title="FULL HOUSE" score="Big" note="3 + 2 in 5 cards / clear" cards={[3, 3, 3, 5, 5]} />
-          </div>
+            <div className="board-wrap">
+              <div className="board" aria-label="NUTS board">
+                {game.board.map((cell, index) => {
+                  const isHit = game.selectedCells.includes(index);
 
-          {settings.showDebug && (
-            <div className="debug-box">
-              <p className="eyebrow">Debug</p>
-              <pre>{JSON.stringify(
-                {
-                  lastHand: game.lastHand?.label ?? null,
-                  hitCells: game.lastHand?.cells ?? [],
-                  ranks: game.lastHand?.ranks ?? [],
-                  turnsSinceHand: game.turnsSinceHand,
-                },
-                null,
-                2,
-              )}</pre>
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      className={`cell ${cell ? "filled" : "empty"} ${isHit ? "hit" : ""}`}
+                      onClick={() => placeCard(index)}
+                      disabled={game.status !== "PLAYING" || cell !== null}
+                      aria-label={`cell ${index + 1}`}
+                    >
+                      {cell ? <CardView card={cell} /> : <span className="empty-dot" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </aside>
-      </section>
+
+            {game.status === "GAME_OVER" && (
+              <div className="game-over-layer">
+                <div className="game-over-card">
+                  <p className="eyebrow">Result</p>
+                  <h2>GAME OVER</h2>
+                  <p>Final Score: {game.score}</p>
+                  <p className="result-best">Best Score: {Math.max(savedBestScore, game.bestScore)}</p>
+                  <button className="primary-button" type="button" onClick={restart}>
+                    Play Again
+                  </button>
+                  <button className="secondary-button game-over-secondary" type="button" onClick={backToTitle}>
+                    Title
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <aside className="panel right-panel">
+            <p className="eyebrow">Hands</p>
+
+            <div className="hand-list">
+              <RuleCard title="PAIR" score="Small" note="same rank ×2 / no clear" cards={[1, 1]} />
+              <RuleCard title="THREE" score="Base" note="same rank ×3 / clear" cards={[2, 2, 2]} />
+              <RuleCard title="STRAIGHT" score="Middle" note="3 consecutive ranks / clear" cards={[2, 3, 4]} />
+              <RuleCard title="FULL HOUSE" score="Big" note="3 + 2 in 5 cards / clear" cards={[3, 3, 3, 5, 5]} />
+            </div>
+
+            <div className="history-box">
+              <p className="eyebrow">Recent Hits</p>
+              {game.history.length === 0 ? (
+                <p className="history-empty">No hands yet.</p>
+              ) : (
+                <div className="history-list">
+                  {game.history.map((item) => (
+                    <div key={item.id} className="history-item">
+                      <span>{item.label}</span>
+                      <strong>+{item.score}</strong>
+                      <small>x{item.combo}{item.cleared ? " / clear" : ""}</small>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {settings.showDebug && (
+              <div className="debug-box">
+                <p className="eyebrow">Debug</p>
+                <pre>{JSON.stringify(
+                  {
+                    lastHand: game.lastHand?.label ?? null,
+                    hitCells: game.lastHand?.cells ?? [],
+                    ranks: game.lastHand?.ranks ?? [],
+                    combo: game.combo,
+                    turnsSinceHand: game.turnsSinceHand,
+                    graceLeft,
+                  },
+                  null,
+                  2,
+                )}</pre>
+              </div>
+            )}
+          </aside>
+        </section>
       )}
 
       <style jsx>{`
@@ -611,6 +713,7 @@ export default function Page() {
           color: #f7efe3;
           background:
             radial-gradient(circle at 50% 15%, rgba(233, 176, 92, 0.18), transparent 34%),
+            radial-gradient(circle at 15% 80%, rgba(110, 70, 34, 0.2), transparent 28%),
             linear-gradient(145deg, #16110d 0%, #0b0907 54%, #17110c 100%);
           font-family:
             Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -629,9 +732,13 @@ export default function Page() {
           mask-image: radial-gradient(circle at center, black, transparent 76%);
         }
 
-        .home-shell {
+        .home-shell,
+        .game-shell {
           position: relative;
           z-index: 1;
+        }
+
+        .home-shell {
           width: min(1040px, 100%);
           min-height: min(680px, calc(100svh - 24px));
           display: grid;
@@ -641,11 +748,19 @@ export default function Page() {
         }
 
         .home-card,
-        .home-rules {
+        .home-rules,
+        .panel,
+        .board-section,
+        .game-over-card,
+        .modal-card {
           border: 1px solid rgba(255, 230, 190, 0.22);
           background: rgba(17, 14, 10, 0.74);
           box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
           backdrop-filter: blur(18px);
+        }
+
+        .home-card,
+        .home-rules {
           border-radius: 34px;
           padding: clamp(22px, 3vw, 36px);
         }
@@ -670,6 +785,7 @@ export default function Page() {
         }
 
         .brand-mark {
+          position: relative;
           width: 74px;
           height: 74px;
           border-radius: 22px;
@@ -707,6 +823,28 @@ export default function Page() {
           font-weight: 700;
         }
 
+        .home-stats {
+          width: fit-content;
+          min-width: 180px;
+          border: 1px solid rgba(255, 230, 190, 0.16);
+          border-radius: 20px;
+          padding: 12px 16px;
+          background: rgba(255, 255, 255, 0.055);
+        }
+
+        .home-stats span {
+          display: block;
+          color: #b7a991;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .home-stats strong {
+          display: block;
+          margin-top: 3px;
+          font-size: 28px;
+        }
+
         .home-actions {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
@@ -721,24 +859,12 @@ export default function Page() {
         }
 
         .game-shell {
-          position: relative;
-          z-index: 1;
           width: min(1280px, 100%);
           height: min(780px, calc(100svh - 24px));
           display: grid;
-          grid-template-columns: minmax(210px, 0.8fr) minmax(360px, 1.45fr) minmax(250px, 0.95fr);
+          grid-template-columns: minmax(220px, 0.82fr) minmax(360px, 1.45fr) minmax(250px, 0.95fr);
           gap: clamp(12px, 1.6vw, 22px);
           align-items: stretch;
-        }
-
-        .panel,
-        .board-section,
-        .game-over-card,
-        .modal-card {
-          border: 1px solid rgba(255, 230, 190, 0.22);
-          background: rgba(17, 14, 10, 0.74);
-          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          backdrop-filter: blur(18px);
         }
 
         .panel {
@@ -746,7 +872,7 @@ export default function Page() {
           padding: clamp(16px, 2vw, 24px);
           display: flex;
           flex-direction: column;
-          gap: 18px;
+          gap: 16px;
           min-width: 0;
           overflow: hidden;
         }
@@ -812,7 +938,7 @@ export default function Page() {
         }
 
         .hand-badge {
-          min-width: 78px;
+          min-width: 86px;
           border-radius: 999px;
           padding: 6px 9px;
           color: #8c7f6a;
@@ -834,10 +960,33 @@ export default function Page() {
           letter-spacing: -0.04em;
         }
 
+        .score-subline {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: -8px;
+          color: #b7a991;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .score-subline strong {
+          color: #f4c36e;
+          font-size: 16px;
+        }
+
         .metric-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 10px;
+        }
+
+        .metric-card,
+        .combo-card,
+        .history-item,
+        .home-stats {
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
         }
 
         .metric-card {
@@ -847,7 +996,8 @@ export default function Page() {
           background: rgba(255, 255, 255, 0.045);
         }
 
-        .metric-card span {
+        .metric-card span,
+        .combo-card span {
           display: block;
           margin-bottom: 4px;
           color: #b7a991;
@@ -857,6 +1007,58 @@ export default function Page() {
 
         .metric-card strong {
           font-size: 28px;
+        }
+
+        .metric-card.wide {
+          grid-column: 1 / -1;
+        }
+
+        .combo-card {
+          border: 1px solid rgba(255, 230, 190, 0.15);
+          border-radius: 20px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.042);
+        }
+
+        .combo-card.combo-active {
+          border-color: rgba(244, 195, 110, 0.34);
+          background: rgba(244, 195, 110, 0.085);
+        }
+
+        .combo-card-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .combo-card-top strong {
+          font-size: 24px;
+        }
+
+        .grace-dots {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
+          margin: 8px 0;
+        }
+
+        .grace-dots i {
+          height: 7px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.09);
+        }
+
+        .grace-dots i.on {
+          background: linear-gradient(90deg, #f7d78e, #c9822f);
+        }
+
+        .combo-card p {
+          margin: 0;
+          color: #b7a991;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.45;
         }
 
         .next-card-wrap {
@@ -928,10 +1130,6 @@ export default function Page() {
           gap: 10px;
         }
 
-        .metric-card.wide {
-          grid-column: 1 / -1;
-        }
-
         .game-over-secondary {
           margin-top: 10px;
         }
@@ -1001,9 +1199,13 @@ export default function Page() {
           accent-color: #d28a36;
         }
 
+        .board-wrap {
+          display: grid;
+          place-items: center;
+          min-height: 0;
+        }
+
         .board {
-          align-self: center;
-          justify-self: center;
           width: min(100%, calc(100svh - 190px), 560px);
           aspect-ratio: 1;
           display: grid;
@@ -1168,6 +1370,50 @@ export default function Page() {
           line-height: 1.45;
         }
 
+        .history-box {
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          padding-top: 14px;
+        }
+
+        .history-empty {
+          margin: 0;
+          color: #b7a991;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .history-list {
+          display: grid;
+          gap: 8px;
+        }
+
+        .history-item {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 2px 10px;
+          border: 1px solid rgba(255, 230, 190, 0.11);
+          border-radius: 14px;
+          padding: 9px 10px;
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .history-item span {
+          font-size: 12px;
+          font-weight: 950;
+        }
+
+        .history-item strong {
+          color: #f4c36e;
+          font-size: 12px;
+        }
+
+        .history-item small {
+          grid-column: 1 / -1;
+          color: #9f917c;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
         .debug-box {
           margin-top: auto;
           border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1184,26 +1430,29 @@ export default function Page() {
           white-space: pre-wrap;
         }
 
-        .game-over-card {
+        .game-over-layer {
           position: absolute;
-          inset: auto 24px 24px 24px;
-          z-index: 2;
+          inset: 0;
+          z-index: 3;
+          display: grid;
+          place-items: center;
+          padding: 24px;
+          background: rgba(8, 7, 6, 0.58);
+        }
+
+        .game-over-card {
+          width: min(360px, 100%);
           border-radius: 24px;
-          padding: 20px;
+          padding: 22px;
           text-align: center;
         }
 
+        .result-best {
+          color: #c89d63;
+          font-weight: 900;
+        }
+
         @media (max-width: 980px) {
-          .home-shell {
-            grid-template-columns: 1fr;
-            min-height: auto;
-          }
-
-          .home-actions {
-            grid-template-columns: 1fr;
-          }
-
-
           :global(body) {
             overflow: auto;
           }
@@ -1215,100 +1464,14 @@ export default function Page() {
             align-items: flex-start;
           }
 
-          .home-shell {
-          position: relative;
-          z-index: 1;
-          width: min(1040px, 100%);
-          min-height: min(680px, calc(100svh - 24px));
-          display: grid;
-          grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
-          gap: clamp(14px, 2vw, 26px);
-          align-items: stretch;
-        }
-
-        .home-card,
-        .home-rules {
-          border: 1px solid rgba(255, 230, 190, 0.22);
-          background: rgba(17, 14, 10, 0.74);
-          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          backdrop-filter: blur(18px);
-          border-radius: 34px;
-          padding: clamp(22px, 3vw, 36px);
-        }
-
-        .home-card {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .home-card::after {
-          content: "";
-          position: absolute;
-          inset: auto -70px -90px auto;
-          width: 260px;
-          height: 260px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(244, 195, 110, 0.22), transparent 68%);
-          pointer-events: none;
-        }
-
-        .brand-mark {
-          width: 74px;
-          height: 74px;
-          border-radius: 22px;
-          display: grid;
-          place-items: center;
-          margin-bottom: 18px;
-          color: #201309;
-          background: linear-gradient(145deg, #f7d78e, #c9822f);
-          box-shadow: 0 18px 48px rgba(201, 130, 47, 0.28);
-          font-weight: 1000;
-          font-size: 34px;
-          letter-spacing: -0.04em;
-        }
-
-        .brand-mark i {
-          position: absolute;
-          width: 22px;
-          height: 4px;
-          transform: translate(21px, 22px) rotate(-22deg);
-          border-radius: 999px;
-          background: rgba(32, 19, 9, 0.32);
-        }
-
-        .home-card h1 {
-          text-align: left;
-          font-size: clamp(64px, 11vw, 132px);
-          margin-bottom: 18px;
-        }
-
-        .home-copy {
-          max-width: 560px;
-          color: #ead8bd;
-          font-size: clamp(16px, 2vw, 20px);
-          line-height: 1.7;
-          font-weight: 700;
-        }
-
-        .home-actions {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
-          gap: 12px;
-          margin-top: 28px;
-        }
-
-        .home-rules {
-          display: grid;
-          align-content: center;
-          gap: 12px;
-        }
-
-        .game-shell {
+          .home-shell,
+          .game-shell {
+            grid-template-columns: 1fr;
             height: auto;
-            min-height: calc(100svh - 24px);
+            min-height: auto;
+          }
+
+          .home-actions {
             grid-template-columns: 1fr;
           }
 
@@ -1335,105 +1498,24 @@ export default function Page() {
             padding: 10px;
           }
 
-          .home-shell {
-          position: relative;
-          z-index: 1;
-          width: min(1040px, 100%);
-          min-height: min(680px, calc(100svh - 24px));
-          display: grid;
-          grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
-          gap: clamp(14px, 2vw, 26px);
-          align-items: stretch;
-        }
-
-        .home-card,
-        .home-rules {
-          border: 1px solid rgba(255, 230, 190, 0.22);
-          background: rgba(17, 14, 10, 0.74);
-          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          backdrop-filter: blur(18px);
-          border-radius: 34px;
-          padding: clamp(22px, 3vw, 36px);
-        }
-
-        .home-card {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .home-card::after {
-          content: "";
-          position: absolute;
-          inset: auto -70px -90px auto;
-          width: 260px;
-          height: 260px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(244, 195, 110, 0.22), transparent 68%);
-          pointer-events: none;
-        }
-
-        .brand-mark {
-          width: 74px;
-          height: 74px;
-          border-radius: 22px;
-          display: grid;
-          place-items: center;
-          margin-bottom: 18px;
-          color: #201309;
-          background: linear-gradient(145deg, #f7d78e, #c9822f);
-          box-shadow: 0 18px 48px rgba(201, 130, 47, 0.28);
-          font-weight: 1000;
-          font-size: 34px;
-          letter-spacing: -0.04em;
-        }
-
-        .brand-mark i {
-          position: absolute;
-          width: 22px;
-          height: 4px;
-          transform: translate(21px, 22px) rotate(-22deg);
-          border-radius: 999px;
-          background: rgba(32, 19, 9, 0.32);
-        }
-
-        .home-card h1 {
-          text-align: left;
-          font-size: clamp(64px, 11vw, 132px);
-          margin-bottom: 18px;
-        }
-
-        .home-copy {
-          max-width: 560px;
-          color: #ead8bd;
-          font-size: clamp(16px, 2vw, 20px);
-          line-height: 1.7;
-          font-weight: 700;
-        }
-
-        .home-actions {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
-          gap: 12px;
-          margin-top: 28px;
-        }
-
-        .home-rules {
-          display: grid;
-          align-content: center;
-          gap: 12px;
-        }
-
-        .game-shell {
-            gap: 10px;
-          }
-
+          .home-card,
+          .home-rules,
           .panel,
           .board-section {
             border-radius: 22px;
             padding: 14px;
+          }
+
+          .game-shell {
+            gap: 10px;
+          }
+
+          .status-bar {
+            width: 100%;
+            border-radius: 18px;
+            align-items: flex-start;
+            flex-direction: column;
+            text-align: left;
           }
 
           .board {
