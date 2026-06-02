@@ -2962,6 +2962,31 @@ export default function Home() {
           }
         }
 
+
+        @media (min-width: 900px) {
+          .portrait-board-wrap {
+            padding-top: 0.45rem !important;
+          }
+
+          .portrait-board {
+            height: 100% !important;
+            max-height: 100% !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            min-height: 0 !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 .duel-status-title {
+            font-size: 1.25rem !important;
+            line-height: 1 !important;
+          }
+
+          .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 button {
+            padding-block: 0.45rem !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3025,16 +3050,6 @@ export default function Home() {
             <div className="portrait-stack-layout relative z-10 grid min-h-0 flex-1 justify-center gap-2 md:grid-cols-[minmax(420px,1fr)_250px] lg:grid-cols-[minmax(680px,900px)_340px] xl:gap-3 2xl:grid-cols-[minmax(740px,960px)_380px]">
               <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
                 <section className="portrait-board-wrap pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
-                  <div className="mb-2 flex h-7 items-center justify-between">
-                    <p className="rounded-md border-[3px] border-[#061811] bg-[#123f32] px-3 py-1 text-xs font-black tracking-[0.25em] text-[#f5d06f] shadow-[3px_3px_0_#04120d]">
-                      SHARED BOARD
-                    </p>
-                    <div className="flex gap-1.5 text-[10px] font-black">
-                      <span className="rounded-md border-[2px] border-[#061811] bg-[#155e75] px-2 py-1 text-[#dffbff] shadow-[2px_2px_0_#04120d]">P1</span>
-                      <span className="rounded-md border-[2px] border-[#061811] bg-[#9f1239] px-2 py-1 text-[#fff1f2] shadow-[2px_2px_0_#04120d]">P2</span>
-                    </div>
-                  </div>
-
                   <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
                     {resultBanner && (
                       <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
@@ -3170,14 +3185,8 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="pixel-hard flex min-h-0 flex-1 flex-col border-[4px] border-[#061811] bg-[#081b18] p-2 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48]">
-                    <div className="mb-2 shrink-0 rounded-lg border-[3px] border-[#061811] bg-[#123f32] px-3 py-1.5 text-center shadow-[3px_3px_0_#04120d]">
-                      <p className="text-lg font-black tracking-[0.08em] text-[#d5d48a] drop-shadow-[2px_2px_0_#03100b]">
-                        STATUS
-                      </p>
-                    </div>
-
-                    <div className="flex min-h-0 flex-1 flex-col justify-center rounded-xl border-[3px] border-[#061811] bg-[#07160f] p-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.35)]">
+                  <div className="pixel-hard flex min-h-0 shrink-0 flex-col border-[4px] border-[#061811] bg-[#081b18] p-1.5 shadow-[4px_4px_0_#04120d,inset_0_0_0_2px_#255d48] md:h-[168px] lg:h-[190px] xl:h-[210px]">
+                    <div className="flex min-h-0 flex-1 flex-col justify-center rounded-xl border-[3px] border-[#061811] bg-[#07160f] p-2 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.35)]">
                       <p className="duel-status-title text-2xl font-black text-white drop-shadow-[3px_3px_0_#03100b]">
                         {duel.isGameOver ? winnerText : `PLAYER ${duel.currentPlayer}`}
                       </p>
@@ -3188,13 +3197,13 @@ export default function Home() {
                       )}
                     </div>
 
-                    <div className="mt-2 grid gap-2">
+                    <div className="mt-1.5 grid gap-1.5">
                       {duel.isGameOver && (
-                        <button onClick={restartDuelGame} className="rounded-xl border-[4px] border-[#061811] bg-[#f0a536] px-4 py-3 text-xl font-black text-[#2a1603] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
+                        <button onClick={restartDuelGame} className="rounded-xl border-[4px] border-[#061811] bg-[#f0a536] px-4 py-2 text-lg font-black text-[#2a1603] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
                           REMATCH
                         </button>
                       )}
-                      <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-3 text-lg font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
+                      <button onClick={() => setScreen("home")} className="rounded-xl border-[4px] border-[#061811] bg-[#124733] px-4 py-2 text-base font-black text-[#fff4cf] shadow-[5px_5px_0_#04120d] transition hover:-translate-y-1">
                         HOME
                       </button>
                     </div>
