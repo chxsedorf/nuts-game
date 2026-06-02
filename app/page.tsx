@@ -3662,6 +3662,54 @@ export default function Home() {
           }
         }
 
+
+        /* Final fix: remove every visible frame/background around image buttons. */
+        .control-image-button,
+        .control-image-button:hover,
+        .control-image-button:active,
+        .control-image-button:focus,
+        .control-image-button:focus-visible {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: visible !important;
+          line-height: 0 !important;
+        }
+
+        .control-image-button img {
+          display: block !important;
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+        }
+
+        .duel-control-buttons,
+        .solo-control-buttons {
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
+
+        .duel-control-buttons .control-image-button,
+        .solo-control-buttons .control-image-button {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -3875,7 +3923,7 @@ export default function Home() {
                     <div className="duel-control-buttons mt-1.5 grid shrink-0 grid-cols-2 gap-1.5">
                       <button
                         onClick={restartDuelGame}
-                        className="control-image-button restart-image-button transition hover:-translate-y-1 active:translate-y-0"
+                        className="control-image-button restart-image-button transition hover:-translate-y-0.5 active:translate-y-0"
                         aria-label="Restart duel game"
                       >
                         <img src={RESTART_BUTTON_SRC} alt="RESTART" draggable={false} />
@@ -3891,7 +3939,7 @@ export default function Home() {
                             window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
                           }
                         }}
-                        className="control-image-button home-image-button transition hover:-translate-y-1 active:translate-y-0"
+                        className="control-image-button home-image-button transition hover:-translate-y-0.5 active:translate-y-0"
                         aria-label="Go home"
                       >
                         <img src={HOME_BUTTON_SRC} alt="HOME" draggable={false} />
@@ -5389,6 +5437,54 @@ export default function Home() {
           }
         }
 
+
+        /* Final fix: remove every visible frame/background around image buttons. */
+        .control-image-button,
+        .control-image-button:hover,
+        .control-image-button:active,
+        .control-image-button:focus,
+        .control-image-button:focus-visible {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: visible !important;
+          line-height: 0 !important;
+        }
+
+        .control-image-button img {
+          display: block !important;
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+        }
+
+        .duel-control-buttons,
+        .solo-control-buttons {
+          background: transparent !important;
+          border: 0 !important;
+          outline: 0 !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
+
+        .duel-control-buttons .control-image-button,
+        .solo-control-buttons .control-image-button {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -5784,7 +5880,7 @@ export default function Home() {
               <div className="solo-control-buttons grid shrink-0 grid-cols-2 gap-1.5 sm:gap-2">
                 <button
                   onClick={restartGame}
-                  className="control-image-button restart-image-button transition hover:-translate-y-1 active:translate-y-0"
+                  className="control-image-button restart-image-button transition hover:-translate-y-0.5 active:translate-y-0"
                   aria-label="Restart game"
                 >
                   <img src={RESTART_BUTTON_SRC} alt="RESTART" draggable={false} />
@@ -5800,7 +5896,7 @@ export default function Home() {
                       window.setTimeout(() => startBgm(HOME_BGM_SRC), 0);
                     }
                   }}
-                  className="control-image-button home-image-button transition hover:-translate-y-1 active:translate-y-0"
+                  className="control-image-button home-image-button transition hover:-translate-y-0.5 active:translate-y-0"
                   aria-label="Go home"
                 >
                   <img src={HOME_BUTTON_SRC} alt="HOME" draggable={false} />
