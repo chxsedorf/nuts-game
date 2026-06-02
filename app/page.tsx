@@ -5958,6 +5958,63 @@ export default function Home() {
               9px 9px 0 #020806 !important;
           }
         }
+
+        /* Balatro-style score font.
+           Optional: if you legally add /public/fonts/m6x11plus.ttf, it will be used first. */
+        @font-face {
+          font-family: "NutsBalatroScore";
+          src: url("/fonts/m6x11plus.ttf") format("truetype");
+          font-weight: 400 900;
+          font-style: normal;
+          font-display: swap;
+        }
+
+        .pixel-score-number {
+          font-family:
+            "NutsBalatroScore",
+            "m6x11plus",
+            "m6x11",
+            "Arial Black",
+            "Impact",
+            "Courier New",
+            monospace !important;
+          font-size: clamp(5.8rem, 11.5vw, 10.9rem) !important;
+          font-weight: 900 !important;
+          letter-spacing: 0.01em !important;
+          transform: scaleX(0.9) !important;
+          color: #fff2a8 !important;
+          -webkit-text-stroke: 0 !important;
+          background: none !important;
+          -webkit-background-clip: initial !important;
+          background-clip: initial !important;
+          text-rendering: geometricPrecision !important;
+          image-rendering: pixelated !important;
+          filter: none !important;
+          text-shadow:
+            0 -3px 0 #fff8d6,
+            3px 0 0 #fff8d6,
+            -3px 0 0 #6f3b0b,
+            0 3px 0 #8a4b10,
+            3px 3px 0 #d28a23,
+            7px 7px 0 #061811,
+            11px 11px 0 #020806 !important;
+        }
+
+        @media (max-width: 640px) {
+          .pixel-score-number {
+            font-size: clamp(4.25rem, 18vw, 6.7rem) !important;
+            letter-spacing: 0 !important;
+            transform: scaleX(0.9) !important;
+            text-shadow:
+              0 -2px 0 #fff8d6,
+              2px 0 0 #fff8d6,
+              -2px 0 0 #6f3b0b,
+              0 2px 0 #8a4b10,
+              3px 3px 0 #d28a23,
+              6px 6px 0 #061811,
+              9px 9px 0 #020806 !important;
+          }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
