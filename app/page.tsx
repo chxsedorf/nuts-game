@@ -1771,6 +1771,56 @@ function HomeScreen({
           60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
           80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
         }
+
+        /* HARD STABILITY FIX: no hand result effect may move the viewport, frame, board, or layout. */
+        .balatro-inspired-bg,
+        .balatro-inspired-bg > *,
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-board-wrap *,
+        .portrait-frame > section,
+        .portrait-frame > header,
+        .portrait-layout-grid {
+          translate: none !important;
+        }
+
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid {
+          transform: none !important;
+          animation-name: none !important;
+          transition-property: opacity, filter, background, box-shadow, border-color, color !important;
+        }
+
+        .portrait-board > button {
+          transform: none !important;
+        }
+
+        .pixel-hit-cell,
+        .pixel-hit-cell *,
+        .pixel-hit-cell::before,
+        .pixel-hit-cell::after {
+          transform: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes resultFrameFlash {
+          0%, 100% { transform: none; filter: none; }
+        }
+
+        @keyframes clearShake {
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.25); transform: none; }
+          70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -4799,6 +4849,56 @@ export default function Home() {
           60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
           80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
         }
+
+        /* HARD STABILITY FIX: no hand result effect may move the viewport, frame, board, or layout. */
+        .balatro-inspired-bg,
+        .balatro-inspired-bg > *,
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-board-wrap *,
+        .portrait-frame > section,
+        .portrait-frame > header,
+        .portrait-layout-grid {
+          translate: none !important;
+        }
+
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid {
+          transform: none !important;
+          animation-name: none !important;
+          transition-property: opacity, filter, background, box-shadow, border-color, color !important;
+        }
+
+        .portrait-board > button {
+          transform: none !important;
+        }
+
+        .pixel-hit-cell,
+        .pixel-hit-cell *,
+        .pixel-hit-cell::before,
+        .pixel-hit-cell::after {
+          transform: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes resultFrameFlash {
+          0%, 100% { transform: none; filter: none; }
+        }
+
+        @keyframes clearShake {
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.25); transform: none; }
+          70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -5118,10 +5218,10 @@ export default function Home() {
         }
 
         @keyframes clearShake {
-          0% { transform: rotate(-2deg) scale(1); opacity: 1; filter: brightness(1); }
-          35% { transform: rotate(3deg) scale(1.12); opacity: 1; filter: brightness(1.35); }
-          70% { transform: rotate(-4deg) scale(1.04); opacity: 0.85; filter: brightness(1.1); }
-          100% { transform: rotate(-2deg) scale(0.78); opacity: 0.25; filter: brightness(0.7); }
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.35); transform: none; }
+          70% { opacity: 0.85; filter: brightness(1.1); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
 
         @keyframes resultBounce {
@@ -5470,9 +5570,7 @@ export default function Home() {
         }
 
         @keyframes resultFrameFlash {
-          0% { filter: brightness(1); }
-          22% { filter: brightness(1.10) saturate(1.08); }
-          100% { filter: brightness(1); }
+          0%, 100% { filter: none; transform: none; }
         }
 
         @keyframes resultBurst {
@@ -7454,6 +7552,56 @@ export default function Home() {
           60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
           80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
         }
+
+        /* HARD STABILITY FIX: no hand result effect may move the viewport, frame, board, or layout. */
+        .balatro-inspired-bg,
+        .balatro-inspired-bg > *,
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-board-wrap *,
+        .portrait-frame > section,
+        .portrait-frame > header,
+        .portrait-layout-grid {
+          translate: none !important;
+        }
+
+        .portrait-frame,
+        .table-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid {
+          transform: none !important;
+          animation-name: none !important;
+          transition-property: opacity, filter, background, box-shadow, border-color, color !important;
+        }
+
+        .portrait-board > button {
+          transform: none !important;
+        }
+
+        .pixel-hit-cell,
+        .pixel-hit-cell *,
+        .pixel-hit-cell::before,
+        .pixel-hit-cell::after {
+          transform: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes resultFrameFlash {
+          0%, 100% { transform: none; filter: none; }
+        }
+
+        @keyframes clearShake {
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.25); transform: none; }
+          70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -7622,7 +7770,7 @@ export default function Home() {
       <div className="portrait-outer relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
         <section
           className="portrait-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]"
-          style={{ animation: resultPulse ? "resultFrameFlash 360ms ease-out" : undefined }}
+          style={undefined}
         >
           <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
