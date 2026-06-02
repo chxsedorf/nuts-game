@@ -380,7 +380,7 @@ export default function Page() {
   }
 
   return (
-    <main className="nuts-root">
+    <main className={`nuts-root ${settings.reducedMotion ? "motion-off" : ""}`}>
       <div className="bg-grid" />
 
       <button className="settings-button" type="button" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
@@ -433,6 +433,10 @@ export default function Page() {
       {screen === "HOME" ? (
         <section className="home-shell">
           <div className="home-card">
+            <div className="brand-mark" aria-hidden="true">
+              <span>N</span>
+              <i />
+            </div>
             <p className="eyebrow">Stable Rebuild</p>
             <h1>NUTS</h1>
             <p className="home-copy">
@@ -480,6 +484,11 @@ export default function Page() {
           <div className="next-card-wrap">
             <p className="eyebrow">Next Card</p>
             <CardView card={game.currentCard} large />
+            <div className="deck-stack" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
           </div>
 
           <div className="button-stack">
@@ -496,7 +505,12 @@ export default function Page() {
           <header className="title-area">
             <p className="eyebrow">Minimal Stable Build</p>
             <h1>NUTS</h1>
-            <p className="status-text">{game.lastMessage}</p>
+            <div className="status-bar">
+              <span className={`hand-badge ${game.lastHand ? "active" : ""}`}>
+                {game.lastHand ? game.lastHand.label : "NO HAND"}
+              </span>
+              <p className="status-text">{game.lastMessage}</p>
+            </div>
           </header>
 
           <div className="board" aria-label="NUTS board">
@@ -637,9 +651,46 @@ export default function Page() {
         }
 
         .home-card {
+          position: relative;
           display: flex;
           flex-direction: column;
           justify-content: center;
+          overflow: hidden;
+        }
+
+        .home-card::after {
+          content: "";
+          position: absolute;
+          inset: auto -70px -90px auto;
+          width: 260px;
+          height: 260px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(244, 195, 110, 0.22), transparent 68%);
+          pointer-events: none;
+        }
+
+        .brand-mark {
+          width: 74px;
+          height: 74px;
+          border-radius: 22px;
+          display: grid;
+          place-items: center;
+          margin-bottom: 18px;
+          color: #201309;
+          background: linear-gradient(145deg, #f7d78e, #c9822f);
+          box-shadow: 0 18px 48px rgba(201, 130, 47, 0.28);
+          font-weight: 1000;
+          font-size: 34px;
+          letter-spacing: -0.04em;
+        }
+
+        .brand-mark i {
+          position: absolute;
+          width: 22px;
+          height: 4px;
+          transform: translate(21px, 22px) rotate(-22deg);
+          border-radius: 999px;
+          background: rgba(32, 19, 9, 0.32);
         }
 
         .home-card h1 {
@@ -741,11 +792,39 @@ export default function Page() {
           margin-bottom: 8px;
         }
 
+        .status-bar {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          min-height: 38px;
+          padding: 7px 12px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 230, 190, 0.13);
+          background: rgba(255, 255, 255, 0.045);
+        }
+
         .status-text {
           min-height: 1.5em;
           margin-bottom: 0;
           color: #ead8bd;
-          font-weight: 700;
+          font-weight: 800;
+        }
+
+        .hand-badge {
+          min-width: 78px;
+          border-radius: 999px;
+          padding: 6px 9px;
+          color: #8c7f6a;
+          background: rgba(255, 255, 255, 0.06);
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+        }
+
+        .hand-badge.active {
+          color: #241507;
+          background: linear-gradient(180deg, #f7d78e, #c9822f);
         }
 
         .score {
@@ -781,8 +860,33 @@ export default function Page() {
         }
 
         .next-card-wrap {
+          position: relative;
           margin-top: auto;
         }
+
+        .deck-stack {
+          position: absolute;
+          right: 12px;
+          bottom: 4px;
+          width: 42px;
+          height: 56px;
+          pointer-events: none;
+        }
+
+        .deck-stack span {
+          position: absolute;
+          inset: 0;
+          border-radius: 9px;
+          border: 1px solid rgba(255, 230, 190, 0.18);
+          background:
+            linear-gradient(135deg, rgba(244, 195, 110, 0.22), transparent 45%),
+            rgba(255, 255, 255, 0.06);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+        }
+
+        .deck-stack span:nth-child(1) { transform: translate(-8px, 6px) rotate(-8deg); opacity: 0.45; }
+        .deck-stack span:nth-child(2) { transform: translate(-3px, 2px) rotate(-3deg); opacity: 0.68; }
+        .deck-stack span:nth-child(3) { transform: translate(3px, -3px) rotate(4deg); opacity: 0.9; }
 
         .primary-button,
         .settings-button,
@@ -941,6 +1045,13 @@ export default function Page() {
         .cell.hit {
           border-color: rgba(244, 195, 110, 0.92);
           box-shadow: 0 0 0 2px rgba(244, 195, 110, 0.18), 0 0 30px rgba(244, 195, 110, 0.22);
+          animation: hitPulse 520ms ease both;
+        }
+
+        @keyframes hitPulse {
+          0% { transform: scale(1); }
+          42% { transform: scale(1.055); }
+          100% { transform: scale(1); }
         }
 
         .empty-dot {
@@ -1126,9 +1237,46 @@ export default function Page() {
         }
 
         .home-card {
+          position: relative;
           display: flex;
           flex-direction: column;
           justify-content: center;
+          overflow: hidden;
+        }
+
+        .home-card::after {
+          content: "";
+          position: absolute;
+          inset: auto -70px -90px auto;
+          width: 260px;
+          height: 260px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(244, 195, 110, 0.22), transparent 68%);
+          pointer-events: none;
+        }
+
+        .brand-mark {
+          width: 74px;
+          height: 74px;
+          border-radius: 22px;
+          display: grid;
+          place-items: center;
+          margin-bottom: 18px;
+          color: #201309;
+          background: linear-gradient(145deg, #f7d78e, #c9822f);
+          box-shadow: 0 18px 48px rgba(201, 130, 47, 0.28);
+          font-weight: 1000;
+          font-size: 34px;
+          letter-spacing: -0.04em;
+        }
+
+        .brand-mark i {
+          position: absolute;
+          width: 22px;
+          height: 4px;
+          transform: translate(21px, 22px) rotate(-22deg);
+          border-radius: 999px;
+          background: rgba(32, 19, 9, 0.32);
         }
 
         .home-card h1 {
@@ -1209,9 +1357,46 @@ export default function Page() {
         }
 
         .home-card {
+          position: relative;
           display: flex;
           flex-direction: column;
           justify-content: center;
+          overflow: hidden;
+        }
+
+        .home-card::after {
+          content: "";
+          position: absolute;
+          inset: auto -70px -90px auto;
+          width: 260px;
+          height: 260px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(244, 195, 110, 0.22), transparent 68%);
+          pointer-events: none;
+        }
+
+        .brand-mark {
+          width: 74px;
+          height: 74px;
+          border-radius: 22px;
+          display: grid;
+          place-items: center;
+          margin-bottom: 18px;
+          color: #201309;
+          background: linear-gradient(145deg, #f7d78e, #c9822f);
+          box-shadow: 0 18px 48px rgba(201, 130, 47, 0.28);
+          font-weight: 1000;
+          font-size: 34px;
+          letter-spacing: -0.04em;
+        }
+
+        .brand-mark i {
+          position: absolute;
+          width: 22px;
+          height: 4px;
+          transform: translate(21px, 22px) rotate(-22deg);
+          border-radius: 999px;
+          background: rgba(32, 19, 9, 0.32);
         }
 
         .home-card h1 {
@@ -1271,10 +1456,19 @@ export default function Page() {
           }
         }
 
+        .motion-off .cell,
+        .motion-off .primary-button,
+        .motion-off .cell.hit {
+          transition: none;
+          animation: none;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .cell,
-          .primary-button {
+          .primary-button,
+          .cell.hit {
             transition: none;
+            animation: none;
           }
         }
       `}</style>
