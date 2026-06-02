@@ -557,8 +557,8 @@ function getHandRankKey(card: Card): string {
   const rankText = String(card.rank ?? "").trim().toUpperCase();
   const numericValue = Number(card.value);
 
-  // Normalize Ace completely.
-  // A / 1 / ACE / value 14 / value 1 are all the same rank.
+  // In NUTS, Ace is the visible "1" card.
+  // Treat every possible Ace representation as the same rank.
   if (
     rankText === "A" ||
     rankText === "1" ||
@@ -566,28 +566,25 @@ function getHandRankKey(card: Card): string {
     numericValue === 14 ||
     numericValue === 1
   ) {
-    return "A";
+    return "1";
   }
 
-  if (rankText === "J" || rankText === "JACK") return "J";
-  if (rankText === "Q" || rankText === "QUEEN") return "Q";
-  if (rankText === "K" || rankText === "KING") return "K";
+  if (rankText === "J" || rankText === "JACK") return "11";
+  if (rankText === "Q" || rankText === "QUEEN") return "12";
+  if (rankText === "K" || rankText === "KING") return "13";
 
-  if (rankText) return rankText;
+  if (/^\d+$/.test(rankText)) return String(Number(rankText));
 
-  return String(card.value);
+  if (Number.isFinite(numericValue)) return String(numericValue);
+
+  return rankText;
 }
 
 function getStraightOrderValue(card: Card): number {
   const rankKey = getHandRankKey(card);
+  const value = Number(rankKey);
 
-  if (rankKey === "A") return 1;
-  if (rankKey === "J") return 11;
-  if (rankKey === "Q") return 12;
-  if (rankKey === "K") return 13;
-
-  const rankValue = Number(rankKey);
-  return Number.isFinite(rankValue) ? rankValue : Number.NaN;
+  return Number.isFinite(value) ? value : Number.NaN;
 }
 
 function getResultKey(result: HandResult): string {
@@ -617,16 +614,18 @@ function areSameRank(cards: LineCard[]): boolean {
 function isPairCards(cards: LineCard[]): boolean {
   if (cards.length !== 2) return false;
 
-  const [first, second] = cards;
-
-  // Pair is ONLY identical normalized ranks.
-  // A-A works. A-2 / 3-2 / 2-3 never works.
-  return getHandRankKey(first.card) === getHandRankKey(second.card);
+  // Pair is exactly two cards with the same normalized rank.
+  // 1-1 / A-A works.
+  // 1-2 / 1-3 / 2-3 / 3-2 never works.
+  return areSameRank(cards);
 }
 
 function isThreeCard(cards: LineCard[]): boolean {
   if (cards.length !== 3) return false;
 
+  // Three is exactly three cards with the same normalized rank.
+  // 1-1-1 / 2-2-2 / 3-3-3 work.
+  // 1-2-2 never works.
   return areSameRank(cards);
 }
 
@@ -639,14 +638,13 @@ function isStraightCards(cards: LineCard[]): boolean {
 
   if (values.some((value) => Number.isNaN(value))) return false;
 
-  const straightKey = values.join("-");
+  const uniqueValues = new Set(values);
+  if (uniqueValues.size !== 3) return false;
 
-  // Explicit allow-list for 3-card straights.
-  // This guarantees 2-3-4 is accepted and duplicate hands such as 2-3-3 are rejected.
-  return straightKey === "1-2-3" || straightKey === "2-3-4" || straightKey === "3-4-5" ||
-    straightKey === "4-5-6" || straightKey === "5-6-7" || straightKey === "6-7-8" ||
-    straightKey === "7-8-9" || straightKey === "8-9-10" || straightKey === "9-10-11" ||
-    straightKey === "10-11-12" || straightKey === "11-12-13";
+  // Three-card straight only: n, n+1, n+2.
+  // 1-2-3 and 2-3-4 both work.
+  // 2-3-3 never works.
+  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
 }
 
 function isCleanFullHouse(cards: LineCard[]): boolean {
@@ -695,31 +693,18 @@ const handRuleConfig: Record<
   },
 };
 
-function createConfiguredHandResult(name: HandRuleName, cards: LineCard[]): HandResult {
+function createHandResult(
+  name: HandRuleName,
+  cards: LineCard[]
+): HandResult {
   const config = handRuleConfig[name];
 
-  return createHandResult(
-    name,
-    config.scorePerCard * cards.length,
-    cards,
-    config.shouldClear,
-    config.priority
-  );
-}
-
-function createHandResult(
-  name: string,
-  score: number,
-  cards: LineCard[],
-  shouldClear: boolean,
-  priority: number
-): HandResult {
   return {
     name,
-    score,
+    score: config.scorePerCard * cards.length,
     cards: toPositions(cards),
-    shouldClear,
-    priority,
+    shouldClear: config.shouldClear,
+    priority: config.priority,
   };
 }
 
@@ -749,70 +734,48 @@ function evaluateWindow(
   windowCards: LineCard[],
   placedRow: number,
   placedCol: number,
-  results: HandResult[],
-  allowCatchUpClearHands = false
+  results: HandResult[]
 ) {
-  const touchesPlacedCard = includesPlaced(windowCards, placedRow, placedCol);
+  // Every hand must include the card that was just placed.
+  // This prevents old pairs / old hands from being scored again.
+  if (!includesPlaced(windowCards, placedRow, placedCol)) return;
 
-  // Pair must include the newly placed card.
-  // Pair does not clear, so old pairs must not score repeatedly.
-  if (windowCards.length === 2) {
-    if (touchesPlacedCard && isPairCards(windowCards)) {
-      addUniqueResult(
-        results,
-        createConfiguredHandResult("Pair", windowCards)
-      );
+  if (windowCards.length === 5) {
+    if (isCleanFullHouse(windowCards)) {
+      addUniqueResult(results, createHandResult("Full House", windowCards));
     }
 
     return;
   }
 
-  const canScoreClearHand = touchesPlacedCard || allowCatchUpClearHands;
-  if (!canScoreClearHand) return;
-
   if (windowCards.length === 3) {
     if (isThreeCard(windowCards)) {
-      addUniqueResult(
-        results,
-        createConfiguredHandResult("Three Card", windowCards)
-      );
+      addUniqueResult(results, createHandResult("Three Card", windowCards));
       return;
     }
 
     if (isStraightCards(windowCards)) {
-      addUniqueResult(
-        results,
-        createConfiguredHandResult("Straight", windowCards)
-      );
+      addUniqueResult(results, createHandResult("Straight", windowCards));
     }
 
     return;
   }
 
-  if (windowCards.length === 5 && isCleanFullHouse(windowCards)) {
-    addUniqueResult(
-      results,
-      createConfiguredHandResult("Full House", windowCards)
-    );
+  if (windowCards.length === 2 && isPairCards(windowCards)) {
+    addUniqueResult(results, createHandResult("Pair", windowCards));
   }
 }
 
-function evaluateLine(
-  line: LineCard[],
-  placedRow: number,
-  placedCol: number,
-  allowCatchUpClearHands = false
-): HandResult[] {
+function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
   if (line.length < 2) return [];
 
   const candidates: HandResult[] = [];
 
   for (let start = 0; start < line.length; start++) {
-    // Higher-value clear hands are checked first.
-    // Pair is checked last and never clears.
-    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates, allowCatchUpClearHands);
-    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates, allowCatchUpClearHands);
-    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates, false);
+    // Stronger clearing hands first, Pair last.
+    evaluateWindow(line.slice(start, start + 5), placedRow, placedCol, candidates);
+    evaluateWindow(line.slice(start, start + 3), placedRow, placedCol, candidates);
+    evaluateWindow(line.slice(start, start + 2), placedRow, placedCol, candidates);
   }
 
   return filterDominatedResults(candidates);
@@ -849,44 +812,17 @@ function getAxisSegments(board: Board, row: number, col: number, axis: "row" | "
   return segments;
 }
 
-function getAllAxisSegments(board: Board): LineCard[][] {
-  const segments: LineCard[][] = [];
-
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    segments.push(...getAxisSegments(board, row, 0, "row"));
-  }
-
-  for (let col = 0; col < BOARD_SIZE; col++) {
-    segments.push(...getAxisSegments(board, 0, col, "col"));
-  }
-
-  return segments;
-}
-
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   const allResults: HandResult[] = [];
-  const primarySegments = [
+  const segments = [
     ...getAxisSegments(board, row, col, "row"),
     ...getAxisSegments(board, row, col, "col"),
   ];
 
-  // Normal rule: hands touched by the placed card.
-  for (const segment of primarySegments) {
+  for (const segment of segments) {
     if (!includesPlaced(segment, row, col)) continue;
 
-    const segmentResults = evaluateLine(segment, row, col, false);
-
-    for (const result of segmentResults) {
-      addUniqueResult(allResults, result);
-    }
-  }
-
-  // Safety net: catch missed clearable hands only.
-  // Pair is not included here because Pair does not clear and must not repeat-score.
-  for (const segment of getAllAxisSegments(board)) {
-    const segmentResults = evaluateLine(segment, row, col, true).filter(
-      (result) => result.shouldClear
-    );
+    const segmentResults = evaluateLine(segment, row, col);
 
     for (const result of segmentResults) {
       addUniqueResult(allResults, result);
