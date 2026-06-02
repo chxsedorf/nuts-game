@@ -546,15 +546,25 @@ function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
   return cards.some((item) => item.row === row && item.col === col);
 }
 
-function getHandValue(card: Card): number {
-  return card.rank === "A" ? 1 : card.value;
+function getHandRankKey(card: Card): string {
+  // Hand judgement should follow the printed card rank, not a numeric value that may be used elsewhere.
+  // A is treated as 1 only for straight order, but A-A and A-A-A still match by rank.
+  return card.rank === "A" ? "1" : card.rank;
+}
+
+function getStraightOrderValue(card: Card): number {
+  if (card.rank === "A") return 1;
+  if (card.rank === "J") return 11;
+  if (card.rank === "Q") return 12;
+  if (card.rank === "K") return 13;
+  return Number(card.rank);
 }
 
 function areSameRank(cards: LineCard[]): boolean {
   if (cards.length === 0) return false;
 
-  const firstValue = getHandValue(cards[0].card);
-  return cards.every((item) => getHandValue(item.card) === firstValue);
+  const firstRank = getHandRankKey(cards[0].card);
+  return cards.every((item) => getHandRankKey(item.card) === firstRank);
 }
 
 function isThreeCard(cards: LineCard[]): boolean {
@@ -569,12 +579,11 @@ function isStraightCards(cards: LineCard[]): boolean {
   if (cards.length !== 3) return false;
 
   const values = cards
-    .map((item) => getHandValue(item.card))
+    .map((item) => getStraightOrderValue(item.card))
     .sort((a, b) => a - b);
 
-  const uniqueValues = new Set(values);
-
-  if (uniqueValues.size !== 3) return false;
+  // 2,3,3 / A,2,2 / duplicated ranks must never be a straight.
+  if (new Set(values).size !== 3) return false;
 
   return values[1] === values[0] + 1 && values[2] === values[1] + 1;
 }
@@ -582,11 +591,11 @@ function isStraightCards(cards: LineCard[]): boolean {
 function isCleanFullHouse(cards: LineCard[]): boolean {
   if (cards.length !== 5) return false;
 
-  const counts = new Map<number, number>();
+  const counts = new Map<string, number>();
 
   for (const item of cards) {
-    const value = getHandValue(item.card);
-    counts.set(value, (counts.get(value) ?? 0) + 1);
+    const rank = getHandRankKey(item.card);
+    counts.set(rank, (counts.get(rank) ?? 0) + 1);
   }
 
   const sortedCounts = [...counts.values()].sort((a, b) => a - b);
@@ -618,9 +627,6 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
 
   const results: HandResult[] = [];
 
-  // Evaluate only exact contiguous windows.
-  // A is treated as 1 for all hand checks, so A-A / A-A-A / A-2-3 work correctly.
-  // Pair never fires for 1-2 / 1-3, and Three never fires for 1-2-2.
   for (let start = 0; start < line.length; start++) {
     const pairCards = line.slice(start, start + 2);
 
