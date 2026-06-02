@@ -1598,6 +1598,76 @@ function HomeScreen({
           outline: none !important;
           scroll-margin: 0 !important;
         }
+
+        /* Safe micro shake: visual overlay only, never the game layout or board. */
+        .micro-shake-overlay {
+          contain: strict;
+          transform: translateZ(0);
+          animation: microShakeLayer 420ms steps(2, end) both;
+        }
+
+        .micro-shake-scan {
+          opacity: 0.18;
+          background:
+            linear-gradient(90deg, transparent, rgba(255,239,122,0.15), transparent),
+            repeating-linear-gradient(0deg, rgba(245,208,111,0.18) 0 1px, transparent 1px 7px);
+          mix-blend-mode: screen;
+          animation: microShakeScan 420ms steps(2, end) both;
+        }
+
+        .micro-shake-flash {
+          opacity: 0;
+          background:
+            radial-gradient(circle at 50% 42%, rgba(245,208,111,0.18), transparent 30%),
+            radial-gradient(circle at 48% 50%, rgba(110,231,255,0.10), transparent 38%);
+          animation: microShakeFlash 420ms ease-out both;
+        }
+
+        @keyframes microShakeLayer {
+          0% { transform: translate3d(0, 0, 0); }
+          16% { transform: translate3d(1px, 0, 0); }
+          32% { transform: translate3d(-1px, 0, 0); }
+          48% { transform: translate3d(1px, 0, 0); }
+          64% { transform: translate3d(-1px, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes microShakeScan {
+          0% { transform: translateX(-2px); opacity: 0; }
+          20% { opacity: 0.18; }
+          70% { opacity: 0.10; }
+          100% { transform: translateX(2px); opacity: 0; }
+        }
+
+        @keyframes microShakeFlash {
+          0% { opacity: 0; }
+          18% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+
+        .game-fixed-viewport,
+        .balatro-inspired-bg,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-stack-layout,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-stack-layout,
+        .portrait-board-wrap,
+        .portrait-board {
+          animation-name: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
 `}</style>
 
       <div className="home-bg-suits" aria-hidden="true">
@@ -4540,6 +4610,76 @@ export default function Home() {
           outline: none !important;
           scroll-margin: 0 !important;
         }
+
+        /* Safe micro shake: visual overlay only, never the game layout or board. */
+        .micro-shake-overlay {
+          contain: strict;
+          transform: translateZ(0);
+          animation: microShakeLayer 420ms steps(2, end) both;
+        }
+
+        .micro-shake-scan {
+          opacity: 0.18;
+          background:
+            linear-gradient(90deg, transparent, rgba(255,239,122,0.15), transparent),
+            repeating-linear-gradient(0deg, rgba(245,208,111,0.18) 0 1px, transparent 1px 7px);
+          mix-blend-mode: screen;
+          animation: microShakeScan 420ms steps(2, end) both;
+        }
+
+        .micro-shake-flash {
+          opacity: 0;
+          background:
+            radial-gradient(circle at 50% 42%, rgba(245,208,111,0.18), transparent 30%),
+            radial-gradient(circle at 48% 50%, rgba(110,231,255,0.10), transparent 38%);
+          animation: microShakeFlash 420ms ease-out both;
+        }
+
+        @keyframes microShakeLayer {
+          0% { transform: translate3d(0, 0, 0); }
+          16% { transform: translate3d(1px, 0, 0); }
+          32% { transform: translate3d(-1px, 0, 0); }
+          48% { transform: translate3d(1px, 0, 0); }
+          64% { transform: translate3d(-1px, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes microShakeScan {
+          0% { transform: translateX(-2px); opacity: 0; }
+          20% { opacity: 0.18; }
+          70% { opacity: 0.10; }
+          100% { transform: translateX(2px); opacity: 0; }
+        }
+
+        @keyframes microShakeFlash {
+          0% { opacity: 0; }
+          18% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+
+        .game-fixed-viewport,
+        .balatro-inspired-bg,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-stack-layout,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-stack-layout,
+        .portrait-board-wrap,
+        .portrait-board {
+          animation-name: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -6993,6 +7133,76 @@ export default function Home() {
           outline: none !important;
           scroll-margin: 0 !important;
         }
+
+        /* Safe micro shake: visual overlay only, never the game layout or board. */
+        .micro-shake-overlay {
+          contain: strict;
+          transform: translateZ(0);
+          animation: microShakeLayer 420ms steps(2, end) both;
+        }
+
+        .micro-shake-scan {
+          opacity: 0.18;
+          background:
+            linear-gradient(90deg, transparent, rgba(255,239,122,0.15), transparent),
+            repeating-linear-gradient(0deg, rgba(245,208,111,0.18) 0 1px, transparent 1px 7px);
+          mix-blend-mode: screen;
+          animation: microShakeScan 420ms steps(2, end) both;
+        }
+
+        .micro-shake-flash {
+          opacity: 0;
+          background:
+            radial-gradient(circle at 50% 42%, rgba(245,208,111,0.18), transparent 30%),
+            radial-gradient(circle at 48% 50%, rgba(110,231,255,0.10), transparent 38%);
+          animation: microShakeFlash 420ms ease-out both;
+        }
+
+        @keyframes microShakeLayer {
+          0% { transform: translate3d(0, 0, 0); }
+          16% { transform: translate3d(1px, 0, 0); }
+          32% { transform: translate3d(-1px, 0, 0); }
+          48% { transform: translate3d(1px, 0, 0); }
+          64% { transform: translate3d(-1px, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes microShakeScan {
+          0% { transform: translateX(-2px); opacity: 0; }
+          20% { opacity: 0.18; }
+          70% { opacity: 0.10; }
+          100% { transform: translateX(2px); opacity: 0; }
+        }
+
+        @keyframes microShakeFlash {
+          0% { opacity: 0; }
+          18% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+
+        .game-fixed-viewport,
+        .balatro-inspired-bg,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-stack-layout,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-stack-layout,
+        .portrait-board-wrap,
+        .portrait-board {
+          animation-name: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
 `}</style>
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(245,181,68,0.14),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(90,255,190,0.08),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(0,0,0,0.36),transparent_54%)]" />
@@ -7007,6 +7217,13 @@ export default function Home() {
         <span style={{ left: "48%", top: "8%", fontSize: "28px", ["--r" as string]: "8deg" }}>A</span>
         <span style={{ left: "54%", top: "86%", fontSize: "30px", ["--r" as string]: "-8deg" }}>K</span>
       </div>
+
+      {resultPulse && (
+        <div className="micro-shake-overlay pointer-events-none fixed inset-0 z-[34] overflow-hidden" aria-hidden="true">
+          <div className="micro-shake-scan absolute inset-0" />
+          <div className="micro-shake-flash absolute inset-0" />
+        </div>
+      )}
 
       {isComboAuraVisible && (
         <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
