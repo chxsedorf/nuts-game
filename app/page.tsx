@@ -3297,6 +3297,66 @@ export default function Home() {
           }
         }
 
+
+        /* DUEL: use more horizontal space while keeping the board frame fully visible. */
+        @media (min-width: 900px) {
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(700px, 1fr) 320px !important;
+            gap: 0.65rem !important;
+          }
+
+          .duel-shift-up .portrait-board-wrap {
+            padding: 0.35rem !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit {
+            width: min(100%, calc(100svh - 188px), 690px) !important;
+            height: min(100%, calc(100svh - 202px), 640px) !important;
+            max-width: min(100%, calc(100svh - 188px), 690px) !important;
+            max-height: min(100%, calc(100svh - 202px), 640px) !important;
+            aspect-ratio: 1.06 / 1 !important;
+            gap: 0.34rem !important;
+            padding: 0.45rem !important;
+            margin: auto !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 760px) {
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(660px, 1fr) 305px !important;
+            gap: 0.55rem !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit {
+            width: min(100%, calc(100svh - 172px), 640px) !important;
+            height: min(100%, calc(100svh - 186px), 600px) !important;
+            max-width: min(100%, calc(100svh - 172px), 640px) !important;
+            max-height: min(100%, calc(100svh - 186px), 600px) !important;
+            aspect-ratio: 1.055 / 1 !important;
+            gap: 0.26rem !important;
+            padding: 0.38rem !important;
+          }
+        }
+
+        @media (min-width: 900px) and (max-height: 690px) {
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(610px, 1fr) 292px !important;
+            gap: 0.45rem !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit {
+            width: min(100%, calc(100svh - 160px), 600px) !important;
+            height: min(100%, calc(100svh - 174px), 560px) !important;
+            max-width: min(100%, calc(100svh - 160px), 600px) !important;
+            max-height: min(100%, calc(100svh - 174px), 560px) !important;
+            aspect-ratio: 1.05 / 1 !important;
+            gap: 0.2rem !important;
+            padding: 0.3rem !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
