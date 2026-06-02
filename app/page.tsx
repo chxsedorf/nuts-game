@@ -297,6 +297,18 @@ function comboGraceLeft(combo: number, turnsSinceHand: number) {
   return Math.max(0, COMBO_GRACE_TURNS - turnsSinceHand);
 }
 
+function pressureLabel(emptyCells: number) {
+  if (emptyCells <= 3) return "CRITICAL";
+  if (emptyCells <= 7) return "DANGER";
+  if (emptyCells <= 12) return "TIGHT";
+  return "SAFE";
+}
+
+function handClassName(kind: HandKind | undefined) {
+  if (!kind) return "none";
+  return kind.toLowerCase().replace("_", "-");
+}
+
 function createEmptyBoard(): Board {
   return Array.from({ length: BOARD_CELLS }, () => null);
 }
@@ -336,6 +348,9 @@ export default function Page() {
   const emptyCells = useMemo(() => game.board.filter((cell) => cell === null).length, [game.board]);
   const deckLeft = game.deck.length + 1;
   const graceLeft = comboGraceLeft(game.combo, game.turnsSinceHand);
+  const currentMultiplier = comboMultiplier(game.combo);
+  const pressure = pressureLabel(emptyCells);
+  const lastHandClass = handClassName(game.lastHand?.kind);
 
   function createFreshGame() {
     return {
@@ -492,10 +507,10 @@ export default function Page() {
               <span>N</span>
               <i />
             </div>
-            <p className="eyebrow">Stable Rebuild v4</p>
+            <p className="eyebrow">Stable Rebuild v5</p>
             <h1>NUTS</h1>
             <p className="home-copy">
-              Build rows and columns, chain hands within three turns, and keep the board alive as long as possible.
+              Build rows and columns, chain hands within three turns, clear space, and survive the pressure.
             </p>
 
             <div className="home-stats">
@@ -540,10 +555,22 @@ export default function Page() {
                 <span>Empty</span>
                 <strong>{emptyCells}</strong>
               </div>
-              <div className="metric-card wide">
+              <div className="metric-card">
+                <span>Multiplier</span>
+                <strong>x{currentMultiplier}</strong>
+              </div>
+              <div className="metric-card">
                 <span>Deck</span>
                 <strong>{deckLeft}</strong>
               </div>
+            </div>
+
+            <div className={`pressure-card pressure-${pressure.toLowerCase()}`}>
+              <div>
+                <span>Board Pressure</span>
+                <strong>{pressure}</strong>
+              </div>
+              <p>{emptyCells} spaces left. Clears are the key to survival.</p>
             </div>
 
             <div className={`combo-card ${game.combo > 0 ? "combo-active" : ""}`}>
@@ -581,10 +608,10 @@ export default function Page() {
 
           <section className="board-section">
             <header className="title-area">
-              <p className="eyebrow">Stable Build v4</p>
+              <p className="eyebrow">Stable Build v5</p>
               <h1>NUTS</h1>
               <div className="status-bar">
-                <span className={`hand-badge ${game.lastHand ? "active" : ""}`}>
+                <span className={`hand-badge ${game.lastHand ? "active" : ""} ${lastHandClass}`}>
                   {game.lastHand ? game.lastHand.label : "NO HAND"}
                 </span>
                 <p className="status-text">{game.lastMessage}</p>
@@ -592,7 +619,7 @@ export default function Page() {
             </header>
 
             <div className="board-wrap">
-              <div className="board" aria-label="NUTS board">
+              <div className={`board pressure-${pressure.toLowerCase()}`} aria-label="NUTS board">
                 {game.board.map((cell, index) => {
                   const isHit = game.selectedCells.includes(index);
 
@@ -610,6 +637,11 @@ export default function Page() {
                   );
                 })}
               </div>
+              {game.lastScoreDelta > 0 && (
+                <div key={`score-${game.score}`} className={`score-pop ${lastHandClass}`}>
+                  +{game.lastScoreDelta}
+                </div>
+              )}
             </div>
 
             {game.status === "GAME_OVER" && (
@@ -618,6 +650,7 @@ export default function Page() {
                   <p className="eyebrow">Result</p>
                   <h2>GAME OVER</h2>
                   <p>Final Score: {game.score}</p>
+                  <p>Hands Made: {game.history.length}</p>
                   <p className="result-best">Best Score: {Math.max(savedBestScore, game.bestScore)}</p>
                   <button className="primary-button" type="button" onClick={restart}>
                     Play Again
@@ -953,6 +986,18 @@ export default function Page() {
           background: linear-gradient(180deg, #f7d78e, #c9822f);
         }
 
+        .hand-badge.three {
+          background: linear-gradient(180deg, #ffe9a8, #c9822f);
+        }
+
+        .hand-badge.straight {
+          background: linear-gradient(180deg, #d7f0ff, #4da1c8);
+        }
+
+        .hand-badge.full-house {
+          background: linear-gradient(180deg, #ffd1e8, #b9578c);
+        }
+
         .score {
           font-size: clamp(40px, 5vw, 72px);
           font-weight: 900;
@@ -1011,6 +1056,49 @@ export default function Page() {
 
         .metric-card.wide {
           grid-column: 1 / -1;
+        }
+
+        .pressure-card {
+          border: 1px solid rgba(255, 230, 190, 0.15);
+          border-radius: 20px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.042);
+        }
+
+        .pressure-card div {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .pressure-card span {
+          color: #b7a991;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .pressure-card strong {
+          font-size: 16px;
+          letter-spacing: 0.08em;
+        }
+
+        .pressure-card p {
+          margin: 8px 0 0;
+          color: #b7a991;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.45;
+        }
+
+        .pressure-card.pressure-danger,
+        .pressure-card.pressure-critical {
+          border-color: rgba(236, 100, 74, 0.42);
+          background: rgba(236, 100, 74, 0.09);
+        }
+
+        .pressure-card.pressure-critical strong {
+          color: #ff8f6f;
         }
 
         .combo-card {
@@ -1200,9 +1288,42 @@ export default function Page() {
         }
 
         .board-wrap {
+          position: relative;
           display: grid;
           place-items: center;
           min-height: 0;
+        }
+
+        .score-pop {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          z-index: 4;
+          transform: translate(-50%, -50%);
+          border: 1px solid rgba(255, 230, 190, 0.28);
+          border-radius: 999px;
+          padding: 10px 18px;
+          color: #221407;
+          background: linear-gradient(180deg, #f7d78e, #c9822f);
+          box-shadow: 0 20px 55px rgba(201, 130, 47, 0.28);
+          font-size: clamp(26px, 5vw, 54px);
+          font-weight: 1000;
+          pointer-events: none;
+          animation: scorePop 820ms ease both;
+        }
+
+        .score-pop.straight {
+          background: linear-gradient(180deg, #d7f0ff, #4da1c8);
+        }
+
+        .score-pop.full-house {
+          background: linear-gradient(180deg, #ffd1e8, #b9578c);
+        }
+
+        @keyframes scorePop {
+          0% { opacity: 0; transform: translate(-50%, -40%) scale(0.82); }
+          22% { opacity: 1; transform: translate(-50%, -58%) scale(1.04); }
+          100% { opacity: 0; transform: translate(-50%, -96%) scale(0.92); }
         }
 
         .board {
@@ -1217,6 +1338,12 @@ export default function Page() {
             linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent),
             rgba(0, 0, 0, 0.32);
           border: 1px solid rgba(255, 230, 190, 0.18);
+        }
+
+        .board.pressure-danger,
+        .board.pressure-critical {
+          border-color: rgba(236, 100, 74, 0.35);
+          box-shadow: inset 0 0 40px rgba(236, 100, 74, 0.06), 0 0 38px rgba(236, 100, 74, 0.08);
         }
 
         .cell {
@@ -1540,7 +1667,8 @@ export default function Page() {
 
         .motion-off .cell,
         .motion-off .primary-button,
-        .motion-off .cell.hit {
+        .motion-off .cell.hit,
+        .motion-off .score-pop {
           transition: none;
           animation: none;
         }
@@ -1548,7 +1676,8 @@ export default function Page() {
         @media (prefers-reduced-motion: reduce) {
           .cell,
           .primary-button,
-          .cell.hit {
+          .cell.hit,
+          .score-pop {
             transition: none;
             animation: none;
           }
