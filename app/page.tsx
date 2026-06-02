@@ -201,51 +201,6 @@ function getScoreDetailText(baseScore: number, combo: number, handCount: number)
   return `BASE ${baseScore} ×${combo}`;
 }
 
-function getHandAnimationTone(text: string) {
-  if (text.includes("Full House")) {
-    return {
-      label: "FULL HOUSE",
-      eyebrow: "BIG CLEAR",
-      className: "hand-impact-fullhouse",
-      lineClass: "hand-line-fullhouse",
-    };
-  }
-
-  if (text.includes("Straight")) {
-    return {
-      label: "STRAIGHT",
-      eyebrow: "LINE CLEAR",
-      className: "hand-impact-straight",
-      lineClass: "hand-line-straight",
-    };
-  }
-
-  if (text.includes("Three Card")) {
-    return {
-      label: "THREE CARD",
-      eyebrow: "CARD CLEAR",
-      className: "hand-impact-three",
-      lineClass: "hand-line-three",
-    };
-  }
-
-  if (text.includes("Pair")) {
-    return {
-      label: "PAIR",
-      eyebrow: "SCORE ONLY",
-      className: "hand-impact-pair",
-      lineClass: "hand-line-pair",
-    };
-  }
-
-  return {
-    label: text,
-    eyebrow: "HAND HIT",
-    className: "hand-impact-default",
-    lineClass: "hand-line-default",
-  };
-}
-
 function getComboTier(combo: number) {
   if (combo >= 50) {
     return {
@@ -596,9 +551,8 @@ function getHandRankKey(card: Card): string {
   const rankText = String(card.rank ?? "").trim().toUpperCase();
   const numericValue = Number(card.value);
 
-  // Strong Ace normalization.
-  // Any of these must be treated as the same rank:
-  // rank "A", rank "1", rank "ACE", value 14, value 1.
+  // Normalize Ace completely.
+  // A / 1 / ACE / value 14 / value 1 are all the same rank.
   if (
     rankText === "A" ||
     rankText === "1" ||
@@ -627,10 +581,7 @@ function getStraightOrderValue(card: Card): number {
   if (rankKey === "K") return 13;
 
   const rankValue = Number(rankKey);
-
-  if (Number.isFinite(rankValue)) return rankValue;
-
-  return Number.NaN;
+  return Number.isFinite(rankValue) ? rankValue : Number.NaN;
 }
 
 function getResultKey(result: HandResult): string {
@@ -662,10 +613,8 @@ function isPairCards(cards: LineCard[]): boolean {
 
   const [first, second] = cards;
 
-  // Absolute rule:
-  // Pair is ONLY two identical normalized ranks.
-  // A-A / 1-1 works.
-  // A-2 / 1-2 / 3-2 never works.
+  // Pair is ONLY identical normalized ranks.
+  // A-A works. A-2 / 3-2 / 2-3 never works.
   return getHandRankKey(first.card) === getHandRankKey(second.card);
 }
 
@@ -755,8 +704,8 @@ function evaluateWindow(
 ) {
   const touchesPlacedCard = includesPlaced(windowCards, placedRow, placedCol);
 
-  // Pair must be newly made by the placed card.
-  // Because Pair does not clear, this prevents old pairs from scoring repeatedly.
+  // Pair must include the newly placed card.
+  // Pair does not clear, so old pairs must not score repeatedly.
   if (windowCards.length === 2) {
     if (touchesPlacedCard && isPairCards(windowCards)) {
       addUniqueResult(
@@ -769,7 +718,6 @@ function evaluateWindow(
   }
 
   const canScoreClearHand = touchesPlacedCard || allowCatchUpClearHands;
-
   if (!canScoreClearHand) return;
 
   if (windowCards.length === 3) {
@@ -870,7 +818,7 @@ function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
     ...getAxisSegments(board, row, col, "col"),
   ];
 
-  // 1. Normal rule: score hands touched by the newly placed card.
+  // Normal rule: hands touched by the placed card.
   for (const segment of primarySegments) {
     if (!includesPlaced(segment, row, col)) continue;
 
@@ -881,8 +829,8 @@ function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
     }
   }
 
-  // 2. Safety net: scan the whole board for missed clearable hands only.
-  // Pair is still restricted to the placed card, so old Pair hands cannot repeat-score.
+  // Safety net: catch missed clearable hands only.
+  // Pair is not included here because Pair does not clear and must not repeat-score.
   for (const segment of getAllAxisSegments(board)) {
     const segmentResults = evaluateLine(segment, row, col, true).filter(
       (result) => result.shouldClear
@@ -1540,354 +1488,8 @@ function HomeScreen({
           z-index: 3 !important;
         }
 
-        /* Hand hit impact: Pair is score-only; Three/Straight/Full House clear with bigger impact. */
-        .hand-impact-layer {
-          animation: handLayerFade 1150ms ease-out forwards;
-        }
-
-        .hand-impact-card {
-          position: relative;
-          min-width: min(78%, 360px);
-          max-width: min(88%, 520px);
-          padding: 0.85rem 1.05rem 0.95rem;
-          text-align: center;
-          border: 5px solid #061811;
-          background:
-            linear-gradient(180deg, rgba(15,88,65,0.98), rgba(6,28,22,0.98));
-          color: #fff4cf;
-          box-shadow:
-            8px 8px 0 #020806,
-            0 0 0 2px #f0a536 inset,
-            0 0 0 7px rgba(6,24,17,0.82) inset,
-            0 0 34px rgba(245,208,111,0.18);
-          clip-path: polygon(7% 0, 93% 0, 100% 18%, 100% 82%, 93% 100%, 7% 100%, 0 82%, 0 18%);
-          animation: handImpactSlam 980ms cubic-bezier(.18,.95,.22,1) forwards;
-        }
-
-        .hand-impact-card::before,
-        .hand-impact-card::after {
-          content: "";
-          position: absolute;
-          pointer-events: none;
-          left: 10px;
-          right: 10px;
-          height: 3px;
-          background: #f0a536;
-          box-shadow: 0 2px 0 #4d2a07;
-        }
-
-        .hand-impact-card::before { top: 10px; }
-        .hand-impact-card::after { bottom: 10px; }
-
-        .hand-impact-eyebrow {
-          display: block;
-          margin-bottom: 0.25rem;
-          font-size: 0.62rem;
-          font-weight: 900;
-          letter-spacing: 0.28em;
-          color: #8ff0b8;
-          text-shadow: 2px 2px 0 #03100b;
-        }
-
-        .hand-impact-card strong {
-          display: block;
-          font-family: "Press Start 2P", "Courier New", monospace;
-          font-size: clamp(1.12rem, 3.1vw, 2.25rem);
-          line-height: 1.18;
-          color: #ffef7a;
-          text-shadow:
-            3px 3px 0 #7b3f0b,
-            6px 6px 0 #020806;
-        }
-
-        .hand-impact-score {
-          display: inline-block;
-          margin-top: 0.55rem;
-          padding: 0.18rem 0.55rem;
-          border: 3px solid #061811;
-          background: #f5d06f;
-          color: #6b2509;
-          font-size: 1rem;
-          font-weight: 900;
-          box-shadow: 3px 3px 0 #020806;
-        }
-
-        .hand-impact-combo {
-          display: inline-block;
-          margin-left: 0.45rem;
-          padding: 0.18rem 0.55rem;
-          border: 3px solid #061811;
-          background: #0e3e31;
-          color: #6ee7ff;
-          font-size: 0.9rem;
-          font-weight: 900;
-          box-shadow: 3px 3px 0 #020806;
-        }
-
-        .hand-impact-pair {
-          transform-origin: center;
-          background:
-            linear-gradient(180deg, rgba(16,73,57,0.98), rgba(5,25,20,0.98));
-        }
-
-        .hand-impact-pair strong {
-          color: #8ff0b8;
-          font-size: clamp(1rem, 2.8vw, 1.85rem);
-        }
-
-        .hand-impact-three strong {
-          color: #ffef7a;
-        }
-
-        .hand-impact-straight strong {
-          color: #6ee7ff;
-        }
-
-        .hand-impact-fullhouse {
-          animation: fullHouseImpact 1100ms cubic-bezier(.15,1,.22,1) forwards;
-        }
-
-        .hand-impact-fullhouse strong {
-          color: #fff4cf;
-          text-shadow:
-            0 -2px 0 #fff8d6,
-            3px 3px 0 #d23a2f,
-            7px 7px 0 #020806,
-            0 0 22px rgba(245,208,111,0.75);
-        }
-
-        .hand-impact-line {
-          position: absolute;
-          left: 10%;
-          right: 10%;
-          top: 50%;
-          height: 5px;
-          background: linear-gradient(90deg, transparent, #ffef7a, #6ee7ff, #ffef7a, transparent);
-          box-shadow: 0 0 16px rgba(245,208,111,0.88);
-          transform: translateY(-50%) scaleX(0);
-          animation: handLineSweep 760ms ease-out forwards;
-        }
-
-        .hand-line-pair {
-          opacity: 0.38;
-          height: 3px;
-          background: linear-gradient(90deg, transparent, #8ff0b8, transparent);
-        }
-
-        .hand-line-straight {
-          height: 7px;
-          background: linear-gradient(90deg, transparent, #6ee7ff, #ffef7a, #6ee7ff, transparent);
-          animation-duration: 920ms;
-        }
-
-        .hand-line-fullhouse {
-          height: 9px;
-          background: linear-gradient(90deg, transparent, #d23a2f, #fff4cf, #f0a536, transparent);
-        }
-
-        .hand-sparkle {
-          position: absolute;
-          color: #ffef7a;
-          font-size: 1.4rem;
-          text-shadow: 3px 3px 0 #020806, 0 0 16px rgba(245,208,111,0.88);
-          animation: handSparkle 960ms ease-out forwards;
-        }
-
-        .hand-sparkle-a { left: 18%; top: 24%; }
-        .hand-sparkle-b { right: 18%; top: 30%; animation-delay: 80ms; }
-        .hand-sparkle-c { left: 50%; bottom: 22%; animation-delay: 140ms; }
-
-        .pixel-hit-cell::before {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: -4px;
-          z-index: 25;
-          background:
-            linear-gradient(90deg, transparent, rgba(255,239,122,0.18), transparent),
-            repeating-linear-gradient(45deg, rgba(110,231,255,0.18) 0 4px, transparent 4px 9px);
-          mix-blend-mode: screen;
-          animation: hitCellSweep 720ms ease-out forwards;
-        }
-
-        .pixel-hit-cell::after {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: 5px;
-          z-index: 26;
-          border: 3px solid rgba(255,239,122,0.88);
-          box-shadow: 0 0 12px rgba(110,231,255,0.78), inset 0 0 12px rgba(245,208,111,0.32);
-          animation: hitCellFrame 760ms ease-out forwards;
-        }
-
-        @keyframes handLayerFade {
-          0%, 78% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-
-        @keyframes handImpactSlam {
-          0% { opacity: 0; transform: translateY(18px) scale(0.78) rotate(-3deg); filter: brightness(0.8); }
-          22% { opacity: 1; transform: translateY(-8px) scale(1.11) rotate(2deg); filter: brightness(1.35); }
-          50% { transform: translateY(0) scale(1) rotate(-1deg); filter: brightness(1.04); }
-          100% { opacity: 0; transform: translateY(-18px) scale(0.92) rotate(0deg); filter: brightness(0.9); }
-        }
-
-        @keyframes fullHouseImpact {
-          0% { opacity: 0; transform: scale(0.72) rotate(-5deg); filter: brightness(0.75); }
-          24% { opacity: 1; transform: scale(1.18) rotate(3deg); filter: brightness(1.45); }
-          42% { transform: scale(0.98) rotate(-2deg); }
-          68% { transform: scale(1.05) rotate(1deg); }
-          100% { opacity: 0; transform: scale(0.92) rotate(0deg); }
-        }
-
-        @keyframes handLineSweep {
-          0% { opacity: 0; transform: translateY(-50%) scaleX(0); }
-          18% { opacity: 1; }
-          72% { opacity: 1; transform: translateY(-50%) scaleX(1); }
-          100% { opacity: 0; transform: translateY(-50%) scaleX(1.05); }
-        }
-
-        @keyframes handSparkle {
-          0% { opacity: 0; transform: scale(0.25) rotate(0deg); }
-          24% { opacity: 1; transform: scale(1.4) rotate(14deg); }
-          100% { opacity: 0; transform: scale(0.5) rotate(70deg); }
-        }
-
-        @keyframes hitCellSweep {
-          0% { opacity: 0; transform: translateX(-70%) skewX(-12deg); }
-          26% { opacity: 1; }
-          100% { opacity: 0; transform: translateX(70%) skewX(-12deg); }
-        }
-
-        @keyframes hitCellFrame {
-          0% { opacity: 0; transform: scale(0.72); }
-          24% { opacity: 1; transform: scale(1.08); }
-          100% { opacity: 0; transform: scale(1.22); }
-        }
-
-        @media (max-width: 700px) {
-          .hand-impact-card {
-            min-width: min(86%, 310px);
-            padding: 0.72rem 0.82rem 0.82rem;
-            border-width: 4px;
-          }
-
-          .hand-impact-card strong {
-            font-size: clamp(0.92rem, 4vw, 1.45rem);
-          }
-
-          .hand-impact-eyebrow {
-            font-size: 0.52rem;
-          }
-
-          .hand-impact-score,
-          .hand-impact-combo {
-            font-size: 0.75rem;
-            border-width: 2px;
-          }
-        }
-
-        /* Stability fix: hand hits must not shift the whole play screen. */
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-queue-panel {
-          transform-origin: center center;
-        }
-
-        .hand-impact-layer {
-          contain: layout paint !important;
-        }
-
-        .hand-impact-card {
-          will-change: transform, opacity, filter;
-        }
-
-        @keyframes tinyImpactShake {
-          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
-          20% { transform: translate3d(-1px, 0, 0) rotate(-0.25deg); }
-          40% { transform: translate3d(1px, 0, 0) rotate(0.25deg); }
-          60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
-          80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
-        }
-
-        /* HARD STABILITY FIX: no hand result effect may move the viewport, frame, board, or layout. */
-        .balatro-inspired-bg,
-        .balatro-inspired-bg > *,
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-board-wrap *,
-        .portrait-frame > section,
-        .portrait-frame > header,
-        .portrait-layout-grid {
-          translate: none !important;
-        }
-
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-layout-grid {
-          transform: none !important;
-          animation-name: none !important;
-          transition-property: opacity, filter, background, box-shadow, border-color, color !important;
-        }
-
-        .portrait-board > button {
-          transform: none !important;
-        }
-
-        .pixel-hit-cell,
-        .pixel-hit-cell *,
-        .pixel-hit-cell::before,
-        .pixel-hit-cell::after {
-          transform: none !important;
-        }
-
-        @keyframes boardKick {
-          0%, 100% { transform: none; }
-        }
-
-        @keyframes resultFrameFlash {
-          0%, 100% { transform: none; filter: none; }
-        }
-
-        @keyframes clearShake {
-          0% { opacity: 1; filter: brightness(1); transform: none; }
-          35% { opacity: 1; filter: brightness(1.25); transform: none; }
-          70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
-          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
-        }
-
-        /* Scroll-jump fix: prevent browser scroll anchoring while result effects appear/disappear. */
-        html,
-        body,
-        .nuts-pixel,
-        .balatro-inspired-bg,
-        .home-simple-screen,
-        .portrait-frame,
-        .portrait-layout-grid,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-queue-panel,
-        .gameover-overlay {
-          overflow-anchor: none !important;
-          scroll-behavior: auto !important;
-        }
-
-        .hand-impact-layer,
-        .hand-impact-card,
-        .pixel-hit-cell,
-        .floating-score,
-        .result-score-panel {
-          overflow-anchor: none !important;
-        }
-
-        /* Final viewport stability: board clicks/results must never scroll the page on desktop. */
+        /* Normal gameplay stability reset:
+           no result element may push/scroll the page, and board cells cannot move the layout. */
         @media (min-width: 768px) {
           html,
           body {
@@ -1902,15 +1504,49 @@ function HomeScreen({
           }
         }
 
-        .portrait-board button {
-          scroll-margin: 0 !important;
-          outline: none !important;
+        html,
+        body,
+        .balatro-inspired-bg,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          overflow-anchor: none !important;
+          scroll-behavior: auto !important;
         }
 
+        .portrait-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid {
+          transform: none !important;
+          animation: none !important;
+        }
+
+        .portrait-board button,
         .portrait-board button:focus,
         .portrait-board button:focus-visible {
           outline: none !important;
-          box-shadow: inherit;
+          scroll-margin: 0 !important;
+        }
+
+        .pixel-hit-cell,
+        .pixel-hit-cell *,
+        .pixel-hit-cell::before,
+        .pixel-hit-cell::after {
+          transform: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes clearShake {
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.2); transform: none; }
+          70% { opacity: 0.85; filter: brightness(1.05); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
 `}</style>
 
@@ -2056,7 +1692,6 @@ export default function Home() {
   const [resultPulse, setResultPulse] = useState(false);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
   const [resultBanner, setResultBanner] = useState<ResultBanner | null>(null);
-  const resultScrollLockRef = useRef<number | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -2066,23 +1701,6 @@ export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgmTrackRef = useRef<string>("");
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const html = document.documentElement;
-    const body = document.body;
-    const previousHtmlOverflowAnchor = html.style.overflowAnchor;
-    const previousBodyOverflowAnchor = body.style.overflowAnchor;
-
-    html.style.overflowAnchor = "none";
-    body.style.overflowAnchor = "none";
-
-    return () => {
-      html.style.overflowAnchor = previousHtmlOverflowAnchor;
-      body.style.overflowAnchor = previousBodyOverflowAnchor;
-    };
-  }, []);
 
   useEffect(() => {
     preloadCardImages();
@@ -2100,48 +1718,6 @@ export default function Home() {
   const selectedCard = game.hand[0] ?? null;
 
   const isResolvingHand = highlightCells.size > 0;
-
-  function blurActiveControl() {
-    if (typeof document === "undefined") return;
-
-    const activeElement = document.activeElement;
-
-    if (activeElement instanceof HTMLElement) {
-      activeElement.blur();
-    }
-  }
-
-  function lockScrollPositionDuringResult(duration = 760) {
-    if (typeof window === "undefined") return;
-
-    const scrollingElement = document.scrollingElement || document.documentElement;
-    const lockedY = window.scrollY || scrollingElement.scrollTop || 0;
-    const lockUntil = performance.now() + duration;
-
-    resultScrollLockRef.current = lockedY;
-
-    const keepLocked = () => {
-      if (resultScrollLockRef.current === null) return;
-
-      const targetY = resultScrollLockRef.current;
-
-      if (Math.abs((window.scrollY || scrollingElement.scrollTop || 0) - targetY) > 0.5) {
-        window.scrollTo({ left: 0, top: targetY, behavior: "auto" });
-        scrollingElement.scrollTop = targetY;
-      }
-
-      if (performance.now() < lockUntil) {
-        window.requestAnimationFrame(keepLocked);
-        return;
-      }
-
-      resultScrollLockRef.current = null;
-    };
-
-    window.requestAnimationFrame(keepLocked);
-  }
-
-
 
   function getSafeSfxGain(gainValue: number) {
     if (!soundEnabled || sfxVolume <= 0) return 0;
@@ -2963,10 +2539,6 @@ export default function Home() {
 
     if (nextGameOver) {
       window.setTimeout(() => playSound("gameover"), 220);
-    }
-
-    if (hasHand || resultText === "COMBO BROKEN") {
-      lockScrollPositionDuringResult(820);
     }
 
     setPlacedCell(keyOf(row, col));
@@ -4732,354 +4304,8 @@ export default function Home() {
           z-index: 3 !important;
         }
 
-        /* Hand hit impact: Pair is score-only; Three/Straight/Full House clear with bigger impact. */
-        .hand-impact-layer {
-          animation: handLayerFade 1150ms ease-out forwards;
-        }
-
-        .hand-impact-card {
-          position: relative;
-          min-width: min(78%, 360px);
-          max-width: min(88%, 520px);
-          padding: 0.85rem 1.05rem 0.95rem;
-          text-align: center;
-          border: 5px solid #061811;
-          background:
-            linear-gradient(180deg, rgba(15,88,65,0.98), rgba(6,28,22,0.98));
-          color: #fff4cf;
-          box-shadow:
-            8px 8px 0 #020806,
-            0 0 0 2px #f0a536 inset,
-            0 0 0 7px rgba(6,24,17,0.82) inset,
-            0 0 34px rgba(245,208,111,0.18);
-          clip-path: polygon(7% 0, 93% 0, 100% 18%, 100% 82%, 93% 100%, 7% 100%, 0 82%, 0 18%);
-          animation: handImpactSlam 980ms cubic-bezier(.18,.95,.22,1) forwards;
-        }
-
-        .hand-impact-card::before,
-        .hand-impact-card::after {
-          content: "";
-          position: absolute;
-          pointer-events: none;
-          left: 10px;
-          right: 10px;
-          height: 3px;
-          background: #f0a536;
-          box-shadow: 0 2px 0 #4d2a07;
-        }
-
-        .hand-impact-card::before { top: 10px; }
-        .hand-impact-card::after { bottom: 10px; }
-
-        .hand-impact-eyebrow {
-          display: block;
-          margin-bottom: 0.25rem;
-          font-size: 0.62rem;
-          font-weight: 900;
-          letter-spacing: 0.28em;
-          color: #8ff0b8;
-          text-shadow: 2px 2px 0 #03100b;
-        }
-
-        .hand-impact-card strong {
-          display: block;
-          font-family: "Press Start 2P", "Courier New", monospace;
-          font-size: clamp(1.12rem, 3.1vw, 2.25rem);
-          line-height: 1.18;
-          color: #ffef7a;
-          text-shadow:
-            3px 3px 0 #7b3f0b,
-            6px 6px 0 #020806;
-        }
-
-        .hand-impact-score {
-          display: inline-block;
-          margin-top: 0.55rem;
-          padding: 0.18rem 0.55rem;
-          border: 3px solid #061811;
-          background: #f5d06f;
-          color: #6b2509;
-          font-size: 1rem;
-          font-weight: 900;
-          box-shadow: 3px 3px 0 #020806;
-        }
-
-        .hand-impact-combo {
-          display: inline-block;
-          margin-left: 0.45rem;
-          padding: 0.18rem 0.55rem;
-          border: 3px solid #061811;
-          background: #0e3e31;
-          color: #6ee7ff;
-          font-size: 0.9rem;
-          font-weight: 900;
-          box-shadow: 3px 3px 0 #020806;
-        }
-
-        .hand-impact-pair {
-          transform-origin: center;
-          background:
-            linear-gradient(180deg, rgba(16,73,57,0.98), rgba(5,25,20,0.98));
-        }
-
-        .hand-impact-pair strong {
-          color: #8ff0b8;
-          font-size: clamp(1rem, 2.8vw, 1.85rem);
-        }
-
-        .hand-impact-three strong {
-          color: #ffef7a;
-        }
-
-        .hand-impact-straight strong {
-          color: #6ee7ff;
-        }
-
-        .hand-impact-fullhouse {
-          animation: fullHouseImpact 1100ms cubic-bezier(.15,1,.22,1) forwards;
-        }
-
-        .hand-impact-fullhouse strong {
-          color: #fff4cf;
-          text-shadow:
-            0 -2px 0 #fff8d6,
-            3px 3px 0 #d23a2f,
-            7px 7px 0 #020806,
-            0 0 22px rgba(245,208,111,0.75);
-        }
-
-        .hand-impact-line {
-          position: absolute;
-          left: 10%;
-          right: 10%;
-          top: 50%;
-          height: 5px;
-          background: linear-gradient(90deg, transparent, #ffef7a, #6ee7ff, #ffef7a, transparent);
-          box-shadow: 0 0 16px rgba(245,208,111,0.88);
-          transform: translateY(-50%) scaleX(0);
-          animation: handLineSweep 760ms ease-out forwards;
-        }
-
-        .hand-line-pair {
-          opacity: 0.38;
-          height: 3px;
-          background: linear-gradient(90deg, transparent, #8ff0b8, transparent);
-        }
-
-        .hand-line-straight {
-          height: 7px;
-          background: linear-gradient(90deg, transparent, #6ee7ff, #ffef7a, #6ee7ff, transparent);
-          animation-duration: 920ms;
-        }
-
-        .hand-line-fullhouse {
-          height: 9px;
-          background: linear-gradient(90deg, transparent, #d23a2f, #fff4cf, #f0a536, transparent);
-        }
-
-        .hand-sparkle {
-          position: absolute;
-          color: #ffef7a;
-          font-size: 1.4rem;
-          text-shadow: 3px 3px 0 #020806, 0 0 16px rgba(245,208,111,0.88);
-          animation: handSparkle 960ms ease-out forwards;
-        }
-
-        .hand-sparkle-a { left: 18%; top: 24%; }
-        .hand-sparkle-b { right: 18%; top: 30%; animation-delay: 80ms; }
-        .hand-sparkle-c { left: 50%; bottom: 22%; animation-delay: 140ms; }
-
-        .pixel-hit-cell::before {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: -4px;
-          z-index: 25;
-          background:
-            linear-gradient(90deg, transparent, rgba(255,239,122,0.18), transparent),
-            repeating-linear-gradient(45deg, rgba(110,231,255,0.18) 0 4px, transparent 4px 9px);
-          mix-blend-mode: screen;
-          animation: hitCellSweep 720ms ease-out forwards;
-        }
-
-        .pixel-hit-cell::after {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: 5px;
-          z-index: 26;
-          border: 3px solid rgba(255,239,122,0.88);
-          box-shadow: 0 0 12px rgba(110,231,255,0.78), inset 0 0 12px rgba(245,208,111,0.32);
-          animation: hitCellFrame 760ms ease-out forwards;
-        }
-
-        @keyframes handLayerFade {
-          0%, 78% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-
-        @keyframes handImpactSlam {
-          0% { opacity: 0; transform: translateY(18px) scale(0.78) rotate(-3deg); filter: brightness(0.8); }
-          22% { opacity: 1; transform: translateY(-8px) scale(1.11) rotate(2deg); filter: brightness(1.35); }
-          50% { transform: translateY(0) scale(1) rotate(-1deg); filter: brightness(1.04); }
-          100% { opacity: 0; transform: translateY(-18px) scale(0.92) rotate(0deg); filter: brightness(0.9); }
-        }
-
-        @keyframes fullHouseImpact {
-          0% { opacity: 0; transform: scale(0.72) rotate(-5deg); filter: brightness(0.75); }
-          24% { opacity: 1; transform: scale(1.18) rotate(3deg); filter: brightness(1.45); }
-          42% { transform: scale(0.98) rotate(-2deg); }
-          68% { transform: scale(1.05) rotate(1deg); }
-          100% { opacity: 0; transform: scale(0.92) rotate(0deg); }
-        }
-
-        @keyframes handLineSweep {
-          0% { opacity: 0; transform: translateY(-50%) scaleX(0); }
-          18% { opacity: 1; }
-          72% { opacity: 1; transform: translateY(-50%) scaleX(1); }
-          100% { opacity: 0; transform: translateY(-50%) scaleX(1.05); }
-        }
-
-        @keyframes handSparkle {
-          0% { opacity: 0; transform: scale(0.25) rotate(0deg); }
-          24% { opacity: 1; transform: scale(1.4) rotate(14deg); }
-          100% { opacity: 0; transform: scale(0.5) rotate(70deg); }
-        }
-
-        @keyframes hitCellSweep {
-          0% { opacity: 0; transform: translateX(-70%) skewX(-12deg); }
-          26% { opacity: 1; }
-          100% { opacity: 0; transform: translateX(70%) skewX(-12deg); }
-        }
-
-        @keyframes hitCellFrame {
-          0% { opacity: 0; transform: scale(0.72); }
-          24% { opacity: 1; transform: scale(1.08); }
-          100% { opacity: 0; transform: scale(1.22); }
-        }
-
-        @media (max-width: 700px) {
-          .hand-impact-card {
-            min-width: min(86%, 310px);
-            padding: 0.72rem 0.82rem 0.82rem;
-            border-width: 4px;
-          }
-
-          .hand-impact-card strong {
-            font-size: clamp(0.92rem, 4vw, 1.45rem);
-          }
-
-          .hand-impact-eyebrow {
-            font-size: 0.52rem;
-          }
-
-          .hand-impact-score,
-          .hand-impact-combo {
-            font-size: 0.75rem;
-            border-width: 2px;
-          }
-        }
-
-        /* Stability fix: hand hits must not shift the whole play screen. */
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-queue-panel {
-          transform-origin: center center;
-        }
-
-        .hand-impact-layer {
-          contain: layout paint !important;
-        }
-
-        .hand-impact-card {
-          will-change: transform, opacity, filter;
-        }
-
-        @keyframes tinyImpactShake {
-          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
-          20% { transform: translate3d(-1px, 0, 0) rotate(-0.25deg); }
-          40% { transform: translate3d(1px, 0, 0) rotate(0.25deg); }
-          60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
-          80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
-        }
-
-        /* HARD STABILITY FIX: no hand result effect may move the viewport, frame, board, or layout. */
-        .balatro-inspired-bg,
-        .balatro-inspired-bg > *,
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-board-wrap *,
-        .portrait-frame > section,
-        .portrait-frame > header,
-        .portrait-layout-grid {
-          translate: none !important;
-        }
-
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-layout-grid {
-          transform: none !important;
-          animation-name: none !important;
-          transition-property: opacity, filter, background, box-shadow, border-color, color !important;
-        }
-
-        .portrait-board > button {
-          transform: none !important;
-        }
-
-        .pixel-hit-cell,
-        .pixel-hit-cell *,
-        .pixel-hit-cell::before,
-        .pixel-hit-cell::after {
-          transform: none !important;
-        }
-
-        @keyframes boardKick {
-          0%, 100% { transform: none; }
-        }
-
-        @keyframes resultFrameFlash {
-          0%, 100% { transform: none; filter: none; }
-        }
-
-        @keyframes clearShake {
-          0% { opacity: 1; filter: brightness(1); transform: none; }
-          35% { opacity: 1; filter: brightness(1.25); transform: none; }
-          70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
-          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
-        }
-
-        /* Scroll-jump fix: prevent browser scroll anchoring while result effects appear/disappear. */
-        html,
-        body,
-        .nuts-pixel,
-        .balatro-inspired-bg,
-        .home-simple-screen,
-        .portrait-frame,
-        .portrait-layout-grid,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-queue-panel,
-        .gameover-overlay {
-          overflow-anchor: none !important;
-          scroll-behavior: auto !important;
-        }
-
-        .hand-impact-layer,
-        .hand-impact-card,
-        .pixel-hit-cell,
-        .floating-score,
-        .result-score-panel {
-          overflow-anchor: none !important;
-        }
-
-        /* Final viewport stability: board clicks/results must never scroll the page on desktop. */
+        /* Normal gameplay stability reset:
+           no result element may push/scroll the page, and board cells cannot move the layout. */
         @media (min-width: 768px) {
           html,
           body {
@@ -5094,15 +4320,49 @@ export default function Home() {
           }
         }
 
-        .portrait-board button {
-          scroll-margin: 0 !important;
-          outline: none !important;
+        html,
+        body,
+        .balatro-inspired-bg,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          overflow-anchor: none !important;
+          scroll-behavior: auto !important;
         }
 
+        .portrait-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid {
+          transform: none !important;
+          animation: none !important;
+        }
+
+        .portrait-board button,
         .portrait-board button:focus,
         .portrait-board button:focus-visible {
           outline: none !important;
-          box-shadow: inherit;
+          scroll-margin: 0 !important;
+        }
+
+        .pixel-hit-cell,
+        .pixel-hit-cell *,
+        .pixel-hit-cell::before,
+        .pixel-hit-cell::after {
+          transform: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes clearShake {
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.2); transform: none; }
+          70% { opacity: 0.85; filter: brightness(1.05); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
 `}</style>
 
@@ -5168,38 +4428,7 @@ export default function Home() {
               <div className="flex min-h-0 flex-col overflow-visible md:overflow-hidden">
                 <section className="portrait-board-wrap pixel-hard relative flex min-h-0 flex-1 flex-col overflow-hidden border-[5px] border-[#061811] bg-[#0b2f27] p-1.5 shadow-[5px_5px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset] sm:border-[6px] sm:p-2 md:shadow-[7px_7px_0_#04120d,0_0_0_2px_#255d48_inset,0_0_24px_rgba(0,0,0,0.35)_inset]">
                   <div className="portrait-board duel-board-solo-fit pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
-                    {resultBanner && (
-                      <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
-                        <div
-                          className="rounded-xl border-[4px] border-[#061811] bg-[#f5d06f]/92 px-3 py-2 text-right text-[#061811] shadow-[4px_4px_0_#03100b] backdrop-blur-[1px]"
-                          style={{ animation: "targetBanner 160ms ease-out" }}
-                        >
-                          <p className="text-[9px] font-black tracking-[0.22em] opacity-75">CLAIM</p>
-                          <p className="mt-0.5 max-w-[220px] truncate text-lg font-black leading-tight">{resultBanner.text}</p>
-                        </div>
-                      </div>
-                    )}
 
-                                        {resultBanner && !resultBanner.isBreak && (() => {
-                      const handTone = getHandAnimationTone(resultBanner.text);
-
-                      return (
-                        <div className="hand-impact-layer pointer-events-none absolute inset-0 z-50 grid place-items-center">
-                          <div className={`hand-impact-card ${handTone.className}`}>
-                            <span className="hand-impact-eyebrow">{handTone.eyebrow}</span>
-                            <strong>{handTone.label}</strong>
-                            <span className="hand-impact-score">+{resultBanner.score}</span>
-                            {resultBanner.comboNext && (
-                              <span className="hand-impact-combo">COMBO x{resultBanner.comboNext}</span>
-                            )}
-                          </div>
-                          <span className={`hand-impact-line ${handTone.lineClass}`} />
-                          <span className="hand-sparkle hand-sparkle-a">✦</span>
-                          <span className="hand-sparkle hand-sparkle-b">◆</span>
-                          <span className="hand-sparkle hand-sparkle-c">✦</span>
-                        </div>
-                      );
-                    })()}
 
                     {duel.board.map((boardRow, rowIndex) =>
                       boardRow.map((cell, colIndex) => {
@@ -5228,7 +4457,7 @@ export default function Home() {
                                 : "slot-surface border-[#061811] shadow-[3px_3px_0_#04120d]",
                               canPlace ? "cursor-pointer hover:-translate-y-1 hover:brightness-125" : "",
                               ownerGlow,
-                              isPlaced ? "scale-[1.03]" : "",
+                              isPlaced ? "" : "",
                               isHit ? "pixel-hit-cell z-20 bg-transparent shadow-[0_0_0_2px_#f5d06f,0_0_10px_rgba(255,239,122,0.38),4px_4px_0_#000]" : "",
                               isClearing ? "opacity-80" : "",
                             ].join(" ")}
@@ -5373,9 +4602,6 @@ export default function Home() {
 
   const currentComboTier = getComboTier(game.combo);
   const resultComboTier = resultBanner ? getComboTier(resultBanner.combo) : null;
-  const resultHandTone = resultBanner && !resultBanner.isBreak
-    ? getHandAnimationTone(resultBanner.text)
-    : null;
   const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
 
   return (
@@ -5423,10 +4649,10 @@ export default function Home() {
         }
 
         @keyframes clearShake {
-          0% { opacity: 1; filter: brightness(1); transform: none; }
-          35% { opacity: 1; filter: brightness(1.35); transform: none; }
-          70% { opacity: 0.85; filter: brightness(1.1); transform: none; }
-          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
+          0% { transform: rotate(-2deg) scale(1); opacity: 1; filter: brightness(1); }
+          35% { transform: rotate(3deg) scale(1.12); opacity: 1; filter: brightness(1.35); }
+          70% { transform: rotate(-4deg) scale(1.04); opacity: 0.85; filter: brightness(1.1); }
+          100% { transform: rotate(-2deg) scale(0.78); opacity: 0.25; filter: brightness(0.7); }
         }
 
         @keyframes resultBounce {
@@ -5772,10 +4998,6 @@ export default function Home() {
 
         @keyframes boardKick {
           0%, 100% { transform: none; }
-        }
-
-        @keyframes resultFrameFlash {
-          0%, 100% { filter: none; transform: none; }
         }
 
         @keyframes resultBurst {
@@ -7485,354 +6707,8 @@ export default function Home() {
           z-index: 3 !important;
         }
 
-        /* Hand hit impact: Pair is score-only; Three/Straight/Full House clear with bigger impact. */
-        .hand-impact-layer {
-          animation: handLayerFade 1150ms ease-out forwards;
-        }
-
-        .hand-impact-card {
-          position: relative;
-          min-width: min(78%, 360px);
-          max-width: min(88%, 520px);
-          padding: 0.85rem 1.05rem 0.95rem;
-          text-align: center;
-          border: 5px solid #061811;
-          background:
-            linear-gradient(180deg, rgba(15,88,65,0.98), rgba(6,28,22,0.98));
-          color: #fff4cf;
-          box-shadow:
-            8px 8px 0 #020806,
-            0 0 0 2px #f0a536 inset,
-            0 0 0 7px rgba(6,24,17,0.82) inset,
-            0 0 34px rgba(245,208,111,0.18);
-          clip-path: polygon(7% 0, 93% 0, 100% 18%, 100% 82%, 93% 100%, 7% 100%, 0 82%, 0 18%);
-          animation: handImpactSlam 980ms cubic-bezier(.18,.95,.22,1) forwards;
-        }
-
-        .hand-impact-card::before,
-        .hand-impact-card::after {
-          content: "";
-          position: absolute;
-          pointer-events: none;
-          left: 10px;
-          right: 10px;
-          height: 3px;
-          background: #f0a536;
-          box-shadow: 0 2px 0 #4d2a07;
-        }
-
-        .hand-impact-card::before { top: 10px; }
-        .hand-impact-card::after { bottom: 10px; }
-
-        .hand-impact-eyebrow {
-          display: block;
-          margin-bottom: 0.25rem;
-          font-size: 0.62rem;
-          font-weight: 900;
-          letter-spacing: 0.28em;
-          color: #8ff0b8;
-          text-shadow: 2px 2px 0 #03100b;
-        }
-
-        .hand-impact-card strong {
-          display: block;
-          font-family: "Press Start 2P", "Courier New", monospace;
-          font-size: clamp(1.12rem, 3.1vw, 2.25rem);
-          line-height: 1.18;
-          color: #ffef7a;
-          text-shadow:
-            3px 3px 0 #7b3f0b,
-            6px 6px 0 #020806;
-        }
-
-        .hand-impact-score {
-          display: inline-block;
-          margin-top: 0.55rem;
-          padding: 0.18rem 0.55rem;
-          border: 3px solid #061811;
-          background: #f5d06f;
-          color: #6b2509;
-          font-size: 1rem;
-          font-weight: 900;
-          box-shadow: 3px 3px 0 #020806;
-        }
-
-        .hand-impact-combo {
-          display: inline-block;
-          margin-left: 0.45rem;
-          padding: 0.18rem 0.55rem;
-          border: 3px solid #061811;
-          background: #0e3e31;
-          color: #6ee7ff;
-          font-size: 0.9rem;
-          font-weight: 900;
-          box-shadow: 3px 3px 0 #020806;
-        }
-
-        .hand-impact-pair {
-          transform-origin: center;
-          background:
-            linear-gradient(180deg, rgba(16,73,57,0.98), rgba(5,25,20,0.98));
-        }
-
-        .hand-impact-pair strong {
-          color: #8ff0b8;
-          font-size: clamp(1rem, 2.8vw, 1.85rem);
-        }
-
-        .hand-impact-three strong {
-          color: #ffef7a;
-        }
-
-        .hand-impact-straight strong {
-          color: #6ee7ff;
-        }
-
-        .hand-impact-fullhouse {
-          animation: fullHouseImpact 1100ms cubic-bezier(.15,1,.22,1) forwards;
-        }
-
-        .hand-impact-fullhouse strong {
-          color: #fff4cf;
-          text-shadow:
-            0 -2px 0 #fff8d6,
-            3px 3px 0 #d23a2f,
-            7px 7px 0 #020806,
-            0 0 22px rgba(245,208,111,0.75);
-        }
-
-        .hand-impact-line {
-          position: absolute;
-          left: 10%;
-          right: 10%;
-          top: 50%;
-          height: 5px;
-          background: linear-gradient(90deg, transparent, #ffef7a, #6ee7ff, #ffef7a, transparent);
-          box-shadow: 0 0 16px rgba(245,208,111,0.88);
-          transform: translateY(-50%) scaleX(0);
-          animation: handLineSweep 760ms ease-out forwards;
-        }
-
-        .hand-line-pair {
-          opacity: 0.38;
-          height: 3px;
-          background: linear-gradient(90deg, transparent, #8ff0b8, transparent);
-        }
-
-        .hand-line-straight {
-          height: 7px;
-          background: linear-gradient(90deg, transparent, #6ee7ff, #ffef7a, #6ee7ff, transparent);
-          animation-duration: 920ms;
-        }
-
-        .hand-line-fullhouse {
-          height: 9px;
-          background: linear-gradient(90deg, transparent, #d23a2f, #fff4cf, #f0a536, transparent);
-        }
-
-        .hand-sparkle {
-          position: absolute;
-          color: #ffef7a;
-          font-size: 1.4rem;
-          text-shadow: 3px 3px 0 #020806, 0 0 16px rgba(245,208,111,0.88);
-          animation: handSparkle 960ms ease-out forwards;
-        }
-
-        .hand-sparkle-a { left: 18%; top: 24%; }
-        .hand-sparkle-b { right: 18%; top: 30%; animation-delay: 80ms; }
-        .hand-sparkle-c { left: 50%; bottom: 22%; animation-delay: 140ms; }
-
-        .pixel-hit-cell::before {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: -4px;
-          z-index: 25;
-          background:
-            linear-gradient(90deg, transparent, rgba(255,239,122,0.18), transparent),
-            repeating-linear-gradient(45deg, rgba(110,231,255,0.18) 0 4px, transparent 4px 9px);
-          mix-blend-mode: screen;
-          animation: hitCellSweep 720ms ease-out forwards;
-        }
-
-        .pixel-hit-cell::after {
-          content: "";
-          pointer-events: none;
-          position: absolute;
-          inset: 5px;
-          z-index: 26;
-          border: 3px solid rgba(255,239,122,0.88);
-          box-shadow: 0 0 12px rgba(110,231,255,0.78), inset 0 0 12px rgba(245,208,111,0.32);
-          animation: hitCellFrame 760ms ease-out forwards;
-        }
-
-        @keyframes handLayerFade {
-          0%, 78% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-
-        @keyframes handImpactSlam {
-          0% { opacity: 0; transform: translateY(18px) scale(0.78) rotate(-3deg); filter: brightness(0.8); }
-          22% { opacity: 1; transform: translateY(-8px) scale(1.11) rotate(2deg); filter: brightness(1.35); }
-          50% { transform: translateY(0) scale(1) rotate(-1deg); filter: brightness(1.04); }
-          100% { opacity: 0; transform: translateY(-18px) scale(0.92) rotate(0deg); filter: brightness(0.9); }
-        }
-
-        @keyframes fullHouseImpact {
-          0% { opacity: 0; transform: scale(0.72) rotate(-5deg); filter: brightness(0.75); }
-          24% { opacity: 1; transform: scale(1.18) rotate(3deg); filter: brightness(1.45); }
-          42% { transform: scale(0.98) rotate(-2deg); }
-          68% { transform: scale(1.05) rotate(1deg); }
-          100% { opacity: 0; transform: scale(0.92) rotate(0deg); }
-        }
-
-        @keyframes handLineSweep {
-          0% { opacity: 0; transform: translateY(-50%) scaleX(0); }
-          18% { opacity: 1; }
-          72% { opacity: 1; transform: translateY(-50%) scaleX(1); }
-          100% { opacity: 0; transform: translateY(-50%) scaleX(1.05); }
-        }
-
-        @keyframes handSparkle {
-          0% { opacity: 0; transform: scale(0.25) rotate(0deg); }
-          24% { opacity: 1; transform: scale(1.4) rotate(14deg); }
-          100% { opacity: 0; transform: scale(0.5) rotate(70deg); }
-        }
-
-        @keyframes hitCellSweep {
-          0% { opacity: 0; transform: translateX(-70%) skewX(-12deg); }
-          26% { opacity: 1; }
-          100% { opacity: 0; transform: translateX(70%) skewX(-12deg); }
-        }
-
-        @keyframes hitCellFrame {
-          0% { opacity: 0; transform: scale(0.72); }
-          24% { opacity: 1; transform: scale(1.08); }
-          100% { opacity: 0; transform: scale(1.22); }
-        }
-
-        @media (max-width: 700px) {
-          .hand-impact-card {
-            min-width: min(86%, 310px);
-            padding: 0.72rem 0.82rem 0.82rem;
-            border-width: 4px;
-          }
-
-          .hand-impact-card strong {
-            font-size: clamp(0.92rem, 4vw, 1.45rem);
-          }
-
-          .hand-impact-eyebrow {
-            font-size: 0.52rem;
-          }
-
-          .hand-impact-score,
-          .hand-impact-combo {
-            font-size: 0.75rem;
-            border-width: 2px;
-          }
-        }
-
-        /* Stability fix: hand hits must not shift the whole play screen. */
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-queue-panel {
-          transform-origin: center center;
-        }
-
-        .hand-impact-layer {
-          contain: layout paint !important;
-        }
-
-        .hand-impact-card {
-          will-change: transform, opacity, filter;
-        }
-
-        @keyframes tinyImpactShake {
-          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
-          20% { transform: translate3d(-1px, 0, 0) rotate(-0.25deg); }
-          40% { transform: translate3d(1px, 0, 0) rotate(0.25deg); }
-          60% { transform: translate3d(-1px, 0, 0) rotate(-0.12deg); }
-          80% { transform: translate3d(1px, 0, 0) rotate(0.12deg); }
-        }
-
-        /* HARD STABILITY FIX: no hand result effect may move the viewport, frame, board, or layout. */
-        .balatro-inspired-bg,
-        .balatro-inspired-bg > *,
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-board-wrap *,
-        .portrait-frame > section,
-        .portrait-frame > header,
-        .portrait-layout-grid {
-          translate: none !important;
-        }
-
-        .portrait-frame,
-        .table-frame,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-layout-grid {
-          transform: none !important;
-          animation-name: none !important;
-          transition-property: opacity, filter, background, box-shadow, border-color, color !important;
-        }
-
-        .portrait-board > button {
-          transform: none !important;
-        }
-
-        .pixel-hit-cell,
-        .pixel-hit-cell *,
-        .pixel-hit-cell::before,
-        .pixel-hit-cell::after {
-          transform: none !important;
-        }
-
-        @keyframes boardKick {
-          0%, 100% { transform: none; }
-        }
-
-        @keyframes resultFrameFlash {
-          0%, 100% { transform: none; filter: none; }
-        }
-
-        @keyframes clearShake {
-          0% { opacity: 1; filter: brightness(1); transform: none; }
-          35% { opacity: 1; filter: brightness(1.25); transform: none; }
-          70% { opacity: 0.8; filter: brightness(1.05); transform: none; }
-          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
-        }
-
-        /* Scroll-jump fix: prevent browser scroll anchoring while result effects appear/disappear. */
-        html,
-        body,
-        .nuts-pixel,
-        .balatro-inspired-bg,
-        .home-simple-screen,
-        .portrait-frame,
-        .portrait-layout-grid,
-        .portrait-board-wrap,
-        .portrait-board,
-        .portrait-queue-panel,
-        .gameover-overlay {
-          overflow-anchor: none !important;
-          scroll-behavior: auto !important;
-        }
-
-        .hand-impact-layer,
-        .hand-impact-card,
-        .pixel-hit-cell,
-        .floating-score,
-        .result-score-panel {
-          overflow-anchor: none !important;
-        }
-
-        /* Final viewport stability: board clicks/results must never scroll the page on desktop. */
+        /* Normal gameplay stability reset:
+           no result element may push/scroll the page, and board cells cannot move the layout. */
         @media (min-width: 768px) {
           html,
           body {
@@ -7847,15 +6723,49 @@ export default function Home() {
           }
         }
 
-        .portrait-board button {
-          scroll-margin: 0 !important;
-          outline: none !important;
+        html,
+        body,
+        .balatro-inspired-bg,
+        .portrait-frame,
+        .portrait-layout-grid,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-queue-panel {
+          overflow-anchor: none !important;
+          scroll-behavior: auto !important;
         }
 
+        .portrait-frame,
+        .portrait-board-wrap,
+        .portrait-board,
+        .portrait-layout-grid {
+          transform: none !important;
+          animation: none !important;
+        }
+
+        .portrait-board button,
         .portrait-board button:focus,
         .portrait-board button:focus-visible {
           outline: none !important;
-          box-shadow: inherit;
+          scroll-margin: 0 !important;
+        }
+
+        .pixel-hit-cell,
+        .pixel-hit-cell *,
+        .pixel-hit-cell::before,
+        .pixel-hit-cell::after {
+          transform: none !important;
+        }
+
+        @keyframes boardKick {
+          0%, 100% { transform: none; }
+        }
+
+        @keyframes clearShake {
+          0% { opacity: 1; filter: brightness(1); transform: none; }
+          35% { opacity: 1; filter: brightness(1.2); transform: none; }
+          70% { opacity: 0.85; filter: brightness(1.05); transform: none; }
+          100% { opacity: 0.25; filter: brightness(0.7); transform: none; }
         }
 `}</style>
 
@@ -7927,15 +6837,6 @@ export default function Home() {
         </div>
       </div>
 
-      {floatingScores.map((score) => (
-        <div
-          key={score.id}
-          className="pointer-events-none fixed left-1/2 top-[12%] z-[35] -translate-x-1/2 rounded-xl border-[4px] border-[#061811] bg-[#f5d06f]/95 px-4 py-2 text-3xl font-black text-[#b83224] shadow-[5px_5px_0_#03100b]"
-          style={{ animation: "floatScore 900ms ease-out forwards" }}
-        >
-          +{score.value}
-        </div>
-      ))}
 
       {game.isGameOver && (
         <div className="gameover-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/82 px-3 py-4 sm:px-4">
@@ -8025,7 +6926,7 @@ export default function Home() {
       <div className="portrait-outer relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1920px] flex-col overflow-visible px-1.5 py-1.5 md:h-screen md:overflow-hidden">
         <section
           className="portrait-frame table-frame pixel-hard relative flex min-h-0 flex-1 flex-col overflow-visible border-[5px] border-[#061811] p-1.5 shadow-[7px_7px_0_#03100b] backdrop-blur-sm sm:border-[6px] sm:p-2 md:overflow-hidden md:shadow-[10px_10px_0_#03100b]"
-          style={undefined}
+          
         >
           <header className="pixel-hard pixel-inner relative z-10 mb-2 grid shrink-0 gap-2 overflow-hidden border-[4px] border-[#07160f] bg-[#0a3329] px-2.5 py-2 shadow-[5px_5px_0_#03100b] sm:px-4 md:grid-cols-[minmax(230px,0.8fr)_minmax(420px,1.9fr)] md:items-center md:shadow-[6px_6px_0_#03100b]">
             <div className="pointer-events-none absolute left-3 right-3 top-2 h-[3px] bg-[#f0b342] shadow-[0_2px_0_#4d2a07]" />
@@ -8083,56 +6984,10 @@ export default function Home() {
                 </div>
 
                 <div className="portrait-board pixel-hard relative mx-auto grid aspect-square min-h-0 w-full max-w-[min(94vw,560px)] flex-none grid-cols-5 grid-rows-5 gap-1 border-[5px] border-[#061811] bg-[#09231d] p-1.5 shadow-[inset_0_0_0_2px_#1a4e3e,inset_0_0_38px_rgba(0,0,0,0.58),5px_5px_0_#04120d] sm:gap-1.5 sm:p-2 md:max-h-full md:max-w-none md:flex-1 lg:aspect-auto lg:max-h-none xl:gap-2 xl:p-3">
-                  {resultBanner && (
-                    <div className="pointer-events-none absolute right-2 top-2 z-40 max-w-[260px] sm:right-3 sm:top-3">
-                      <div
-                        className={[
-                          "rounded-xl border-[4px] px-3 py-2 text-right shadow-[4px_4px_0_#03100b] backdrop-blur-[1px]",
-                          resultBanner.isBreak
-                            ? "border-[#061811] bg-[#d23a2f]/90 text-white"
-                            : `border-[#061811] bg-[#f5d06f]/92 text-[#061811]`,
-                        ].join(" ")}
-                        style={{ animation: "targetBanner 160ms ease-out" }}
-                      >
-                        <p className="text-[9px] font-black tracking-[0.22em] opacity-75">
-                          {resultBanner.isBreak ? "MISS" : "HAND HIT"}
-                        </p>
-                        <p className="mt-0.5 max-w-[220px] truncate text-lg font-black leading-tight">
-                          {resultBanner.text}
-                        </p>
-                        {!resultBanner.isBreak && (
-                          <div className="mt-1 flex items-center justify-end gap-1.5 text-xs font-black">
-                            <span className="rounded-md border-[2px] border-[#061811] bg-[#102a25] px-2 py-0.5 text-[#f5d06f] shadow-[2px_2px_0_#03100b]">
-                              +{resultBanner.score}
-                            </span>
-                            <span className="rounded-md border-[2px] border-[#061811] bg-[#102a25] px-2 py-0.5 text-[#6ee7ff] shadow-[2px_2px_0_#03100b]">
-                              x{resultBanner.combo}
-                            </span>
-                            {resultBanner.comboNext && (
-                              <span className="rounded-md border-[2px] border-[#061811] bg-[#07160f] px-2 py-0.5 text-[#ffef7a] shadow-[2px_2px_0_#03100b]">
-                                → x{resultBanner.comboNext}
-                              </span>
-                            )}
+
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
-
-                  {resultHandTone && resultBanner && (
-                    <div className="hand-impact-layer pointer-events-none absolute inset-0 z-50 grid place-items-center">
-                      <div className={`hand-impact-card ${resultHandTone.className}`}>
-                        <span className="hand-impact-eyebrow">{resultHandTone.eyebrow}</span>
-                        <strong>{resultHandTone.label}</strong>
-                        <span className="hand-impact-score">+{resultBanner.score}</span>
-                        {resultBanner.comboNext && (
-                          <span className="hand-impact-combo">COMBO x{resultBanner.comboNext}</span>
-                        )}
-                      </div>
-                      <span className={`hand-impact-line ${resultHandTone.lineClass}`} />
-                      <span className="hand-sparkle hand-sparkle-a">✦</span>
-                      <span className="hand-sparkle hand-sparkle-b">◆</span>
-                      <span className="hand-sparkle hand-sparkle-c">✦</span>
                     </div>
                   )}
 
@@ -8158,7 +7013,6 @@ export default function Home() {
                           disabled={!!cell || game.isGameOver}
                           tabIndex={-1}
                           onMouseDown={(event) => event.preventDefault()}
-                          onPointerDown={() => lockScrollPositionDuringResult(900)}
                           className={[
                             "pixel-hard-sm relative h-full min-h-0 overflow-hidden border-[3px] transition duration-200",
                             cell
