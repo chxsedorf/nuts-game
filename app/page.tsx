@@ -3482,6 +3482,115 @@ export default function Home() {
           }
         }
 
+
+        /* PC DUEL stronger board scale: larger, but keep all 4 corners visible. */
+        @media (min-width: 1024px) and (pointer: fine) {
+          .duel-shift-up {
+            transform: translateY(-30px) !important;
+            min-height: calc(100svh + 30px) !important;
+            height: calc(100svh + 30px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 16px) !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-frame > header {
+            margin-bottom: 0.24rem !important;
+            padding-block: 0.34rem !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(860px, 1fr) 280px !important;
+            gap: 0.45rem !important;
+            height: calc(100svh - 94px) !important;
+            max-height: calc(100svh - 94px) !important;
+            align-items: stretch !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-board-wrap {
+            padding: 0.25rem !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit,
+          .duel-shift-up .portrait-board {
+            width: min(100%, calc(100svh - 104px), 820px) !important;
+            height: min(100%, calc(100svh - 116px), 774px) !important;
+            max-width: min(100%, calc(100svh - 104px), 820px) !important;
+            max-height: min(100%, calc(100svh - 116px), 774px) !important;
+            aspect-ratio: 1.06 / 1 !important;
+            flex: 0 0 auto !important;
+            margin: auto !important;
+            gap: 0.4rem !important;
+            padding: 0.42rem !important;
+            border-width: 5px !important;
+          }
+
+          .duel-shift-up .portrait-side,
+          .duel-shift-up .portrait-queue-panel {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel {
+            gap: 0.34rem !important;
+            padding: 0.35rem !important;
+          }
+
+          .duel-shift-up .queue-card-well {
+            padding: 0.35rem !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            height: 132px !important;
+            max-height: 132px !important;
+          }
+        }
+
+        @media (min-width: 1024px) and (pointer: fine) and (max-height: 760px) {
+          .duel-shift-up {
+            transform: translateY(-36px) !important;
+            min-height: calc(100svh + 36px) !important;
+            height: calc(100svh + 36px) !important;
+          }
+
+          .duel-shift-up .portrait-frame {
+            height: calc(100svh + 22px) !important;
+          }
+
+          .duel-shift-up .portrait-stack-layout {
+            grid-template-columns: minmax(800px, 1fr) 268px !important;
+            height: calc(100svh - 82px) !important;
+            max-height: calc(100svh - 82px) !important;
+          }
+
+          .duel-shift-up .duel-board-solo-fit,
+          .duel-shift-up .portrait-board {
+            width: min(100%, calc(100svh - 90px), 760px) !important;
+            height: min(100%, calc(100svh - 104px), 716px) !important;
+            max-width: min(100%, calc(100svh - 90px), 760px) !important;
+            max-height: min(100%, calc(100svh - 104px), 716px) !important;
+            gap: 0.3rem !important;
+            padding: 0.34rem !important;
+          }
+
+          .duel-shift-up .portrait-queue-panel > .pixel-hard.flex.min-h-0.shrink-0 {
+            height: 112px !important;
+            max-height: 112px !important;
+          }
+        }
+
 `}</style>
 
       <div className="bg-felt-symbols" aria-hidden="true">
@@ -5020,6 +5129,83 @@ export default function Home() {
 
           .solo-side .solo-now-card-display {
             width: clamp(70px, 20vw, 88px) !important;
+          }
+        }
+
+
+        /* Mobile SOLO polish: hide NOW label and reduce button emphasis. */
+        @media (orientation: portrait), (max-width: 700px) {
+          .solo-side .solo-queue-panel {
+            grid-template-rows: minmax(0, 1fr) !important;
+            height: 248px !important;
+            min-height: 248px !important;
+          }
+
+          .solo-side .solo-queue-panel > .pixel-hard-sm {
+            display: none !important;
+          }
+
+          .solo-side .queue-card-well {
+            padding: 0.55rem 0.35rem 0.4rem !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(88px, 23vw, 116px) !important;
+            max-width: 72% !important;
+          }
+
+          .solo-control-buttons {
+            height: 248px !important;
+            min-height: 248px !important;
+            gap: 0.45rem !important;
+            align-content: center !important;
+          }
+
+          .solo-control-buttons button {
+            height: auto !important;
+            min-height: 76px !important;
+            align-self: center !important;
+            padding: 0.52rem 0.5rem !important;
+            font-size: 0.86rem !important;
+            border-width: 3px !important;
+            box-shadow:
+              3px 3px 0 #04120d,
+              0 0 0 1px rgba(255,255,255,0.12) inset !important;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            height: 226px !important;
+            min-height: 226px !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(80px, 22vw, 102px) !important;
+            max-width: 70% !important;
+          }
+
+          .solo-control-buttons button {
+            min-height: 66px !important;
+            font-size: 0.78rem !important;
+            padding-block: 0.42rem !important;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .solo-side .solo-queue-panel,
+          .solo-control-buttons {
+            height: 212px !important;
+            min-height: 212px !important;
+          }
+
+          .solo-side .solo-now-card-display {
+            width: clamp(72px, 20vw, 92px) !important;
+          }
+
+          .solo-control-buttons button {
+            min-height: 60px !important;
           }
         }
 
