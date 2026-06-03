@@ -565,29 +565,23 @@ function getResultKey(result: HandResult): string {
 function getCardRank(card: Card): number | null {
   const rankText = String(card.rank).trim().toUpperCase();
 
-  if (rankText === "A") return 14;
+  if (rankText === "A" || rankText === "1" || rankText === "ACE") return 1;
   if (rankText === "J") return 11;
   if (rankText === "Q") return 12;
   if (rankText === "K") return 13;
 
   const rankNumber = Number(rankText);
-  if (Number.isInteger(rankNumber) && rankNumber >= 2 && rankNumber <= 10) {
+  if (Number.isInteger(rankNumber) && rankNumber >= 1 && rankNumber <= 10) {
     return rankNumber;
   }
 
   const valueNumber = Number(card.value);
-  if (valueNumber === 1 || valueNumber === 14) return 14;
+  if (valueNumber === 1 || valueNumber === 14) return 1;
   if (Number.isInteger(valueNumber) && valueNumber >= 2 && valueNumber <= 13) {
     return valueNumber;
   }
 
   return null;
-}
-
-function getStraightRanks(card: Card): number[] {
-  const rank = getCardRank(card);
-  if (rank === null) return [];
-  return rank === 14 ? [1, 14] : [rank];
 }
 
 function getRankCounts(cards: LineCard[]): Map<number, number> {
@@ -612,22 +606,15 @@ function hasSameRank(cards: LineCard[], count: number): boolean {
 function isStraight(cards: LineCard[]): boolean {
   if (cards.length !== 3) return false;
 
-  const rankOptions = cards.map((item) => getStraightRanks(item.card));
-  if (rankOptions.some((options) => options.length === 0)) return false;
+  const values = cards
+    .map((item) => getCardRank(item.card))
+    .filter((rank): rank is number => rank !== null)
+    .sort((a, b) => a - b);
 
-  for (const first of rankOptions[0]) {
-    for (const second of rankOptions[1]) {
-      for (const third of rankOptions[2]) {
-        const values = [first, second, third].sort((a, b) => a - b);
-        if (new Set(values).size !== 3) continue;
-        if (values[1] === values[0] + 1 && values[2] === values[1] + 1) {
-          return true;
-        }
-      }
-    }
-  }
+  if (values.length !== 3) return false;
+  if (new Set(values).size !== 3) return false;
 
-  return false;
+  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
 }
 
 function isFullHouse(cards: LineCard[]): boolean {
