@@ -29,25 +29,6 @@ type Card = {
 type BoardCell = Card | null;
 type Board = BoardCell[][];
 
-type CardPosition = {
-  row: number;
-  col: number;
-};
-
-type LineCard = {
-  row: number;
-  col: number;
-  card: Card;
-};
-
-type HandResult = {
-  name: string;
-  score: number;
-  cards: CardPosition[];
-  shouldClear: boolean;
-  priority: number;
-};
-
 type GameState = {
   board: Board;
   deck: Card[];
@@ -124,7 +105,7 @@ const MAX_COMBO_WINDOW = 3;
 const suits: Suit[] = ["spade", "heart", "diamond", "club"];
 
 const ranks: { rank: Rank; value: number }[] = [
-  { rank: "A", value: 14 },
+  { rank: "A", value: 1 },
   { rank: "2", value: 2 },
   { rank: "3", value: 3 },
   { rank: "4", value: 4 },
@@ -152,60 +133,6 @@ const suitNames: Record<Suit, string> = {
   diamond: "Diamond",
   club: "Club",
 };
-
-const scoreTable = {
-  // Pair: combo + small score, no clear.
-  pair: 10,
-
-  // Three Card: combo + score + clear.
-  three: 55,
-
-  // Straight: combo + medium score + clear.
-  straight: 85,
-
-  // Full House: combo + large score + clear.
-  fullHouse: 220,
-};
-
-const comboMilestones = [5, 10, 15, 25, 50, 100];
-
-function getHandCountBonus(handCount: number) {
-  if (handCount >= 4) return 2.2;
-  if (handCount === 3) return 1.75;
-  if (handCount === 2) return 1.35;
-  return 1;
-}
-
-function getComboMilestoneBonus(combo: number) {
-  const hitMilestone = comboMilestones.includes(combo);
-
-  if (!hitMilestone) return 0;
-
-  return combo * 120;
-}
-
-function calculateGainedScore(baseScore: number, combo: number, handCount: number) {
-  const multiHandBonus = getHandCountBonus(handCount);
-  const rawScore = baseScore * combo * multiHandBonus;
-  const milestoneBonus = getComboMilestoneBonus(combo);
-
-  return Math.floor(rawScore + milestoneBonus);
-}
-
-function getScoreDetailText(baseScore: number, combo: number, handCount: number) {
-  const multiHandBonus = getHandCountBonus(handCount);
-  const milestoneBonus = getComboMilestoneBonus(combo);
-
-  if (milestoneBonus > 0) {
-    return `HAND ${baseScore} × COMBO ${combo} × ${multiHandBonus.toFixed(2)} + ${milestoneBonus} BONUS`;
-  }
-
-  if (handCount >= 2) {
-    return `HAND ${baseScore} × COMBO ${combo} × ${multiHandBonus.toFixed(2)}`;
-  }
-
-  return `HAND ${baseScore} × COMBO ${combo}`;
-}
 
 function getComboTier(combo: number) {
   if (combo >= 50) {
@@ -364,14 +291,9 @@ function getCardUsefulness(card: Card, board: Board): number {
         usefulness += 1;
       }
 
+      // A is treated only as 1. Therefore A-K / K-A is not considered useful
+      // for straights; only adjacent numeric steps like A-2, 2-3, Q-K are useful.
       if (Math.abs(cell.value - card.value) === 1) {
-        usefulness += 2;
-      }
-
-      if (
-        (card.value === 14 && cell.value === 2) ||
-        (card.value === 2 && cell.value === 14)
-      ) {
         usefulness += 2;
       }
     }
@@ -470,6 +392,256 @@ function getCardColor(card: Card): string {
 }
 
 
+type HandKind = "full-house" | "three" | "straight" | "pair";
+
+type LineCell = {
+  row: number;
+  col: number;
+  card: Card | null;
+};
+
+type HandResult = {
+  id: string;
+  kind: HandKind;
+  name: string;
+  score: number;
+  cells: string[];
+  clears: boolean;
+  priority: number;
+};
+
+const HAND_PRIORITY: Record<HandKind, number> = {
+  "full-house": 4,
+  three: 3,
+  straight: 2,
+  pair: 1,
+};
+
+const HAND_BASE_SCORE: Record<HandKind, number> = {
+  "full-house": 500,
+  three: 180,
+  straight: 160,
+  pair: 50,
+};
+
+function getCellKey(cell: Pick<LineCell, "row" | "col">) {
+  return keyOf(cell.row, cell.col);
+}
+
+function sameRank(a: Card, b: Card): boolean {
+  return a.rank === b.rank;
+}
+
+function getHandLabel(kind: HandKind): string {
+  if (kind === "full-house") return "FULL HOUSE";
+  if (kind === "three") return "THREE";
+  if (kind === "straight") return "STRAIGHT";
+  return "PAIR";
+}
+
+function makeHandResult(kind: HandKind, cells: LineCell[]): HandResult {
+  const cellKeys = cells.map(getCellKey);
+  const sortedKey = [...cellKeys].sort().join("|");
+  const lengthBonus = kind === "straight" ? Math.max(0, cells.length - 3) * 70 : 0;
+
+  return {
+    id: `${kind}:${sortedKey}`,
+    kind,
+    name: getHandLabel(kind),
+    score: HAND_BASE_SCORE[kind] + lengthBonus,
+    cells: cellKeys,
+    clears: kind !== "pair",
+    priority: HAND_PRIORITY[kind],
+  };
+}
+
+function getRowCells(board: Board, row: number): LineCell[] {
+  return board[row].map((card, col) => ({ row, col, card }));
+}
+
+function getColCells(board: Board, col: number): LineCell[] {
+  return board.map((boardRow, row) => ({ row, col, card: boardRow[col] }));
+}
+
+function getContiguousCardSegments(cells: LineCell[]): LineCell[][] {
+  const segments: LineCell[][] = [];
+  let current: LineCell[] = [];
+
+  for (const cell of cells) {
+    if (cell.card) {
+      current.push(cell);
+    } else {
+      if (current.length > 0) segments.push(current);
+      current = [];
+    }
+  }
+
+  if (current.length > 0) segments.push(current);
+  return segments;
+}
+
+function isStraightCells(cells: LineCell[]): boolean {
+  if (cells.length < 3) return false;
+  if (cells.some((cell) => !cell.card)) return false;
+
+  const cards = cells.map((cell) => cell.card as Card);
+
+  // A is only 1. No dual-value Ace logic is allowed.
+  // Valid: A-2-3, 3-2-A, 10-J-Q, Q-K.
+  // Invalid as a 3-card straight: A-K-Q, Q-K-A, K-A-2.
+  const ascending = cards.every((card, index) =>
+    index === 0 ? true : card.value - cards[index - 1].value === 1
+  );
+  const descending = cards.every((card, index) =>
+    index === 0 ? true : card.value - cards[index - 1].value === -1
+  );
+
+  return ascending || descending;
+}
+
+function detectFullHouse(cells: LineCell[]): HandResult[] {
+  // Full House is valid only when all 5 cells in one whole row/column are filled
+  // and the rank pattern is exactly 3 + 2.
+  if (cells.length !== BOARD_SIZE) return [];
+  if (cells.some((cell) => !cell.card)) return [];
+
+  const counts = new Map<Rank, number>();
+  for (const cell of cells) {
+    const card = cell.card as Card;
+    counts.set(card.rank, (counts.get(card.rank) ?? 0) + 1);
+  }
+
+  const pattern = [...counts.values()].sort((a, b) => b - a);
+  if (pattern.length === 2 && pattern[0] === 3 && pattern[1] === 2) {
+    return [makeHandResult("full-house", cells)];
+  }
+
+  return [];
+}
+
+function detectThrees(segments: LineCell[][]): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (const segment of segments) {
+    for (let start = 0; start <= segment.length - 3; start++) {
+      const window = segment.slice(start, start + 3);
+      const cards = window.map((cell) => cell.card as Card);
+      if (cards.every((card) => sameRank(card, cards[0]))) {
+        results.push(makeHandResult("three", window));
+      }
+    }
+  }
+
+  return dedupeHandResults(results);
+}
+
+function detectStraights(segments: LineCell[][]): HandResult[] {
+  const candidates: HandResult[] = [];
+
+  for (const segment of segments) {
+    for (let start = 0; start <= segment.length - 3; start++) {
+      for (let end = start + 3; end <= segment.length; end++) {
+        const window = segment.slice(start, end);
+        if (isStraightCells(window)) {
+          candidates.push(makeHandResult("straight", window));
+        }
+      }
+    }
+  }
+
+  // Keep only maximal straight windows, so 1-2-3-4 clears as one 4-card straight,
+  // not as duplicated 1-2-3 and 2-3-4 sub-hands.
+  const maximal = candidates.filter((candidate) => {
+    return !candidates.some((other) => {
+      if (other.id === candidate.id) return false;
+      if (other.cells.length <= candidate.cells.length) return false;
+      return candidate.cells.every((cellKey) => other.cells.includes(cellKey));
+    });
+  });
+
+  return dedupeHandResults(maximal);
+}
+
+function detectPairs(segments: LineCell[][]): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (const segment of segments) {
+    for (let start = 0; start <= segment.length - 2; start++) {
+      const pair = segment.slice(start, start + 2);
+      const first = pair[0].card as Card;
+      const second = pair[1].card as Card;
+      if (sameRank(first, second)) {
+        results.push(makeHandResult("pair", pair));
+      }
+    }
+  }
+
+  return dedupeHandResults(results);
+}
+
+function evaluateLine(cells: LineCell[]): HandResult[] {
+  // Strict priority per row/column:
+  // Full House -> Three -> Straight -> Pair.
+  // A lower hand in the same line is ignored when a higher hand exists.
+  const fullHouse = detectFullHouse(cells);
+  if (fullHouse.length > 0) return fullHouse;
+
+  const segments = getContiguousCardSegments(cells);
+
+  const threes = detectThrees(segments);
+  if (threes.length > 0) return threes;
+
+  const straights = detectStraights(segments);
+  if (straights.length > 0) return straights;
+
+  return detectPairs(segments);
+}
+
+function dedupeHandResults(results: HandResult[]): HandResult[] {
+  const map = new Map<string, HandResult>();
+
+  for (const result of results) {
+    map.set(result.id, result);
+  }
+
+  return [...map.values()].sort((a, b) => b.priority - a.priority || b.score - a.score);
+}
+
+function evaluateBoard(board: Board, placedRow: number, placedCol: number): HandResult[] {
+  // Evaluate only the row and column touched by the newly placed card.
+  // This prevents old non-clearing Pairs from scoring repeatedly on later turns,
+  // while still keeping detection strictly horizontal/vertical and adjacent-only.
+  return dedupeHandResults([
+    ...evaluateLine(getRowCells(board, placedRow)),
+    ...evaluateLine(getColCells(board, placedCol)),
+  ]);
+}
+
+function getUniqueCells(results: HandResult[], onlyClearing = false): string[] {
+  const keys = new Set<string>();
+
+  for (const result of results) {
+    if (onlyClearing && !result.clears) continue;
+    for (const cellKey of result.cells) keys.add(cellKey);
+  }
+
+  return [...keys];
+}
+
+function getHandSummary(results: HandResult[]): string {
+  if (results.length === 0) return "NO HAND";
+
+  const counts = new Map<string, number>();
+  for (const result of results) {
+    counts.set(result.name, (counts.get(result.name) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .map(([name, count]) => (count > 1 ? `${name} x${count}` : name))
+    .join(" + ");
+}
+
+
 const CARD_ASSET_VERSION = "v11";
 const LOGO_ASSET_VERSION = "v2";
 const UI_ASSET_VERSION = "v2";
@@ -518,390 +690,6 @@ function preloadCardImages() {
 
 function keyOf(row: number, col: number) {
   return `${row}-${col}`;
-}
-
-type HandKind = "Pair" | "Three Card" | "Straight" | "Full House";
-
-type HandRule = {
-  scorePerCard: number;
-  shouldClear: boolean;
-  priority: number;
-};
-
-const handRules: Record<HandKind, HandRule> = {
-  "Full House": {
-    scorePerCard: scoreTable.fullHouse,
-    shouldClear: true,
-    priority: 40,
-  },
-  "Three Card": {
-    scorePerCard: scoreTable.three,
-    shouldClear: true,
-    priority: 30,
-  },
-  Straight: {
-    scorePerCard: scoreTable.straight,
-    shouldClear: true,
-    priority: 20,
-  },
-  Pair: {
-    scorePerCard: scoreTable.pair,
-    shouldClear: false,
-    priority: 10,
-  },
-};
-
-function toPositions(cards: LineCard[]): CardPosition[] {
-  return cards.map(({ row, col }) => ({ row, col }));
-}
-
-function getResultKey(result: HandResult): string {
-  return result.cards
-    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-    .sort()
-    .join("|");
-}
-
-function getCardRank(card: Card): number | null {
-  const rankText = String(card.rank).trim().toUpperCase();
-
-  // Nuts rule: Ace is treated as 1 so A-A, A-2-3, 3-2-A are valid.
-  if (rankText === "A" || rankText === "1" || rankText === "ACE") return 1;
-  if (rankText === "J") return 11;
-  if (rankText === "Q") return 12;
-  if (rankText === "K") return 13;
-
-  const rankNumber = Number(rankText);
-  if (Number.isInteger(rankNumber) && rankNumber >= 1 && rankNumber <= 10) {
-    return rankNumber;
-  }
-
-  const valueNumber = Number(card.value);
-  if (valueNumber === 1 || valueNumber === 14) return 1;
-  if (Number.isInteger(valueNumber) && valueNumber >= 2 && valueNumber <= 13) {
-    return valueNumber;
-  }
-
-  return null;
-}
-
-function makeHandResult(kind: HandKind, cards: LineCard[]): HandResult {
-  const rule = handRules[kind];
-
-  return {
-    name: kind,
-    score: rule.scorePerCard * cards.length,
-    cards: toPositions(cards),
-    shouldClear: rule.shouldClear,
-    priority: rule.priority,
-  };
-}
-
-function addUniqueHandResult(results: HandResult[], result: HandResult) {
-  const resultKey = getResultKey(result);
-
-  if (
-    results.some(
-      (existing) => existing.name === result.name && getResultKey(existing) === resultKey
-    )
-  ) {
-    return;
-  }
-
-  results.push(result);
-}
-
-function containsPosition(cards: LineCard[], row: number, col: number): boolean {
-  return cards.some((item) => item.row === row && item.col === col);
-}
-
-function getLineCells(board: Board, index: number, direction: "row" | "col"): Array<LineCard | null> {
-  const cells: Array<LineCard | null> = [];
-
-  for (let i = 0; i < BOARD_SIZE; i++) {
-    const row = direction === "row" ? index : i;
-    const col = direction === "row" ? i : index;
-    const card = board[row][col];
-
-    cells.push(card ? { row, col, card } : null);
-  }
-
-  return cells;
-}
-
-function getFilledLine(cells: Array<LineCard | null>): LineCard[] | null {
-  if (cells.some((cell) => cell === null)) return null;
-  return cells as LineCard[];
-}
-
-function getContiguousSegments(cells: Array<LineCard | null>): LineCard[][] {
-  const segments: LineCard[][] = [];
-  let current: LineCard[] = [];
-
-  for (const cell of cells) {
-    if (cell) {
-      current.push(cell);
-      continue;
-    }
-
-    if (current.length > 0) {
-      segments.push(current);
-      current = [];
-    }
-  }
-
-  if (current.length > 0) {
-    segments.push(current);
-  }
-
-  return segments;
-}
-
-function getContiguousWindows(segment: LineCard[], size: number): LineCard[][] {
-  if (segment.length < size) return [];
-
-  const windows: LineCard[][] = [];
-
-  for (let start = 0; start + size <= segment.length; start++) {
-    windows.push(segment.slice(start, start + size));
-  }
-
-  return windows;
-}
-
-function isSameRankWindow(cards: LineCard[], size: number): boolean {
-  if (cards.length !== size) return false;
-
-  const firstRank = getCardRank(cards[0].card);
-  if (firstRank === null) return false;
-
-  return cards.every((item) => getCardRank(item.card) === firstRank);
-}
-
-function isStepStraight(cards: LineCard[]): boolean {
-  if (cards.length < 3) return false;
-
-  const ranks = cards.map((item) => getCardRank(item.card));
-  if (ranks.some((rank) => rank === null)) return false;
-
-  const numericRanks = ranks as number[];
-
-  // 1,2,2 / A,A,2 / 2,3,3 must not become a straight.
-  if (new Set(numericRanks).size !== numericRanks.length) return false;
-
-  const ascending = numericRanks.every(
-    (rank, index) => index === 0 || rank === numericRanks[index - 1] + 1
-  );
-  const descending = numericRanks.every(
-    (rank, index) => index === 0 || rank === numericRanks[index - 1] - 1
-  );
-
-  return ascending || descending;
-}
-
-function isFullHouseLine(line: LineCard[]): boolean {
-  if (line.length !== BOARD_SIZE) return false;
-
-  const rankCounts = new Map<number, number>();
-
-  for (const item of line) {
-    const rank = getCardRank(item.card);
-    if (rank === null) return false;
-    rankCounts.set(rank, (rankCounts.get(rank) ?? 0) + 1);
-  }
-
-  const counts = [...rankCounts.values()].sort((a, b) => b - a);
-  return counts.length === 2 && counts[0] === 3 && counts[1] === 2;
-}
-
-function detectFullHouseInLine(
-  cells: Array<LineCard | null>,
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const filledLine = getFilledLine(cells);
-  if (!filledLine) return [];
-  if (!containsPosition(filledLine, placedRow, placedCol)) return [];
-  if (!isFullHouseLine(filledLine)) return [];
-
-  return [makeHandResult("Full House", filledLine)];
-}
-
-function detectThreeInSegment(
-  segment: LineCard[],
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const results: HandResult[] = [];
-
-  for (const windowCards of getContiguousWindows(segment, 3)) {
-    if (!containsPosition(windowCards, placedRow, placedCol)) continue;
-    if (!isSameRankWindow(windowCards, 3)) continue;
-
-    addUniqueHandResult(results, makeHandResult("Three Card", windowCards));
-  }
-
-  return results;
-}
-
-function detectStraightsInSegment(
-  segment: LineCard[],
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const results: HandResult[] = [];
-
-  // Prefer the longest exact step-straight in this connected segment.
-  // Valid: A-2-3, 3-2-A, 2-3-4, A-K-Q, Q-K-A is intentionally not used
-  // because Ace is fixed to 1 in this ruleset.
-  for (let size = segment.length; size >= 3; size--) {
-    for (const windowCards of getContiguousWindows(segment, size)) {
-      if (!containsPosition(windowCards, placedRow, placedCol)) continue;
-      if (!isStepStraight(windowCards)) continue;
-
-      addUniqueHandResult(results, makeHandResult("Straight", windowCards));
-    }
-
-    if (results.length > 0) return results;
-  }
-
-  return results;
-}
-
-function detectPairsInSegment(
-  segment: LineCard[],
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const results: HandResult[] = [];
-
-  for (const windowCards of getContiguousWindows(segment, 2)) {
-    if (!containsPosition(windowCards, placedRow, placedCol)) continue;
-    if (!isSameRankWindow(windowCards, 2)) continue;
-
-    addUniqueHandResult(results, makeHandResult("Pair", windowCards));
-  }
-
-  return results;
-}
-
-function resultsOverlap(a: HandResult, b: HandResult): boolean {
-  const aKeys = new Set(a.cards.map(({ row, col }) => keyOf(row, col)));
-  return b.cards.some(({ row, col }) => aKeys.has(keyOf(row, col)));
-}
-
-function resultsOverlapOutsidePlaced(
-  a: HandResult,
-  b: HandResult,
-  placedRow: number,
-  placedCol: number
-): boolean {
-  const placedKey = keyOf(placedRow, placedCol);
-  const aKeys = new Set(a.cards.map(({ row, col }) => keyOf(row, col)));
-
-  return b.cards.some(({ row, col }) => {
-    const cardKey = keyOf(row, col);
-    return cardKey !== placedKey && aKeys.has(cardKey);
-  });
-}
-
-function sortHandResults(results: HandResult[]): HandResult[] {
-  return [...results].sort((a, b) => {
-    if (b.priority !== a.priority) return b.priority - a.priority;
-    if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
-    return getResultKey(a).localeCompare(getResultKey(b));
-  });
-}
-
-function chooseBestHandResults(results: HandResult[]): HandResult[] {
-  const accepted: HandResult[] = [];
-
-  for (const result of sortHandResults(results)) {
-    if (accepted.some((existing) => resultsOverlap(existing, result))) {
-      continue;
-    }
-
-    accepted.push(result);
-  }
-
-  return sortHandResults(accepted);
-}
-
-function chooseBestBoardResults(
-  results: HandResult[],
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const accepted: HandResult[] = [];
-
-  for (const result of sortHandResults(results)) {
-    if (
-      accepted.some((existing) =>
-        resultsOverlapOutsidePlaced(existing, result, placedRow, placedCol)
-      )
-    ) {
-      continue;
-    }
-
-    accepted.push(result);
-  }
-
-  return sortHandResults(accepted);
-}
-
-function evaluateLine(
-  board: Board,
-  lineIndex: number,
-  direction: "row" | "col",
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const cells = getLineCells(board, lineIndex, direction);
-
-  // 1. Full House: one completely filled 5-card row/column, absolute priority.
-  const fullHouseResults = detectFullHouseInLine(cells, placedRow, placedCol);
-  if (fullHouseResults.length > 0) return fullHouseResults;
-
-  const results: HandResult[] = [];
-  const segments = getContiguousSegments(cells);
-
-  for (const segment of segments) {
-    // Empty cells break all hands. Only the changed connected segment can create a new hand.
-    if (!containsPosition(segment, placedRow, placedCol)) continue;
-
-    // 2. Three Card
-    for (const result of detectThreeInSegment(segment, placedRow, placedCol)) {
-      addUniqueHandResult(results, result);
-    }
-
-    // 3. Straight
-    for (const result of detectStraightsInSegment(segment, placedRow, placedCol)) {
-      addUniqueHandResult(results, result);
-    }
-
-    // 4. Pair
-    for (const result of detectPairsInSegment(segment, placedRow, placedCol)) {
-      addUniqueHandResult(results, result);
-    }
-  }
-
-  return chooseBestHandResults(results);
-}
-
-function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  const results: HandResult[] = [];
-
-  // A newly placed card can only create a new hand on its row and column.
-  // Each target line is still evaluated as a 5-cell line with empty-cell breaks.
-  for (const result of evaluateLine(board, row, "row", row, col)) {
-    addUniqueHandResult(results, result);
-  }
-
-  for (const result of evaluateLine(board, col, "col", row, col)) {
-    addUniqueHandResult(results, result);
-  }
-
-  return chooseBestBoardResults(results, row, col);
 }
 
 function createInitialGame(highScore = 0): GameState {
@@ -996,147 +784,6 @@ function StatBox({
   );
 }
 
-const roleExamples = [
-  {
-    name: "Pair",
-    cards: [
-      { rank: "7", suit: "heart" as Suit },
-      { rank: "7", suit: "spade" as Suit },
-    ],
-  },
-  {
-    name: "Three",
-    cards: [
-      { rank: "Q", suit: "heart" as Suit },
-      { rank: "Q", suit: "diamond" as Suit },
-      { rank: "Q", suit: "club" as Suit },
-    ],
-  },
-  {
-    name: "Straight",
-    cards: [
-      { rank: "5", suit: "spade" as Suit },
-      { rank: "6", suit: "heart" as Suit },
-      { rank: "7", suit: "club" as Suit },
-    ],
-  },
-  {
-    name: "Full House",
-    cards: [
-      { rank: "9", suit: "heart" as Suit },
-      { rank: "9", suit: "spade" as Suit },
-      { rank: "9", suit: "club" as Suit },
-      { rank: "K", suit: "diamond" as Suit },
-      { rank: "K", suit: "heart" as Suit },
-    ],
-  },
-];
-
-function RoleListPanel() {
-  const roles = roleExamples;
-
-  function MiniCard({ rank, suit }: { rank: string; suit: Suit }) {
-    const isRed = suit === "heart" || suit === "diamond";
-
-    return (
-      <div
-        className={[
-          "flex h-10 w-8 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff4cf] text-[11px] font-black leading-none shadow-[2px_2px_0_#000]",
-          isRed ? "text-red-600" : "text-blue-950",
-        ].join(" ")}
-      >
-        <span>{rank}</span>
-        <span className="text-base">{suitSymbols[suit]}</span>
-      </div>
-    );
-  }
-
-  return (
-    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-3 shadow-[6px_6px_0_#000] lg:flex lg:flex-col">
-      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000] lg:mb-3">
-        <p className="text-[11px] font-black tracking-[0.25em]">HANDS</p>
-      </div>
-
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-        {roles.map((role) => (
-          <div
-            key={role.name}
-            className="rounded-xl border-[3px] border-black bg-[#2d1850] p-2 shadow-[3px_3px_0_#000]"
-          >
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="text-sm font-black leading-none text-[#ffef7a]">
-                {role.name}
-              </p>
-
-            </div>
-
-            <div className="mb-1 flex items-center gap-1">
-              {role.cards.map((card, index) => (
-                <MiniCard
-                  key={`${role.name}-${card.rank}-${card.suit}-${index}`}
-                  rank={card.rank}
-                  suit={card.suit}
-                />
-              ))}
-            </div>
-
-          </div>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
-
-function MobileRoleListPanel() {
-  function MiniCard({ rank, suit }: { rank: string; suit: Suit }) {
-    const isRed = suit === "heart" || suit === "diamond";
-
-    return (
-      <div
-        className={[
-          "flex h-8 w-6 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff4cf] text-[9px] font-black leading-none shadow-[2px_2px_0_#000]",
-          isRed ? "text-red-600" : "text-blue-950",
-        ].join(" ")}
-      >
-        <span>{rank}</span>
-        <span className="text-sm">{suitSymbols[suit]}</span>
-      </div>
-    );
-  }
-
-  return (
-    <aside className="mt-2 hidden rounded-2xl border-[5px] border-black bg-[#101b3b] p-2 shadow-[6px_6px_0_#000] md:block lg:hidden">
-      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffef7a] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
-        <p className="text-[10px] font-black tracking-[0.25em]">HANDS</p>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {roleExamples.map((role) => (
-          <div
-            key={role.name}
-            className="min-w-[116px] rounded-xl border-[3px] border-black bg-[#2d1850] p-2 shadow-[3px_3px_0_#000]"
-          >
-            <p className="mb-1 text-xs font-black leading-none text-[#ffef7a]">
-              {role.name}
-            </p>
-
-            <div className="flex items-center gap-1">
-              {role.cards.map((card, index) => (
-                <MiniCard
-                  key={`${role.name}-${card.rank}-${card.suit}-${index}`}
-                  rank={card.rank}
-                  suit={card.suit}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
 function HomeScreen({
   highScore,
   onStart,
@@ -1146,7 +793,6 @@ function HomeScreen({
   onStart: () => void;
   onStartDuel: () => void;
 }) {
-  const [showHands, setShowHands] = useState(false);
 
   const previewCells = [
     "", "", "K♥", "", "",
@@ -1157,7 +803,7 @@ function HomeScreen({
   ];
 
   const menuCards: Card[] = [
-    { id: "menu-ah", rank: "A", suit: "heart", value: 14 },
+    { id: "menu-ah", rank: "A", suit: "heart", value: 1 },
     { id: "menu-qs", rank: "Q", suit: "spade", value: 12 },
     { id: "menu-jd", rank: "J", suit: "diamond", value: 11 },
   ];
@@ -1938,22 +1584,6 @@ function HomeScreen({
         </section>
       </div>
 
-      {showHands && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="max-h-[88svh] w-full max-w-4xl overflow-y-auto rounded-3xl border-[6px] border-[#f0a536] bg-[#061811] p-4 shadow-[12px_12px_0_#020806]">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-black tracking-[0.12em] text-[#fff4cf]">HANDS</h2>
-              <button
-                onClick={() => setShowHands(false)}
-                className="rounded-xl border-[3px] border-black bg-[#d83b32] px-4 py-2 text-lg font-black text-white shadow-[4px_4px_0_#020806]"
-              >
-                CLOSE
-              </button>
-            </div>
-            <RoleListPanel />
-          </div>
-        </div>
-      )}
     </main>
   );
 }
@@ -2514,54 +2144,6 @@ export default function Home() {
                       <p className="font-black tracking-[0.12em] text-[#f7d17a]">01 PLACE A CARD</p>
                       <p className="mt-1 text-xs leading-5">空いているマスに、表示されたカードを1枚置きます。</p>
                     </div>
-                    <div className="rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <p className="font-black tracking-[0.12em] text-[#f7d17a]">02 MAKE A HAND</p>
-                      <p className="mt-1 text-xs leading-5">縦・横のみで役を作ります。斜めは無効です。</p>
-                    </div>
-                    <div className="rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <p className="font-black tracking-[0.12em] text-[#f7d17a]">03 CLEAR & COMBO</p>
-                      <p className="mt-1 text-xs leading-5">Three以上の役は消えます。Pairは消えずにコンボをつなぎます。</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border-[3px] border-[#06140f] bg-[#0b3328] p-4 shadow-[4px_4px_0_#020806,inset_0_0_0_2px_rgba(242,184,74,0.10)]">
-                  <h3 className="mb-3 text-sm font-black tracking-[0.18em] text-[#f2b84a]">
-                    HAND LIST
-                  </h3>
-
-                  <div className="grid gap-2 text-xs text-[#d9efe4]">
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">PAIR</p>
-                        <p className="mt-1 leading-5">同じ数字2枚。消えない。コンボ継続用。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.pair * 2}</p>
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">THREE CARD</p>
-                        <p className="mt-1 leading-5">同じ数字3枚。役カードが消える。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.three * 3}</p>
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">STRAIGHT</p>
-                        <p className="mt-1 leading-5">連続した数字3枚。Aは1としても使えます。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.straight * 3}</p>
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">FULL HOUSE</p>
-                        <p className="mt-1 leading-5">3枚同数字 + 2枚同数字。高得点。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.fullHouse * 5}</p>
-                    </div>
                   </div>
                 </div>
 
@@ -2646,6 +2228,7 @@ export default function Home() {
 
   function placeDuelCard(row: number, col: number) {
     if (duel.isGameOver) return;
+    if (isResolvingHand) return;
     if (!duel.currentCard) return;
     if (duel.board[row][col]) return;
 
@@ -2654,64 +2237,37 @@ export default function Home() {
 
     const selected = duel.currentCard;
     const newBoard = duel.board.map((boardRow) => [...boardRow]);
-    const newOwners = duel.owners.map((ownerRow) => [...ownerRow]);
     newBoard[row][col] = selected;
 
-    // Hand rules:
-    // Pair = combo + small score, no clear, newly placed card only.
-    // Three/Straight/Full House = combo + score + clear, with board safety scan.
-    const results = evaluateBoard(newBoard, row, col);
-    const hasHand = results.length > 0;
-    const claimResults = results.filter((result) => result.shouldClear);
-    const hasClaim = claimResults.length > 0;
-    const handTargets = new Set<string>();
-    const claimTargets = new Set<string>();
+    const handResults = evaluateBoard(newBoard, row, col);
+    const claimCells = getUniqueCells(handResults, true);
+    const hitCells = getUniqueCells(handResults, false);
+    const handSummary = getHandSummary(handResults);
 
-    for (const result of results) {
-      for (const cardPosition of result.cards) {
-        handTargets.add(keyOf(cardPosition.row, cardPosition.col));
-      }
-    }
+    const nextOwners = duel.owners.map((ownerRow) => [...ownerRow]);
 
-    // DUEL claims follow the same rule as SOLO clearing:
-    // Pair gives feedback only. Three Card / Straight / Full House claim cells.
-    for (const result of claimResults) {
-      for (const cardPosition of result.cards) {
-        const targetKey = keyOf(cardPosition.row, cardPosition.col);
-        claimTargets.add(targetKey);
-        newOwners[cardPosition.row][cardPosition.col] = duel.currentPlayer;
-      }
-    }
-
-    if (hasClaim) {
-      for (const targetKey of claimTargets) {
-        const [targetRow, targetCol] = targetKey.split("-").map(Number);
-        newBoard[targetRow][targetCol] = null;
-      }
+    for (const cellKey of claimCells) {
+      const [claimRow, claimCol] = cellKey.split("-").map(Number);
+      nextOwners[claimRow][claimCol] = duel.currentPlayer;
     }
 
     const [nextCard, ...nextDeck] = duel.deck;
     const nextPlayer: PlayerId = duel.currentPlayer === 1 ? 2 : 1;
     const placedCount = duel.placedCount + 1;
-    const p1Owned = countOwnedCells(newOwners, 1);
-    const p2Owned = countOwnedCells(newOwners, 2);
+    const p1Owned = countOwnedCells(nextOwners, 1);
+    const p2Owned = countOwnedCells(nextOwners, 2);
     const winnerText =
       p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
-    const handNameText = hasHand ? results.map((result) => result.name).join(" + ") : "";
 
     const nextBase: DuelState = {
       board: newBoard,
-      owners: newOwners,
+      owners: nextOwners,
       deck: nextDeck,
       currentCard: nextCard ?? null,
       currentPlayer: nextPlayer,
       placedCount,
-      lastResult: hasClaim
-        ? `P${duel.currentPlayer} CLAIMED ${claimTargets.size}`
-        : hasHand
-        ? `${handNameText} · NO CLAIM`
-        : `P${nextPlayer} TURN`,
-      lastHandName: handNameText,
+      lastResult: handResults.length > 0 ? handSummary : `P${nextPlayer} TURN`,
+      lastHandName: handResults.length > 0 ? handSummary : "",
       isGameOver: false,
     };
 
@@ -2723,37 +2279,23 @@ export default function Home() {
       ? finishDuel(nextBase, `BOARD STUCK · ${winnerText}`)
       : nextBase;
 
-    if (hasHand) {
-      window.setTimeout(() => playSound("hit"), 90);
-    }
-
     setPlacedCell(keyOf(row, col));
-    setHighlightCells(handTargets);
-    setClearingCells(hasClaim ? claimTargets : new Set());
-    setResultPulse(hasHand);
-
-    if (hasHand) {
-      const bannerId = Date.now() + 1;
-      setResultBanner({
-        id: bannerId,
-        text: hasClaim ? nextBase.lastHandName : `${nextBase.lastHandName} · NO CLAIM`,
-        score: hasClaim ? claimTargets.size : 0,
-        combo: duel.currentPlayer,
-        comboNext: undefined,
-      });
-      window.setTimeout(() => {
-        setResultBanner((prev) => (prev?.id === bannerId ? null : prev));
-      }, 900);
-    }
-
+    setHighlightCells(new Set(hitCells));
+    setClearingCells(new Set(claimCells));
+    setResultPulse(handResults.length > 0);
+    setResultBanner(null);
     setDuel(nextDuel);
+
+    if (handResults.length > 0) {
+      playSound("hit");
+    }
 
     window.setTimeout(() => {
       setPlacedCell(null);
       setHighlightCells(new Set());
       setClearingCells(new Set());
       setResultPulse(false);
-    }, 720);
+    }, 640);
   }
 
   function selectHandCard(index: number) {
@@ -2772,6 +2314,7 @@ export default function Home() {
 
   function placeCard(row: number, col: number) {
     if (game.isGameOver) return;
+    if (isResolvingHand) return;
     if (!game.hand[0]) return;
     if (game.board[row][col]) return;
 
@@ -2779,171 +2322,97 @@ export default function Home() {
     playSound("place");
 
     const selected = game.hand[0];
-
     const newBoard = game.board.map((boardRow) => [...boardRow]);
     newBoard[row][col] = selected;
 
-    const results = evaluateBoard(newBoard, row, col);
-    const hasHand = results.length > 0;
+    const handResults = evaluateBoard(newBoard, row, col);
+    const hitCells = getUniqueCells(handResults, false);
+    const clearingCellKeys = getUniqueCells(handResults, true);
+    const hasHand = handResults.length > 0;
+    const baseScore = handResults.reduce((sum, result) => sum + result.score, 0);
+    const scoreGain = hasHand ? baseScore * game.combo : 0;
+    const nextScore = game.score + scoreGain;
+    const nextHighScore = Math.max(game.highScore, nextScore);
+    const handSummary = getHandSummary(handResults);
 
-    const baseScore = results.reduce((sum, result) => sum + result.score, 0);
-    const gainedScore = hasHand
-      ? calculateGainedScore(baseScore, game.combo, results.length)
-      : 0;
-    const scoreDetailText = hasHand
-      ? getScoreDetailText(baseScore, game.combo, results.length)
-      : "";
-
-    let nextCombo = game.combo;
-    let nextComboWindow = game.comboWindow;
-
-    if (hasHand) {
-      nextCombo = game.combo + 1;
-      nextComboWindow = MAX_COMBO_WINDOW;
-    } else if (game.combo > 1) {
-      nextComboWindow = game.comboWindow - 1;
-
-      if (nextComboWindow <= 0) {
-        nextCombo = 1;
-        nextComboWindow = MAX_COMBO_WINDOW;
-      }
-    } else {
-      nextCombo = 1;
-      nextComboWindow = MAX_COMBO_WINDOW;
-    }
-
-    const clearTargets = new Set<string>();
-    const handTargets = new Set<string>();
-
-    for (const result of results) {
-      for (const cardPosition of result.cards) {
-        handTargets.add(keyOf(cardPosition.row, cardPosition.col));
-      }
-
-      if (!result.shouldClear) continue;
-
-      for (const cardPosition of result.cards) {
-        clearTargets.add(keyOf(cardPosition.row, cardPosition.col));
-      }
-    }
-
-    const boardBeforeClear = newBoard.map((boardRow) => [...boardRow]);
-
-    if (clearTargets.size > 0) {
-      for (const key of clearTargets) {
-        const [targetRow, targetCol] = key.split("-").map(Number);
-        newBoard[targetRow][targetCol] = null;
-      }
+    const boardAfterClear = newBoard.map((boardRow) => [...boardRow]);
+    for (const cellKey of clearingCellKeys) {
+      const [clearRow, clearCol] = cellKey.split("-").map(Number);
+      boardAfterClear[clearRow][clearCol] = null;
     }
 
     const newHand = [...game.hand];
     newHand.shift();
 
-    const drawResult = drawCardsForBoard(game.deck, 1, newBoard);
+    const drawResult = drawCardsForBoard(game.deck, 1, boardAfterClear);
     newHand.push(...drawResult.drawn);
 
-    const nextScore = game.score + gainedScore;
-    const nextHighScore = Math.max(game.highScore, nextScore);
+    const nextComboWindow = hasHand
+      ? MAX_COMBO_WINDOW
+      : Math.max(0, game.comboWindow - 1);
+    const isComboBroken = !hasHand && game.combo > 1 && nextComboWindow === 0;
+    const nextCombo = hasHand ? game.combo + 1 : isComboBroken ? 1 : game.combo;
+    const nextGameOver = isBoardFull(boardAfterClear);
+
+    if (nextGameOver) {
+      window.setTimeout(() => playSound("gameover"), 220);
+    } else if (hasHand) {
+      playSound("hit");
+    } else {
+      playSound("miss");
+    }
 
     if (nextHighScore > game.highScore) {
       saveHighScore(nextHighScore);
     }
 
-    const nextGameOver = isBoardFull(newBoard);
-
-    const resultText = hasHand
-      ? `${results.map((result) => result.name).join(" + ")}`
-      : game.combo > 1 && nextCombo === 1
-      ? "COMBO BROKEN"
-      : game.combo > 1
-      ? `NO HAND - ${nextComboWindow} LEFT`
-      : "NO HAND";
-
-    const lastResultText = hasHand
-      ? `${resultText} · ${scoreDetailText}`
-      : resultText;
-
-    if (hasHand) {
-      window.setTimeout(() => playSound("hit"), 90);
-    } else if (resultText === "COMBO BROKEN") {
-      window.setTimeout(() => playSound("miss"), 90);
-    }
-
-    if (nextGameOver) {
-      window.setTimeout(() => playSound("gameover"), 220);
-    }
-
     setPlacedCell(keyOf(row, col));
-    setHighlightCells(handTargets);
-    setClearingCells(clearTargets);
-    setResultPulse(hasHand || resultText === "COMBO BROKEN");
-    setScorePulse(gainedScore > 0);
-    setComboPulse(hasHand || nextCombo === 1);
-
-    if (hasHand || resultText === "COMBO BROKEN") {
-      const bannerId = Date.now() + 1;
-
-      setResultBanner({
-        id: bannerId,
-        text: resultText,
-        score: gainedScore,
-        combo: game.combo,
-        comboNext: hasHand ? nextCombo : undefined,
-        isBreak: resultText === "COMBO BROKEN",
-      });
-
-      window.setTimeout(() => {
-        setResultBanner((prev) => (prev?.id === bannerId ? null : prev));
-      }, 980);
-    }
-
-    if (gainedScore > 0) {
-      const floatingId = Date.now();
-
-      setFloatingScores((prev) => [
-        ...prev,
-        {
-          id: floatingId,
-          value: gainedScore,
-        },
-      ]);
-
-      window.setTimeout(() => {
-        setFloatingScores((prev) =>
-          prev.filter((score) => score.id !== floatingId)
-        );
-      }, 900);
-    }
+    setHighlightCells(new Set(hitCells));
+    setClearingCells(new Set(clearingCellKeys));
+    setResultPulse(hasHand || isComboBroken);
+    setScorePulse(hasHand);
+    setComboPulse(hasHand || isComboBroken);
+    setFloatingScores(
+      scoreGain > 0
+        ? [{ id: Date.now(), value: scoreGain }]
+        : []
+    );
+    setResultBanner(
+      hasHand
+        ? {
+            id: Date.now(),
+            text: handSummary,
+            score: scoreGain,
+            combo: game.combo,
+            comboNext: nextCombo,
+          }
+        : isComboBroken
+        ? {
+            id: Date.now(),
+            text: "COMBO BREAK",
+            score: 0,
+            combo: game.combo,
+            comboNext: 1,
+            isBreak: true,
+          }
+        : null
+    );
 
     const nextGameState: GameState = {
-      board: newBoard,
+      board: clearingCellKeys.length > 0 ? newBoard : boardAfterClear,
       deck: drawResult.rest,
       hand: newHand,
       score: nextScore,
       highScore: nextHighScore,
       combo: nextCombo,
-      comboWindow: nextComboWindow,
+      comboWindow: hasHand ? MAX_COMBO_WINDOW : nextComboWindow,
       selectedHandIndex: nextGameOver ? null : 0,
-      lastResult: nextGameOver ? "GAME OVER" : lastResultText,
-      lastScore: gainedScore,
+      lastResult: nextGameOver ? "GAME OVER" : hasHand ? handSummary : "PLACED",
+      lastScore: scoreGain,
       isGameOver: nextGameOver,
     };
 
-    if (clearTargets.size > 0) {
-      setGame((prev) => ({
-        ...prev,
-        board: boardBeforeClear,
-        selectedHandIndex: 0,
-      }));
-
-      window.setTimeout(() => {
-        setGame(nextGameState);
-      }, 320);
-    } else {
-      // Pair is a valid hand but does not clear.
-      // Update immediately so Pair highlights, score, combo, and banner all appear reliably.
-      setGame(nextGameState);
-    }
+    setGame(nextGameState);
 
     window.setTimeout(() => {
       setPlacedCell(null);
@@ -2952,7 +2421,17 @@ export default function Home() {
       setScorePulse(false);
       setComboPulse(false);
       setResultPulse(false);
-    }, 760);
+      setFloatingScores([]);
+
+      if (clearingCellKeys.length > 0) {
+        setGame((prev) => ({
+          ...prev,
+          board: boardAfterClear,
+          isGameOver: isBoardFull(boardAfterClear),
+          selectedHandIndex: isBoardFull(boardAfterClear) ? null : 0,
+        }));
+      }
+    }, clearingCellKeys.length > 0 ? 620 : 420);
   }
 
   if (!isLoaded) {
