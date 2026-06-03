@@ -487,7 +487,7 @@ function isStraightCells(cells: LineCell[]): boolean {
   const cards = cells.map((cell) => cell.card as Card);
 
   // A is only 1. No dual-value Ace logic is allowed.
-  // Valid: A-2-3, 3-2-A, 10-J-Q, Q-K.
+  // Valid: A-2-3, 3-2-A, 10-J-Q, Q-J-10.
   // Invalid as a 3-card straight: A-K-Q, Q-K-A, K-A-2.
   const ascending = cards.every((card, index) =>
     index === 0 ? true : card.value - cards[index - 1].value === 1
@@ -499,10 +499,23 @@ function isStraightCells(cells: LineCell[]): boolean {
   return ascending || descending;
 }
 
-function detectFullHouse(cells: LineCell[]): HandResult[] {
-  // Full House is valid only when all 5 cells in one whole row/column are filled
-  // and the rank pattern is exactly 3 + 2.
+function containsCell(cells: LineCell[], targetKey: string): boolean {
+  return cells.some((cell) => getCellKey(cell) === targetKey);
+}
+
+function resultTouchesPlaced(result: HandResult, placedKey: string): boolean {
+  return result.cells.includes(placedKey);
+}
+
+function filterResultsTouchingPlaced(results: HandResult[], placedKey: string): HandResult[] {
+  return dedupeHandResults(results.filter((result) => resultTouchesPlaced(result, placedKey)));
+}
+
+function detectFullHouse(cells: LineCell[], placedKey: string): HandResult[] {
+  // Full House is valid only when all 5 cells in one whole row/column are filled,
+  // the placed card is part of that line, and the rank pattern is exactly 3 + 2.
   if (cells.length !== BOARD_SIZE) return [];
+  if (!containsCell(cells, placedKey)) return [];
   if (cells.some((cell) => !cell.card)) return [];
 
   const counts = new Map<Rank, number>();
@@ -519,12 +532,14 @@ function detectFullHouse(cells: LineCell[]): HandResult[] {
   return [];
 }
 
-function detectThrees(segments: LineCell[][]): HandResult[] {
+function detectThrees(segments: LineCell[][], placedKey: string): HandResult[] {
   const results: HandResult[] = [];
 
   for (const segment of segments) {
     for (let start = 0; start <= segment.length - 3; start++) {
       const window = segment.slice(start, start + 3);
+      if (!containsCell(window, placedKey)) continue;
+
       const cards = window.map((cell) => cell.card as Card);
       if (cards.every((card) => sameRank(card, cards[0]))) {
         results.push(makeHandResult("three", window));
@@ -532,16 +547,18 @@ function detectThrees(segments: LineCell[][]): HandResult[] {
     }
   }
 
-  return dedupeHandResults(results);
+  return filterResultsTouchingPlaced(results, placedKey);
 }
 
-function detectStraights(segments: LineCell[][]): HandResult[] {
+function detectStraights(segments: LineCell[][], placedKey: string): HandResult[] {
   const candidates: HandResult[] = [];
 
   for (const segment of segments) {
     for (let start = 0; start <= segment.length - 3; start++) {
       for (let end = start + 3; end <= segment.length; end++) {
         const window = segment.slice(start, end);
+        if (!containsCell(window, placedKey)) continue;
+
         if (isStraightCells(window)) {
           candidates.push(makeHandResult("straight", window));
         }
@@ -549,8 +566,8 @@ function detectStraights(segments: LineCell[][]): HandResult[] {
     }
   }
 
-  // Keep only maximal straight windows, so 1-2-3-4 clears as one 4-card straight,
-  // not as duplicated 1-2-3 and 2-3-4 sub-hands.
+  // Keep only maximal straight windows touching the placed card, so 1-2-3-4
+  // clears as one 4-card straight instead of duplicated sub-hands.
   const maximal = candidates.filter((candidate) => {
     return !candidates.some((other) => {
       if (other.id === candidate.id) return false;
@@ -559,15 +576,17 @@ function detectStraights(segments: LineCell[][]): HandResult[] {
     });
   });
 
-  return dedupeHandResults(maximal);
+  return filterResultsTouchingPlaced(maximal, placedKey);
 }
 
-function detectPairs(segments: LineCell[][]): HandResult[] {
+function detectPairs(segments: LineCell[][], placedKey: string): HandResult[] {
   const results: HandResult[] = [];
 
   for (const segment of segments) {
     for (let start = 0; start <= segment.length - 2; start++) {
       const pair = segment.slice(start, start + 2);
+      if (!containsCell(pair, placedKey)) continue;
+
       const first = pair[0].card as Card;
       const second = pair[1].card as Card;
       if (sameRank(first, second)) {
@@ -576,25 +595,27 @@ function detectPairs(segments: LineCell[][]): HandResult[] {
     }
   }
 
-  return dedupeHandResults(results);
+  return filterResultsTouchingPlaced(results, placedKey);
 }
 
-function evaluateLine(cells: LineCell[]): HandResult[] {
-  // Strict priority per row/column:
-  // Full House -> Three -> Straight -> Pair.
-  // A lower hand in the same line is ignored when a higher hand exists.
-  const fullHouse = detectFullHouse(cells);
+function evaluateLine(cells: LineCell[], placedKey: string): HandResult[] {
+  // Strict priority per row/column, but ONLY for hands that include the newly
+  // placed card. This prevents old pairs/straights elsewhere in the same line
+  // from re-scoring or triggering combo after an unrelated placement.
+  if (!containsCell(cells, placedKey)) return [];
+
+  const fullHouse = detectFullHouse(cells, placedKey);
   if (fullHouse.length > 0) return fullHouse;
 
   const segments = getContiguousCardSegments(cells);
 
-  const threes = detectThrees(segments);
+  const threes = detectThrees(segments, placedKey);
   if (threes.length > 0) return threes;
 
-  const straights = detectStraights(segments);
+  const straights = detectStraights(segments, placedKey);
   if (straights.length > 0) return straights;
 
-  return detectPairs(segments);
+  return detectPairs(segments, placedKey);
 }
 
 function dedupeHandResults(results: HandResult[]): HandResult[] {
@@ -608,12 +629,14 @@ function dedupeHandResults(results: HandResult[]): HandResult[] {
 }
 
 function evaluateBoard(board: Board, placedRow: number, placedCol: number): HandResult[] {
-  // Evaluate only the row and column touched by the newly placed card.
-  // This prevents old non-clearing Pairs from scoring repeatedly on later turns,
-  // while still keeping detection strictly horizontal/vertical and adjacent-only.
+  const placedKey = keyOf(placedRow, placedCol);
+
+  // Evaluate only the row and column touched by the newly placed card, and then
+  // accept only hands that actually include that newly placed card.
+  // Example: placing A elsewhere must NOT re-trigger an old 4-4 pair or 4-5-6 straight.
   return dedupeHandResults([
-    ...evaluateLine(getRowCells(board, placedRow)),
-    ...evaluateLine(getColCells(board, placedCol)),
+    ...evaluateLine(getRowCells(board, placedRow), placedKey),
+    ...evaluateLine(getColCells(board, placedCol), placedKey),
   ]);
 }
 
