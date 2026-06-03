@@ -429,7 +429,10 @@ function getCellKey(cell: Pick<LineCell, "row" | "col">) {
 }
 
 function sameRank(a: Card, b: Card): boolean {
-  return a.rank === b.rank;
+  // Compare normalized rank values instead of object identity or raw card.value.
+  // This makes Ace pairs reliable even if an older saved/generated card still
+  // has value 14. Ace is always treated as 1 in every hand check.
+  return getRankValue(a.rank) === getRankValue(b.rank);
 }
 
 function getHandLabel(kind: HandKind): string {
@@ -527,10 +530,11 @@ function detectFullHouse(cells: LineCell[], placedKey: string): HandResult[] {
   if (!containsCell(cells, placedKey)) return [];
   if (cells.some((cell) => !cell.card)) return [];
 
-  const counts = new Map<Rank, number>();
+  const counts = new Map<number, number>();
   for (const cell of cells) {
     const card = cell.card as Card;
-    counts.set(card.rank, (counts.get(card.rank) ?? 0) + 1);
+    const rankValue = getRankValue(card.rank);
+    counts.set(rankValue, (counts.get(rankValue) ?? 0) + 1);
   }
 
   const pattern = [...counts.values()].sort((a, b) => b - a);
@@ -607,6 +611,42 @@ function detectPairs(segments: LineCell[][], placedKey: string): HandResult[] {
   return filterResultsTouchingPlaced(results, placedKey);
 }
 
+
+function detectPlacedAdjacentPairs(board: Board, placedRow: number, placedCol: number): HandResult[] {
+  const placedCard = board[placedRow]?.[placedCol];
+  if (!placedCard) return [];
+
+  const results: HandResult[] = [];
+  const directions = [
+    { dr: 0, dc: -1 },
+    { dr: 0, dc: 1 },
+    { dr: -1, dc: 0 },
+    { dr: 1, dc: 0 },
+  ];
+
+  for (const { dr, dc } of directions) {
+    const row = placedRow + dr;
+    const col = placedCol + dc;
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) continue;
+
+    const neighbor = board[row][col];
+    if (!neighbor) continue;
+
+    // Compare by normalized rank value so A is 1 and every numbered pair,
+    // especially 2-2, is caught regardless of suit or card object identity.
+    if (getRankValue(neighbor.rank) !== getRankValue(placedCard.rank)) continue;
+
+    const cells: LineCell[] = [
+      { row, col, card: neighbor },
+      { row: placedRow, col: placedCol, card: placedCard },
+    ].sort((a, b) => a.row - b.row || a.col - b.col);
+
+    results.push(makeHandResult("pair", cells));
+  }
+
+  return dedupeHandResults(results);
+}
+
 function evaluateLine(cells: LineCell[], placedKey: string): HandResult[] {
   // Strict priority per row/column, but ONLY for hands that include the newly
   // placed card. This prevents old pairs/straights elsewhere in the same line
@@ -627,6 +667,28 @@ function evaluateLine(cells: LineCell[], placedKey: string): HandResult[] {
   return detectPairs(segments, placedKey);
 }
 
+function evaluateLineWithoutPairs(cells: LineCell[], placedKey: string): HandResult[] {
+  if (!containsCell(cells, placedKey)) return [];
+
+  const fullHouse = detectFullHouse(cells, placedKey);
+  if (fullHouse.length > 0) return fullHouse;
+
+  const segments = getContiguousCardSegments(cells);
+
+  const threes = detectThrees(segments, placedKey);
+  if (threes.length > 0) return threes;
+
+  const straights = detectStraights(segments, placedKey);
+  if (straights.length > 0) return straights;
+
+  return [];
+}
+
+function detectLinePairsOnly(cells: LineCell[], placedKey: string): HandResult[] {
+  if (!containsCell(cells, placedKey)) return [];
+  return detectPairs(getContiguousCardSegments(cells), placedKey);
+}
+
 function dedupeHandResults(results: HandResult[]): HandResult[] {
   const map = new Map<string, HandResult>();
 
@@ -639,13 +701,25 @@ function dedupeHandResults(results: HandResult[]): HandResult[] {
 
 function evaluateBoard(board: Board, placedRow: number, placedCol: number): HandResult[] {
   const placedKey = keyOf(placedRow, placedCol);
+  const rowCells = getRowCells(board, placedRow);
+  const colCells = getColCells(board, placedCol);
 
-  // Evaluate only the row and column touched by the newly placed card, and then
-  // accept only hands that actually include that newly placed card.
-  // Example: placing A elsewhere must NOT re-trigger an old 4-4 pair or 4-5-6 straight.
+  // First resolve clearing/higher-priority hands only.
+  // Pair is checked separately below so Ace-Ace and 2-2 cannot be swallowed by
+  // line-priority edge cases or stale card values.
+  const highPriorityResults = dedupeHandResults([
+    ...evaluateLineWithoutPairs(rowCells, placedKey),
+    ...evaluateLineWithoutPairs(colCells, placedKey),
+  ]);
+
+  if (highPriorityResults.length > 0) return highPriorityResults;
+
+  // Pair-only pass. It requires the newly placed card and adjacent cells, so old
+  // pairs elsewhere cannot re-score, while A-A is always caught as 1-1.
   return dedupeHandResults([
-    ...evaluateLine(getRowCells(board, placedRow), placedKey),
-    ...evaluateLine(getColCells(board, placedCol), placedKey),
+    ...detectLinePairsOnly(rowCells, placedKey),
+    ...detectLinePairsOnly(colCells, placedKey),
+    ...detectPlacedAdjacentPairs(board, placedRow, placedCol),
   ]);
 }
 
