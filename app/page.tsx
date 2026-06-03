@@ -520,75 +520,15 @@ function keyOf(row: number, col: number) {
   return `${row}-${col}`;
 }
 
-function toPositions(cards: LineCard[]): CardPosition[] {
-  return cards.map(({ row, col }) => ({ row, col }));
-}
+type HandKind = "Pair" | "Three Card" | "Straight" | "Full House";
 
-function getLine(
-  board: Board,
-  row: number,
-  col: number,
-  dRow: number,
-  dCol: number
-): LineCard[] {
-  const line: LineCard[] = [];
-
-  let r = row;
-  let c = col;
-
-  while (
-    r - dRow >= 0 &&
-    r - dRow < BOARD_SIZE &&
-    c - dCol >= 0 &&
-    c - dCol < BOARD_SIZE &&
-    board[r - dRow][c - dCol]
-  ) {
-    r -= dRow;
-    c -= dCol;
-  }
-
-  while (
-    r >= 0 &&
-    r < BOARD_SIZE &&
-    c >= 0 &&
-    c < BOARD_SIZE &&
-    board[r][c]
-  ) {
-    line.push({
-      row: r,
-      col: c,
-      card: board[r][c] as Card,
-    });
-
-    r += dRow;
-    c += dCol;
-  }
-
-  return line;
-}
-
-function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
-  return cards.some((item) => item.row === row && item.col === col);
-}
-
-type DetectedHandKind = "Pair" | "Three Card" | "Straight" | "Full House";
-
-type DetectedHandCandidate = {
-  kind: DetectedHandKind;
-  cards: LineCard[];
+type HandRule = {
   scorePerCard: number;
   shouldClear: boolean;
   priority: number;
 };
 
-const handConfig: Record<
-  DetectedHandKind,
-  {
-    scorePerCard: number;
-    shouldClear: boolean;
-    priority: number;
-  }
-> = {
+const handRules: Record<HandKind, HandRule> = {
   Pair: {
     scorePerCard: scoreTable.pair,
     shouldClear: false,
@@ -611,67 +551,73 @@ const handConfig: Record<
   },
 };
 
-function getRankValueVariants(card: Card): number[] {
-  const rankText = String(card.rank ?? "").trim().toUpperCase();
-  const numericValue = Number(card.value);
-
-  if (
-    rankText === "A" ||
-    rankText === "1" ||
-    rankText === "ACE" ||
-    numericValue === 14 ||
-    numericValue === 1
-  ) {
-    return [1, 14];
-  }
-
-  if (rankText === "J" || rankText === "JACK") return [11];
-  if (rankText === "Q" || rankText === "QUEEN") return [12];
-  if (rankText === "K" || rankText === "KING") return [13];
-
-  const fromRankText = Number(rankText);
-  if (Number.isInteger(fromRankText)) return [fromRankText];
-
-  if (Number.isInteger(numericValue)) return [numericValue];
-
-  return [];
+function toPositions(cards: LineCard[]): CardPosition[] {
+  return cards.map(({ row, col }) => ({ row, col }));
 }
 
-function normalizeRankValue(card: Card): number {
-  return getRankValueVariants(card)[0] ?? Number.NaN;
+function getResultKey(result: HandResult): string {
+  return result.cards
+    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+    .sort()
+    .join("|");
+}
+
+function getCardRank(card: Card): number | null {
+  const rankText = String(card.rank).trim().toUpperCase();
+
+  if (rankText === "A") return 14;
+  if (rankText === "J") return 11;
+  if (rankText === "Q") return 12;
+  if (rankText === "K") return 13;
+
+  const rankNumber = Number(rankText);
+  if (Number.isInteger(rankNumber) && rankNumber >= 2 && rankNumber <= 10) {
+    return rankNumber;
+  }
+
+  const valueNumber = Number(card.value);
+  if (valueNumber === 1 || valueNumber === 14) return 14;
+  if (Number.isInteger(valueNumber) && valueNumber >= 2 && valueNumber <= 13) {
+    return valueNumber;
+  }
+
+  return null;
+}
+
+function getStraightRanks(card: Card): number[] {
+  const rank = getCardRank(card);
+  if (rank === null) return [];
+  return rank === 14 ? [1, 14] : [rank];
 }
 
 function getRankCounts(cards: LineCard[]): Map<number, number> {
   const counts = new Map<number, number>();
 
   for (const item of cards) {
-    const rankValue = normalizeRankValue(item.card);
-    if (!Number.isInteger(rankValue)) continue;
-    counts.set(rankValue, (counts.get(rankValue) ?? 0) + 1);
+    const rank = getCardRank(item.card);
+    if (rank === null) return new Map();
+    counts.set(rank, (counts.get(rank) ?? 0) + 1);
   }
 
   return counts;
 }
 
-function isPairHand(cards: LineCard[]): boolean {
+function hasSameRank(cards: LineCard[], count: number): boolean {
+  if (cards.length !== count) return false;
+
   const counts = getRankCounts(cards);
-  return cards.length === 2 && counts.size === 1 && [...counts.values()][0] === 2;
+  return counts.size === 1 && counts.get(getCardRank(cards[0].card) ?? -1) === count;
 }
 
-function isThreeCardHand(cards: LineCard[]): boolean {
-  const counts = getRankCounts(cards);
-  return cards.length === 3 && counts.size === 1 && [...counts.values()][0] === 3;
-}
-
-function isStraightHand(cards: LineCard[]): boolean {
+function isStraight(cards: LineCard[]): boolean {
   if (cards.length !== 3) return false;
 
-  const variantSets = cards.map((item) => getRankValueVariants(item.card));
-  if (variantSets.some((variants) => variants.length === 0)) return false;
+  const rankOptions = cards.map((item) => getStraightRanks(item.card));
+  if (rankOptions.some((options) => options.length === 0)) return false;
 
-  for (const first of variantSets[0]) {
-    for (const second of variantSets[1]) {
-      for (const third of variantSets[2]) {
+  for (const first of rankOptions[0]) {
+    for (const second of rankOptions[1]) {
+      for (const third of rankOptions[2]) {
         const values = [first, second, third].sort((a, b) => a - b);
         if (new Set(values).size !== 3) continue;
         if (values[1] === values[0] + 1 && values[2] === values[1] + 1) {
@@ -684,171 +630,54 @@ function isStraightHand(cards: LineCard[]): boolean {
   return false;
 }
 
-function isFullHouseHand(cards: LineCard[]): boolean {
+function isFullHouse(cards: LineCard[]): boolean {
   if (cards.length !== 5) return false;
 
   const counts = [...getRankCounts(cards).values()].sort((a, b) => a - b);
   return counts.length === 2 && counts[0] === 2 && counts[1] === 3;
 }
 
-function makeHandCandidate(kind: DetectedHandKind, cards: LineCard[]): DetectedHandCandidate {
-  const config = handConfig[kind];
+function makeHandResult(kind: HandKind, cards: LineCard[]): HandResult {
+  const rule = handRules[kind];
 
   return {
-    kind,
-    cards,
-    scorePerCard: config.scorePerCard,
-    shouldClear: config.shouldClear,
-    priority: config.priority,
+    name: kind,
+    score: rule.scorePerCard * cards.length,
+    cards: toPositions(cards),
+    shouldClear: rule.shouldClear,
+    priority: rule.priority,
   };
 }
 
-function classifyHandCards(cards: LineCard[]): DetectedHandCandidate | null {
-  if (cards.length === 5 && isFullHouseHand(cards)) {
-    return makeHandCandidate("Full House", cards);
+function classifyWindow(cards: LineCard[]): HandResult | null {
+  if (cards.length === 5 && isFullHouse(cards)) {
+    return makeHandResult("Full House", cards);
   }
 
   if (cards.length === 3) {
-    if (isThreeCardHand(cards)) return makeHandCandidate("Three Card", cards);
-    if (isStraightHand(cards)) return makeHandCandidate("Straight", cards);
-    return null;
+    if (hasSameRank(cards, 3)) return makeHandResult("Three Card", cards);
+    if (isStraight(cards)) return makeHandResult("Straight", cards);
   }
 
-  if (cards.length === 2 && isPairHand(cards)) {
-    return makeHandCandidate("Pair", cards);
+  if (cards.length === 2 && hasSameRank(cards, 2)) {
+    return makeHandResult("Pair", cards);
   }
 
   return null;
 }
 
-function createHandResultFromCandidate(candidate: DetectedHandCandidate): HandResult {
-  return {
-    name: candidate.kind,
-    score: candidate.scorePerCard * candidate.cards.length,
-    cards: toPositions(candidate.cards),
-    shouldClear: candidate.shouldClear,
-    priority: candidate.priority,
-  };
+function containsPosition(cards: LineCard[], row: number, col: number): boolean {
+  return cards.some((item) => item.row === row && item.col === col);
 }
 
-function getCombinations<T>(items: T[], count: number): T[][] {
-  const combinations: T[][] = [];
-
-  function walk(startIndex: number, picked: T[]) {
-    if (picked.length === count) {
-      combinations.push(picked);
-      return;
-    }
-
-    const remainingNeeded = count - picked.length;
-    for (let index = startIndex; index <= items.length - remainingNeeded; index++) {
-      walk(index + 1, [...picked, items[index]]);
-    }
-  }
-
-  walk(0, []);
-  return combinations;
-}
-
-function getResultKey(result: HandResult): string {
-  return result.cards
-    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-    .sort()
-    .join("|");
-}
-
-function addUniqueResult(results: HandResult[], result: HandResult) {
-  const resultKey = getResultKey(result);
-
-  const alreadyExists = results.some(
-    (existing) => existing.name === result.name && getResultKey(existing) === resultKey
-  );
-
-  if (!alreadyExists) {
-    results.push(result);
-  }
-}
-
-function resultContains(parent: HandResult, child: HandResult): boolean {
-  const parentKeys = new Set(
-    parent.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
-  );
-
-  return child.cards.every((cardPosition) =>
-    parentKeys.has(keyOf(cardPosition.row, cardPosition.col))
-  );
-}
-
-function resultOverlapsBeyondPlacedCell(
-  a: HandResult,
-  b: HandResult,
-  placedRow: number,
-  placedCol: number
-): boolean {
-  const placedKey = keyOf(placedRow, placedCol);
-  const aKeys = new Set(a.cards.map((cardPosition) => keyOf(cardPosition.row, cardPosition.col)));
-
-  return b.cards.some((cardPosition) => {
-    const cardKey = keyOf(cardPosition.row, cardPosition.col);
-    return cardKey !== placedKey && aKeys.has(cardKey);
-  });
-}
-
-function removeContainedLowerPriorityResults(results: HandResult[]): HandResult[] {
-  return results.filter((result) => {
-    return !results.some((other) => {
-      if (other === result) return false;
-      if (other.priority <= result.priority) return false;
-      return resultContains(other, result);
-    });
-  });
-}
-
-function keepBestNonOverlappingResults(results: HandResult[], placedRow: number, placedCol: number): HandResult[] {
-  const sortedResults = [...removeContainedLowerPriorityResults(results)].sort((a, b) => {
-    if (b.priority !== a.priority) return b.priority - a.priority;
-
-    const aTouchesPlaced = a.cards.some(
-      (cardPosition) => cardPosition.row === placedRow && cardPosition.col === placedCol
-    );
-    const bTouchesPlaced = b.cards.some(
-      (cardPosition) => cardPosition.row === placedRow && cardPosition.col === placedCol
-    );
-
-    if (Number(bTouchesPlaced) !== Number(aTouchesPlaced)) {
-      return Number(bTouchesPlaced) - Number(aTouchesPlaced);
-    }
-
-    if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
-
-    return getResultKey(a).localeCompare(getResultKey(b));
-  });
-
-  const accepted: HandResult[] = [];
-
-  for (const result of sortedResults) {
-    if (
-      accepted.some((existing) =>
-        resultOverlapsBeyondPlacedCell(existing, result, placedRow, placedCol)
-      )
-    ) {
-      continue;
-    }
-
-    accepted.push(result);
-  }
-
-  return accepted.sort((a, b) => b.priority - a.priority || getResultKey(a).localeCompare(getResultKey(b)));
-}
-
-function getContiguousSegmentThroughCell(
+function getContiguousLine(
   board: Board,
   row: number,
   col: number,
   dRow: number,
   dCol: number
 ): LineCard[] {
-  const segment: LineCard[] = [];
+  const line: LineCard[] = [];
   let startRow = row;
   let startCol = col;
 
@@ -873,7 +702,7 @@ function getContiguousSegmentThroughCell(
     currentCol < BOARD_SIZE &&
     board[currentRow][currentCol]
   ) {
-    segment.push({
+    line.push({
       row: currentRow,
       col: currentCol,
       card: board[currentRow][currentCol] as Card,
@@ -883,47 +712,107 @@ function getContiguousSegmentThroughCell(
     currentCol += dCol;
   }
 
-  return segment;
+  return line;
 }
 
-function evaluateSegmentThroughPlacedCard(
-  segment: LineCard[],
+function getContiguousWindows(line: LineCard[], size: number): LineCard[][] {
+  if (line.length < size) return [];
+
+  const windows: LineCard[][] = [];
+  for (let start = 0; start + size <= line.length; start++) {
+    windows.push(line.slice(start, start + size));
+  }
+
+  return windows;
+}
+
+function addUniqueHandResult(results: HandResult[], result: HandResult) {
+  const resultKey = getResultKey(result);
+
+  if (
+    results.some(
+      (existing) => existing.name === result.name && getResultKey(existing) === resultKey
+    )
+  ) {
+    return;
+  }
+
+  results.push(result);
+}
+
+function overlapsOutsidePlaced(
+  a: HandResult,
+  b: HandResult,
+  placedRow: number,
+  placedCol: number
+): boolean {
+  const placedKey = keyOf(placedRow, placedCol);
+  const aKeys = new Set(a.cards.map(({ row, col }) => keyOf(row, col)));
+
+  return b.cards.some(({ row, col }) => {
+    const cardKey = keyOf(row, col);
+    return cardKey !== placedKey && aKeys.has(cardKey);
+  });
+}
+
+function chooseBestHandResults(
+  results: HandResult[],
   placedRow: number,
   placedCol: number
 ): HandResult[] {
-  const candidates: HandResult[] = [];
-  const handSizes = [5, 3, 2];
+  const sorted = [...results].sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
+    if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
+    return getResultKey(a).localeCompare(getResultKey(b));
+  });
 
-  for (const handSize of handSizes) {
-    if (segment.length < handSize) continue;
+  const accepted: HandResult[] = [];
 
-    for (const handCards of getCombinations(segment, handSize)) {
-      if (!includesPlaced(handCards, placedRow, placedCol)) continue;
+  for (const result of sorted) {
+    if (
+      accepted.some((existing) =>
+        overlapsOutsidePlaced(existing, result, placedRow, placedCol)
+      )
+    ) {
+      continue;
+    }
 
-      const candidate = classifyHandCards(handCards);
-      if (!candidate) continue;
+    accepted.push(result);
+  }
 
-      addUniqueResult(candidates, createHandResultFromCandidate(candidate));
+  return accepted.sort((a, b) => b.priority - a.priority || getResultKey(a).localeCompare(getResultKey(b)));
+}
+
+function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (const size of [5, 3, 2]) {
+    for (const windowCards of getContiguousWindows(line, size)) {
+      if (!containsPosition(windowCards, placedRow, placedCol)) continue;
+
+      const result = classifyWindow(windowCards);
+      if (result) addUniqueHandResult(results, result);
     }
   }
 
-  return keepBestNonOverlappingResults(candidates, placedRow, placedCol);
+  return chooseBestHandResults(results, placedRow, placedCol);
 }
 
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  const horizontalSegment = getContiguousSegmentThroughCell(board, row, col, 0, 1);
-  const verticalSegment = getContiguousSegmentThroughCell(board, row, col, 1, 0);
+  const lines = [
+    getContiguousLine(board, row, col, 0, 1),
+    getContiguousLine(board, row, col, 1, 0),
+  ];
+
   const results: HandResult[] = [];
 
-  for (const result of evaluateSegmentThroughPlacedCard(horizontalSegment, row, col)) {
-    addUniqueResult(results, result);
+  for (const line of lines) {
+    for (const result of evaluateLine(line, row, col)) {
+      addUniqueHandResult(results, result);
+    }
   }
 
-  for (const result of evaluateSegmentThroughPlacedCard(verticalSegment, row, col)) {
-    addUniqueResult(results, result);
-  }
-
-  return keepBestNonOverlappingResults(results, row, col);
+  return chooseBestHandResults(results, row, col);
 }
 
 function createInitialGame(highScore = 0): GameState {
