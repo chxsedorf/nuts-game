@@ -529,25 +529,25 @@ type HandRule = {
 };
 
 const handRules: Record<HandKind, HandRule> = {
-  Pair: {
-    scorePerCard: scoreTable.pair,
-    shouldClear: false,
-    priority: 10,
-  },
-  Straight: {
-    scorePerCard: scoreTable.straight,
+  "Full House": {
+    scorePerCard: scoreTable.fullHouse,
     shouldClear: true,
-    priority: 20,
+    priority: 40,
   },
   "Three Card": {
     scorePerCard: scoreTable.three,
     shouldClear: true,
     priority: 30,
   },
-  "Full House": {
-    scorePerCard: scoreTable.fullHouse,
+  Straight: {
+    scorePerCard: scoreTable.straight,
     shouldClear: true,
-    priority: 40,
+    priority: 20,
+  },
+  Pair: {
+    scorePerCard: scoreTable.pair,
+    shouldClear: false,
+    priority: 10,
   },
 };
 
@@ -565,7 +565,7 @@ function getResultKey(result: HandResult): string {
 function getCardRank(card: Card): number | null {
   const rankText = String(card.rank).trim().toUpperCase();
 
-  // In this game, Ace behaves as 1 for A-2-3 style straights.
+  // Nuts rule: Ace is treated as 1 so A-A, A-2-3, 3-2-A are valid.
   if (rankText === "A" || rankText === "1" || rankText === "ACE") return 1;
   if (rankText === "J") return 11;
   if (rankText === "Q") return 12;
@@ -615,22 +615,6 @@ function containsPosition(cards: LineCard[], row: number, col: number): boolean 
   return cards.some((item) => item.row === row && item.col === col);
 }
 
-function getFullBoardLine(board: Board, index: number, direction: "row" | "col"): LineCard[] {
-  const line: LineCard[] = [];
-
-  for (let i = 0; i < BOARD_SIZE; i++) {
-    const row = direction === "row" ? index : i;
-    const col = direction === "row" ? i : index;
-    const card = board[row][col];
-
-    if (!card) continue;
-
-    line.push({ row, col, card });
-  }
-
-  return line;
-}
-
 function getLineCells(board: Board, index: number, direction: "row" | "col"): Array<LineCard | null> {
   const cells: Array<LineCard | null> = [];
 
@@ -643,6 +627,11 @@ function getLineCells(board: Board, index: number, direction: "row" | "col"): Ar
   }
 
   return cells;
+}
+
+function getFilledLine(cells: Array<LineCard | null>): LineCard[] | null {
+  if (cells.some((cell) => cell === null)) return null;
+  return cells as LineCard[];
 }
 
 function getContiguousSegments(cells: Array<LineCard | null>): LineCard[][] {
@@ -668,12 +657,13 @@ function getContiguousSegments(cells: Array<LineCard | null>): LineCard[][] {
   return segments;
 }
 
-function getContiguousWindows(line: LineCard[], size: number): LineCard[][] {
-  if (line.length < size) return [];
+function getContiguousWindows(segment: LineCard[], size: number): LineCard[][] {
+  if (segment.length < size) return [];
 
   const windows: LineCard[][] = [];
-  for (let start = 0; start + size <= line.length; start++) {
-    windows.push(line.slice(start, start + size));
+
+  for (let start = 0; start + size <= segment.length; start++) {
+    windows.push(segment.slice(start, start + size));
   }
 
   return windows;
@@ -688,19 +678,23 @@ function isSameRankWindow(cards: LineCard[], size: number): boolean {
   return cards.every((item) => getCardRank(item.card) === firstRank);
 }
 
-function isStraightWindow(cards: LineCard[]): boolean {
+function isStepStraight(cards: LineCard[]): boolean {
   if (cards.length < 3) return false;
 
-  const ranksInBoardOrder = cards.map((item) => getCardRank(item.card));
-  if (ranksInBoardOrder.some((rank) => rank === null)) return false;
+  const ranks = cards.map((item) => getCardRank(item.card));
+  if (ranks.some((rank) => rank === null)) return false;
 
-  const ranks = ranksInBoardOrder as number[];
+  const numericRanks = ranks as number[];
 
-  // No duplicate number can be part of a straight.
-  if (new Set(ranks).size !== ranks.length) return false;
+  // 1,2,2 / A,A,2 / 2,3,3 must not become a straight.
+  if (new Set(numericRanks).size !== numericRanks.length) return false;
 
-  const ascending = ranks.every((rank, index) => index === 0 || rank === ranks[index - 1] + 1);
-  const descending = ranks.every((rank, index) => index === 0 || rank === ranks[index - 1] - 1);
+  const ascending = numericRanks.every(
+    (rank, index) => index === 0 || rank === numericRanks[index - 1] + 1
+  );
+  const descending = numericRanks.every(
+    (rank, index) => index === 0 || rank === numericRanks[index - 1] - 1
+  );
 
   return ascending || descending;
 }
@@ -708,26 +702,36 @@ function isStraightWindow(cards: LineCard[]): boolean {
 function isFullHouseLine(line: LineCard[]): boolean {
   if (line.length !== BOARD_SIZE) return false;
 
-  const counts = new Map<number, number>();
+  const rankCounts = new Map<number, number>();
 
   for (const item of line) {
     const rank = getCardRank(item.card);
     if (rank === null) return false;
-    counts.set(rank, (counts.get(rank) ?? 0) + 1);
+    rankCounts.set(rank, (rankCounts.get(rank) ?? 0) + 1);
   }
 
-  const sortedCounts = [...counts.values()].sort((a, b) => b - a);
-  return sortedCounts.length === 2 && sortedCounts[0] === 3 && sortedCounts[1] === 2;
+  const counts = [...rankCounts.values()].sort((a, b) => b - a);
+  return counts.length === 2 && counts[0] === 3 && counts[1] === 2;
 }
 
-function detectFullHouseInLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
-  if (!containsPosition(line, placedRow, placedCol)) return [];
-  if (!isFullHouseLine(line)) return [];
+function detectFullHouseInLine(
+  cells: Array<LineCard | null>,
+  placedRow: number,
+  placedCol: number
+): HandResult[] {
+  const filledLine = getFilledLine(cells);
+  if (!filledLine) return [];
+  if (!containsPosition(filledLine, placedRow, placedCol)) return [];
+  if (!isFullHouseLine(filledLine)) return [];
 
-  return [makeHandResult("Full House", line)];
+  return [makeHandResult("Full House", filledLine)];
 }
 
-function detectThreeInSegment(segment: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+function detectThreeInSegment(
+  segment: LineCard[],
+  placedRow: number,
+  placedCol: number
+): HandResult[] {
   const results: HandResult[] = [];
 
   for (const windowCards of getContiguousWindows(segment, 3)) {
@@ -740,25 +744,35 @@ function detectThreeInSegment(segment: LineCard[], placedRow: number, placedCol:
   return results;
 }
 
-function detectStraightsInSegment(segment: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+function detectStraightsInSegment(
+  segment: LineCard[],
+  placedRow: number,
+  placedCol: number
+): HandResult[] {
   const results: HandResult[] = [];
 
+  // Prefer the longest exact step-straight in this connected segment.
+  // Valid: A-2-3, 3-2-A, 2-3-4, A-K-Q, Q-K-A is intentionally not used
+  // because Ace is fixed to 1 in this ruleset.
   for (let size = segment.length; size >= 3; size--) {
     for (const windowCards of getContiguousWindows(segment, size)) {
       if (!containsPosition(windowCards, placedRow, placedCol)) continue;
-      if (!isStraightWindow(windowCards)) continue;
+      if (!isStepStraight(windowCards)) continue;
 
       addUniqueHandResult(results, makeHandResult("Straight", windowCards));
     }
 
-    // Prefer the longest straight in this contiguous segment.
     if (results.length > 0) return results;
   }
 
   return results;
 }
 
-function detectPairsInSegment(segment: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+function detectPairsInSegment(
+  segment: LineCard[],
+  placedRow: number,
+  placedCol: number
+): HandResult[] {
   const results: HandResult[] = [];
 
   for (const windowCards of getContiguousWindows(segment, 2)) {
@@ -842,29 +856,30 @@ function evaluateLine(
   placedRow: number,
   placedCol: number
 ): HandResult[] {
-  const wholeLine = getFullBoardLine(board, lineIndex, direction);
-  const fullHouseResults = detectFullHouseInLine(wholeLine, placedRow, placedCol);
-
-  // Full House has absolute priority for the whole 5-cell line.
-  if (fullHouseResults.length > 0) {
-    return fullHouseResults;
-  }
-
   const cells = getLineCells(board, lineIndex, direction);
-  const segments = getContiguousSegments(cells);
+
+  // 1. Full House: one completely filled 5-card row/column, absolute priority.
+  const fullHouseResults = detectFullHouseInLine(cells, placedRow, placedCol);
+  if (fullHouseResults.length > 0) return fullHouseResults;
+
   const results: HandResult[] = [];
+  const segments = getContiguousSegments(cells);
 
   for (const segment of segments) {
+    // Empty cells break all hands. Only the changed connected segment can create a new hand.
     if (!containsPosition(segment, placedRow, placedCol)) continue;
 
+    // 2. Three Card
     for (const result of detectThreeInSegment(segment, placedRow, placedCol)) {
       addUniqueHandResult(results, result);
     }
 
+    // 3. Straight
     for (const result of detectStraightsInSegment(segment, placedRow, placedCol)) {
       addUniqueHandResult(results, result);
     }
 
+    // 4. Pair
     for (const result of detectPairsInSegment(segment, placedRow, placedCol)) {
       addUniqueHandResult(results, result);
     }
@@ -876,6 +891,8 @@ function evaluateLine(
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   const results: HandResult[] = [];
 
+  // A newly placed card can only create a new hand on its row and column.
+  // Each target line is still evaluated as a 5-cell line with empty-cell breaks.
   for (const result of evaluateLine(board, row, "row", row, col)) {
     addUniqueHandResult(results, result);
   }
