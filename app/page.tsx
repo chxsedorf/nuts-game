@@ -1,126 +1,131 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-type Suit = "♠" | "♥" | "♦" | "♣";
-type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
+type Suit = "spade" | "heart" | "diamond" | "club";
+
+type Rank =
+  | "A"
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | "10"
+  | "J"
+  | "Q"
+  | "K";
 
 type Card = {
   id: string;
-  rank: Rank;
   suit: Suit;
+  rank: Rank;
+  value: number;
 };
 
-type Cell = Card | null;
-type Board = Cell[];
+type BoardCell = Card | null;
+type Board = BoardCell[][];
 
-type Pos = {
+type CardPosition = {
   row: number;
   col: number;
 };
 
-type HandKind = "PAIR" | "THREE" | "STRAIGHT" | "FULL_HOUSE";
+type LineCard = {
+  row: number;
+  col: number;
+  card: Card;
+};
 
 type HandResult = {
-  kind: HandKind;
-  label: string;
+  name: string;
   score: number;
-  remove: boolean;
-  cells: number[];
-  ranks: number[];
+  cards: CardPosition[];
+  shouldClear: boolean;
 };
 
-type HandHistoryItem = {
-  id: string;
-  label: string;
+type GameState = {
+  board: Board;
+  deck: Card[];
+  hand: Card[];
   score: number;
+  highScore: number;
   combo: number;
-  cleared: boolean;
+  comboWindow: number;
+  selectedHandIndex: number | null;
+  lastResult: string;
+  lastScore: number;
+  isGameOver: boolean;
 };
 
-type GameStatus = "PLAYING" | "GAME_OVER";
-
-type Settings = {
-  sound: boolean;
-  showDebug: boolean;
-  reducedMotion: boolean;
-  sfxVolume: number;
-  bgmVolume: number;
+type FloatingScore = {
+  id: number;
+  value: number;
 };
+
+type ScreenState = "home" | "game";
 
 const BOARD_SIZE = 5;
-const BOARD_CELLS = BOARD_SIZE * BOARD_SIZE;
-const COMBO_GRACE_TURNS = 3;
-const SUITS: Suit[] = ["♠", "♥", "♦", "♣"];
-const RANKS: Rank[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+const HAND_SIZE = 3;
+const HIGH_SCORE_KEY = "nuts-high-score";
+const MAX_COMBO_WINDOW = 3;
+const MAX_COMBO = 10;
 
-const HAND_PRIORITY: Record<HandKind, number> = {
-  FULL_HOUSE: 4,
-  STRAIGHT: 3,
-  THREE: 2,
-  PAIR: 1,
+const suits: Suit[] = ["spade", "heart", "diamond", "club"];
+
+const ranks: { rank: Rank; value: number }[] = [
+  { rank: "A", value: 14 },
+  { rank: "2", value: 2 },
+  { rank: "3", value: 3 },
+  { rank: "4", value: 4 },
+  { rank: "5", value: 5 },
+  { rank: "6", value: 6 },
+  { rank: "7", value: 7 },
+  { rank: "8", value: 8 },
+  { rank: "9", value: 9 },
+  { rank: "10", value: 10 },
+  { rank: "J", value: 11 },
+  { rank: "Q", value: 12 },
+  { rank: "K", value: 13 },
+];
+
+const suitSymbols: Record<Suit, string> = {
+  spade: "♠",
+  heart: "♥",
+  diamond: "♦",
+  club: "♣",
 };
 
-const HAND_LABEL: Record<HandKind, string> = {
-  PAIR: "PAIR",
-  THREE: "THREE",
-  STRAIGHT: "STRAIGHT",
-  FULL_HOUSE: "FULL HOUSE",
+const suitNames: Record<Suit, string> = {
+  spade: "Spade",
+  heart: "Heart",
+  diamond: "Diamond",
+  club: "Club",
 };
 
-const HAND_SCORE: Record<HandKind, number> = {
-  PAIR: 10,
-  THREE: 30,
-  STRAIGHT: 50,
-  FULL_HOUSE: 120,
+const scoreTable = {
+  pair: 10,
+  three: 40,
+  straight: 60,
+  flush: 70,
+  fullHouse: 150,
+  royal: 500,
 };
 
-const HAND_REMOVE: Record<HandKind, boolean> = {
-  PAIR: false,
-  THREE: true,
-  STRAIGHT: true,
-  FULL_HOUSE: true,
-};
 
-function indexOf(row: number, col: number) {
-  return row * BOARD_SIZE + col;
+function createEmptyBoard(): Board {
+  return Array.from({ length: BOARD_SIZE }, () =>
+    Array.from({ length: BOARD_SIZE }, () => null)
+  );
 }
 
-function posOf(index: number): Pos {
-  return {
-    row: Math.floor(index / BOARD_SIZE),
-    col: index % BOARD_SIZE,
-  };
-}
+function shuffle<T>(array: T[]): T[] {
+  const copied = [...array];
 
-function makeId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function newDeck(): Card[] {
-  const cards: Card[] = [];
-
-  for (const suit of SUITS) {
-    for (const rank of RANKS) {
-      cards.push({
-        id: `${suit}-${rank}-${makeId()}`,
-        rank,
-        suit,
-      });
-    }
-  }
-
-  return shuffle(cards);
-}
-
-function shuffle<T>(items: T[]): T[] {
-  const copied = [...items];
-
-  for (let i = copied.length - 1; i > 0; i -= 1) {
+  for (let i = copied.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [copied[i], copied[j]] = [copied[j], copied[i]];
   }
@@ -128,1891 +133,1325 @@ function shuffle<T>(items: T[]): T[] {
   return copied;
 }
 
-function drawCard(deck: Card[]): { card: Card; deck: Card[] } {
-  const nextDeck = deck.length > 0 ? deck : newDeck();
-  const [card, ...rest] = nextDeck;
-  return { card, deck: rest };
-}
+function createDeck(): Card[] {
+  const deck: Card[] = [];
 
-function rankLabel(rank: Rank) {
-  if (rank === 1) return "A";
-  if (rank === 11) return "J";
-  if (rank === 12) return "Q";
-  if (rank === 13) return "K";
-  return String(rank);
-}
-
-function rankValue(card: Card) {
-  // A is treated strictly as 1. J/Q/K are 11/12/13.
-  return card.rank;
-}
-
-function countByRank(cards: Card[]) {
-  const counts = new Map<number, number>();
-
-  for (const card of cards) {
-    const value = rankValue(card);
-    counts.set(value, (counts.get(value) ?? 0) + 1);
-  }
-
-  return counts;
-}
-
-function isStraight(cards: Card[]) {
-  if (cards.length !== 3) return false;
-
-  const values = cards.map(rankValue).sort((a, b) => a - b);
-  const uniqueValues = new Set(values);
-
-  if (uniqueValues.size !== 3) return false;
-
-  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
-}
-
-function analyzeExactWindow(cards: Card[], cells: number[]): HandResult | null {
-  if (cards.length !== cells.length) return null;
-
-  const ranks = cards.map(rankValue);
-  const counts = [...countByRank(cards).values()].sort((a, b) => b - a);
-  let kind: HandKind | null = null;
-
-  if (cards.length === 5 && counts.length === 2 && counts[0] === 3 && counts[1] === 2) {
-    kind = "FULL_HOUSE";
-  } else if (cards.length === 3 && isStraight(cards)) {
-    kind = "STRAIGHT";
-  } else if (cards.length === 3 && counts.length === 1 && counts[0] === 3) {
-    kind = "THREE";
-  } else if (cards.length === 2 && counts.length === 1 && counts[0] === 2) {
-    kind = "PAIR";
-  }
-
-  if (!kind) return null;
-
-  return {
-    kind,
-    label: HAND_LABEL[kind],
-    score: HAND_SCORE[kind],
-    remove: HAND_REMOVE[kind],
-    cells,
-    ranks,
-  };
-}
-
-function getLineIndexes(row: number, col: number, direction: "H" | "V") {
-  const indexes: number[] = [];
-
-  for (let i = 0; i < BOARD_SIZE; i += 1) {
-    indexes.push(direction === "H" ? indexOf(row, i) : indexOf(i, col));
-  }
-
-  return indexes;
-}
-
-function getContiguousOccupiedSegment(board: Board, lineIndexes: number[], placedIndex: number) {
-  const placedLinePosition = lineIndexes.indexOf(placedIndex);
-  if (placedLinePosition === -1) return [];
-
-  let start = placedLinePosition;
-  let end = placedLinePosition;
-
-  while (start > 0 && board[lineIndexes[start - 1]]) {
-    start -= 1;
-  }
-
-  while (end < lineIndexes.length - 1 && board[lineIndexes[end + 1]]) {
-    end += 1;
-  }
-
-  return lineIndexes.slice(start, end + 1);
-}
-
-function getWindowsIncludingPlaced(segment: number[], placedIndex: number, length: 2 | 3 | 5) {
-  const windows: number[][] = [];
-
-  if (segment.length < length) return windows;
-
-  for (let start = 0; start <= segment.length - length; start += 1) {
-    const window = segment.slice(start, start + length);
-
-    if (window.length === length && window.includes(placedIndex)) {
-      windows.push(window);
+  for (const suit of suits) {
+    for (const { rank, value } of ranks) {
+      deck.push({
+        id: `${rank}-${suit}-${Math.random().toString(36).slice(2)}`,
+        suit,
+        rank,
+        value,
+      });
     }
   }
 
-  return windows;
+  return shuffle(deck);
 }
 
-function evaluatePlacedCard(board: Board, placedIndex: number): HandResult | null {
-  const placedCard = board[placedIndex];
-  if (!placedCard) return null;
+function drawCards(deck: Card[], count: number): { drawn: Card[]; rest: Card[] } {
+  let currentDeck = [...deck];
 
-  const { row, col } = posOf(placedIndex);
-  const candidates: HandResult[] = [];
+  if (currentDeck.length < count) {
+    currentDeck = [...currentDeck, ...createDeck()];
+  }
 
-  for (const direction of ["H", "V"] as const) {
-    const line = getLineIndexes(row, col, direction);
-    const segment = getContiguousOccupiedSegment(board, line, placedIndex);
+  return {
+    drawn: currentDeck.slice(0, count),
+    rest: currentDeck.slice(count),
+  };
+}
 
-    for (const length of [5, 3, 2] as const) {
-      const windows = getWindowsIncludingPlaced(segment, placedIndex, length);
+function countFilledCells(board: Board): number {
+  return board.flat().filter(Boolean).length;
+}
 
-      for (const window of windows) {
-        const cards = window.map((cellIndex) => board[cellIndex]).filter((card): card is Card => card !== null);
-        const result = analyzeExactWindow(cards, window);
+function getCardUsefulness(card: Card, board: Board): number {
+  let usefulness = 0;
 
-        if (result) {
-          candidates.push(result);
-        }
+  for (const row of board) {
+    for (const cell of row) {
+      if (!cell) continue;
+
+      if (cell.value === card.value) {
+        usefulness += 3;
+      }
+
+      if (cell.suit === card.suit) {
+        usefulness += 1;
+      }
+
+      if (Math.abs(cell.value - card.value) === 1) {
+        usefulness += 2;
+      }
+
+      if (
+        (card.value === 14 && cell.value === 2) ||
+        (card.value === 2 && cell.value === 14)
+      ) {
+        usefulness += 2;
       }
     }
   }
 
-  if (candidates.length === 0) return null;
-
-  return candidates.sort((a, b) => {
-    const priorityDiff = HAND_PRIORITY[b.kind] - HAND_PRIORITY[a.kind];
-    if (priorityDiff !== 0) return priorityDiff;
-    return b.cells.length - a.cells.length;
-  })[0];
+  return usefulness;
 }
 
-function removeCells(board: Board, indexes: number[]) {
-  const nextBoard = [...board];
+function drawCardsForBoard(
+  deck: Card[],
+  count: number,
+  board: Board
+): { drawn: Card[]; rest: Card[] } {
+  let currentDeck = [...deck];
+  const drawn: Card[] = [];
 
-  for (const index of indexes) {
-    nextBoard[index] = null;
+  while (drawn.length < count) {
+    if (currentDeck.length < 6) {
+      currentDeck = [...currentDeck, ...createDeck()];
+    }
+
+    const filledCells = countFilledCells(board);
+
+    const biasChance =
+      filledCells >= 18 ? 0.72 : filledCells >= 12 ? 0.52 : 0.32;
+
+    const shouldBias = Math.random() < biasChance;
+    const candidateCount = shouldBias ? Math.min(8, currentDeck.length) : 1;
+    const candidates = currentDeck.slice(0, candidateCount);
+
+    let selectedIndex = 0;
+
+    if (shouldBias) {
+      let lowestUsefulness = Infinity;
+
+      candidates.forEach((candidate, index) => {
+        const usefulness = getCardUsefulness(candidate, board);
+
+        if (usefulness < lowestUsefulness) {
+          lowestUsefulness = usefulness;
+          selectedIndex = index;
+        }
+      });
+    }
+
+    const [selected] = currentDeck.splice(selectedIndex, 1);
+    drawn.push(selected);
   }
 
-  return nextBoard;
+  return {
+    drawn,
+    rest: currentDeck,
+  };
 }
 
-function isBoardFull(board: Board) {
-  return board.every(Boolean);
+function getSavedHighScore(): number {
+  if (typeof window === "undefined") return 0;
+
+  const saved = window.localStorage.getItem(HIGH_SCORE_KEY);
+  return saved ? Number(saved) : 0;
 }
 
-function comboMultiplier(combo: number) {
-  return Math.max(1, combo);
-}
-
-function comboGraceLeft(combo: number, turnsSinceHand: number) {
-  if (combo <= 0) return 0;
-  return Math.max(0, COMBO_GRACE_TURNS - turnsSinceHand);
-}
-
-function pressureLabel(emptyCells: number) {
-  if (emptyCells <= 3) return "CRITICAL";
-  if (emptyCells <= 7) return "DANGER";
-  if (emptyCells <= 12) return "TIGHT";
-  return "SAFE";
-}
-
-function handClassName(kind: HandKind | undefined) {
-  if (!kind) return "none";
-  return kind.toLowerCase().replace("_", "-");
-}
-
-function createEmptyBoard(): Board {
-  return Array.from({ length: BOARD_CELLS }, () => null);
-}
-
-function safeLocalStorageGet(key: string) {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function safeLocalStorageSet(key: string, value: string) {
+function saveHighScore(score: number) {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    // Ignore private-mode/local-storage failures.
+  window.localStorage.setItem(HIGH_SCORE_KEY, String(score));
+}
+
+function isBoardFull(board: Board): boolean {
+  return board.every((row) => row.every((cell) => cell !== null));
+}
+
+function getCardColor(card: Card): string {
+  if (card.suit === "heart" || card.suit === "diamond") {
+    return "text-red-600";
+  }
+
+  return "text-blue-950";
+}
+
+function keyOf(row: number, col: number) {
+  return `${row}-${col}`;
+}
+
+function toPositions(cards: LineCard[]): CardPosition[] {
+  return cards.map(({ row, col }) => ({ row, col }));
+}
+
+function getLine(
+  board: Board,
+  row: number,
+  col: number,
+  dRow: number,
+  dCol: number
+): LineCard[] {
+  const line: LineCard[] = [];
+
+  let r = row;
+  let c = col;
+
+  while (
+    r - dRow >= 0 &&
+    r - dRow < BOARD_SIZE &&
+    c - dCol >= 0 &&
+    c - dCol < BOARD_SIZE &&
+    board[r - dRow][c - dCol]
+  ) {
+    r -= dRow;
+    c -= dCol;
+  }
+
+  while (
+    r >= 0 &&
+    r < BOARD_SIZE &&
+    c >= 0 &&
+    c < BOARD_SIZE &&
+    board[r][c]
+  ) {
+    line.push({
+      row: r,
+      col: c,
+      card: board[r][c] as Card,
+    });
+
+    r += dRow;
+    c += dCol;
+  }
+
+  return line;
+}
+
+function includesPlaced(cards: LineCard[], row: number, col: number): boolean {
+  return cards.some((item) => item.row === row && item.col === col);
+}
+
+function isOrderedStraight(values: number[]): boolean {
+  const isNormalAscending = values.every(
+    (value, index) => index === 0 || value === values[index - 1] + 1
+  );
+
+  const isNormalDescending = values.every(
+    (value, index) => index === 0 || value === values[index - 1] - 1
+  );
+
+  const aceLowValues = values.map((value) => (value === 14 ? 1 : value));
+
+  const isAceLowAscending = aceLowValues.every(
+    (value, index) => index === 0 || value === aceLowValues[index - 1] + 1
+  );
+
+  const isAceLowDescending = aceLowValues.every(
+    (value, index) => index === 0 || value === aceLowValues[index - 1] - 1
+  );
+
+  return (
+    isNormalAscending ||
+    isNormalDescending ||
+    isAceLowAscending ||
+    isAceLowDescending
+  );
+}
+
+function isCleanFullHouse(cards: LineCard[]): boolean {
+  if (cards.length !== 5) return false;
+
+  const values = cards.map((item) => item.card.value);
+
+  const firstThree =
+    values[0] === values[1] &&
+    values[1] === values[2] &&
+    values[3] === values[4] &&
+    values[2] !== values[3];
+
+  const firstTwo =
+    values[0] === values[1] &&
+    values[2] === values[3] &&
+    values[3] === values[4] &&
+    values[1] !== values[2];
+
+  return firstThree || firstTwo;
+}
+
+function isCleanRoyal(cards: LineCard[]): boolean {
+  if (cards.length !== 5) return false;
+
+  const values = cards.map((item) => item.card.value).join("-");
+
+  return values === "10-11-12-13-14" || values === "14-13-12-11-10";
+}
+
+function addUniqueResult(results: HandResult[], result: HandResult) {
+  const resultKey = result.cards
+    .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+    .sort()
+    .join("|");
+
+  const alreadyExists = results.some((existing) => {
+    const existingKey = existing.cards
+      .map((cardPosition) => keyOf(cardPosition.row, cardPosition.col))
+      .sort()
+      .join("|");
+
+    return existing.name === result.name && existingKey === resultKey;
+  });
+
+  if (!alreadyExists) {
+    results.push(result);
   }
 }
 
-function createInitialGame() {
-  const deck = newDeck();
-  const drawn = drawCard(deck);
+function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+  if (line.length < 2) return [];
+
+  const results: HandResult[] = [];
+
+  for (let start = 0; start < line.length; start++) {
+    const pairCards = line.slice(start, start + 2);
+
+    if (
+      pairCards.length === 2 &&
+      includesPlaced(pairCards, placedRow, placedCol) &&
+      pairCards[0].card.value === pairCards[1].card.value
+    ) {
+      addUniqueResult(results, {
+        name: "Pair",
+        score: scoreTable.pair * pairCards.length,
+        cards: toPositions(pairCards),
+        shouldClear: false,
+      });
+    }
+
+    const threeCards = line.slice(start, start + 3);
+
+    if (
+      threeCards.length === 3 &&
+      includesPlaced(threeCards, placedRow, placedCol)
+    ) {
+      const values = threeCards.map((item) => item.card.value);
+      const suitsInThree = threeCards.map((item) => item.card.suit);
+
+      if (values.every((value) => value === values[0])) {
+        addUniqueResult(results, {
+          name: "Three Card",
+          score: scoreTable.three * threeCards.length,
+          cards: toPositions(threeCards),
+          shouldClear: true,
+        });
+      }
+
+      if (isOrderedStraight(values)) {
+        addUniqueResult(results, {
+          name: "Straight",
+          score: scoreTable.straight * threeCards.length,
+          cards: toPositions(threeCards),
+          shouldClear: true,
+        });
+      }
+
+      if (suitsInThree.every((suit) => suit === suitsInThree[0])) {
+        addUniqueResult(results, {
+          name: `${suitNames[suitsInThree[0]]} Flush`,
+          score: scoreTable.flush * threeCards.length,
+          cards: toPositions(threeCards),
+          shouldClear: true,
+        });
+      }
+    }
+
+    const fiveCards = line.slice(start, start + 5);
+
+    if (
+      fiveCards.length === 5 &&
+      includesPlaced(fiveCards, placedRow, placedCol)
+    ) {
+      if (isCleanFullHouse(fiveCards)) {
+        addUniqueResult(results, {
+          name: "Full House",
+          score: scoreTable.fullHouse * fiveCards.length,
+          cards: toPositions(fiveCards),
+          shouldClear: true,
+        });
+      }
+
+      if (isCleanRoyal(fiveCards)) {
+        addUniqueResult(results, {
+          name: "Royal Line",
+          score: scoreTable.royal * fiveCards.length,
+          cards: toPositions(fiveCards),
+          shouldClear: true,
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
+function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
+  const directions = [
+    [0, 1],
+    [1, 0],
+  ];
+
+  const allResults: HandResult[] = [];
+
+  for (const [dRow, dCol] of directions) {
+    const line = getLine(board, row, col, dRow, dCol);
+    allResults.push(...evaluateLine(line, row, col));
+  }
+
+  return allResults;
+}
+
+function createInitialGame(highScore = 0): GameState {
+  const deck = createDeck();
+  const { drawn, rest } = drawCards(deck, HAND_SIZE);
 
   return {
     board: createEmptyBoard(),
-    deck: drawn.deck,
-    currentCard: drawn.card,
+    deck: rest,
+    hand: drawn,
     score: 0,
-    bestScore: 0,
-    combo: 0,
-    turnsSinceHand: 0,
-    status: "PLAYING" as GameStatus,
-    lastHand: null as HandResult | null,
-    lastMessage: "Place a card.",
-    lastScoreDelta: 0,
-    selectedCells: [] as number[],
-    history: [] as HandHistoryItem[],
+    highScore,
+    combo: 1,
+    comboWindow: MAX_COMBO_WINDOW,
+    selectedHandIndex: 0,
+    lastResult: "PLACE LEFT CARD",
+    lastScore: 0,
+    isGameOver: false,
   };
 }
 
-export default function Page() {
-  const [game, setGame] = useState(() => createInitialGame());
-  const [savedBestScore, setSavedBestScore] = useState(0);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [settings, setSettings] = useState<Settings>({
-    sound: true,
-    showDebug: false,
-    reducedMotion: false,
-    sfxVolume: 0.55,
-    bgmVolume: 0,
-  });
-  const [screen, setScreen] = useState<"HOME" | "GAME">("HOME");
-  const audioContextRef = useRef<AudioContext | null>(null);
+function CardFace({
+  card,
+  size = "normal",
+}: {
+  card: Card;
+  size?: "tiny" | "small" | "normal" | "large";
+}) {
+  const rankSize =
+    size === "large"
+      ? "text-4xl"
+      : size === "tiny"
+      ? "text-sm"
+      : size === "small"
+      ? "text-lg"
+      : "text-2xl";
 
-  useEffect(() => {
-    const savedBest = Number(safeLocalStorageGet("nuts-best-score") ?? "0");
-    if (Number.isFinite(savedBest) && savedBest > 0) {
-      setSavedBestScore(savedBest);
-      setGame((current) => ({ ...current, bestScore: Math.max(current.bestScore, savedBest) }));
-    }
+  const suitSize =
+    size === "large"
+      ? "text-7xl"
+      : size === "tiny"
+      ? "text-2xl"
+      : size === "small"
+      ? "text-4xl"
+      : "text-5xl";
 
-    const savedSettings = safeLocalStorageGet("nuts-settings-v6");
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings) as Partial<Settings>;
-        setSettings((current) => ({ ...current, ...parsed }));
-      } catch {
-        // Ignore invalid saved settings.
-      }
-    }
-  }, []);
+  const cornerTextSize =
+    size === "tiny" ? "text-[10px]" : size === "small" ? "text-xs" : "text-sm";
 
-  useEffect(() => {
-    safeLocalStorageSet("nuts-best-score", String(savedBestScore));
-  }, [savedBestScore]);
+  return (
+    <div
+      className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg font-black ${getCardColor(
+        card
+      )}`}
+    >
+      <div className="absolute inset-0 bg-[#fff3cf]" />
+      <div className="absolute inset-0 opacity-80 bg-[radial-gradient(circle_at_25%_18%,rgba(255,255,255,0.9),transparent_25%),radial-gradient(circle_at_65%_65%,rgba(255,214,129,0.38),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.28),transparent_42%,rgba(0,0,0,0.08))]" />
+      <div className="absolute inset-[3px] rounded-md border border-black/10" />
 
-  useEffect(() => {
-    safeLocalStorageSet("nuts-settings-v6", JSON.stringify(settings));
-  }, [settings]);
+      <div className="absolute left-1 top-1 z-20 flex flex-col items-center leading-none">
+        <span className={`${cornerTextSize} tracking-[-0.03em]`}>
+          {card.rank}
+        </span>
+        <span className={size === "tiny" ? "text-xs" : "text-sm"}>
+          {suitSymbols[card.suit]}
+        </span>
+      </div>
 
-  const emptyCells = useMemo(() => game.board.filter((cell) => cell === null).length, [game.board]);
-  const deckLeft = game.deck.length + 1;
-  const graceLeft = comboGraceLeft(game.combo, game.turnsSinceHand);
-  const currentMultiplier = comboMultiplier(game.combo);
-  const pressure = pressureLabel(emptyCells);
-  const lastHandClass = handClassName(game.lastHand?.kind);
+      <div className="relative z-10 flex flex-col items-center justify-center drop-shadow-[1px_1px_0_rgba(0,0,0,0.16)]">
+        <span className={`${rankSize} leading-none tracking-[-0.04em]`}>
+          {card.rank}
+        </span>
+        <span className={`${suitSize} -mt-1 leading-none`}>
+          {suitSymbols[card.suit]}
+        </span>
+      </div>
 
-  function playTone(type: "start" | "place" | "hit" | "miss" | "button" | "gameover") {
-    if (!settings.sound || settings.sfxVolume <= 0) return;
-    if (typeof window === "undefined") return;
+      <div className="absolute bottom-1 right-1 z-20 flex rotate-180 flex-col items-center leading-none">
+        <span className={`${cornerTextSize} tracking-[-0.03em]`}>
+          {card.rank}
+        </span>
+        <span className={size === "tiny" ? "text-xs" : "text-sm"}>
+          {suitSymbols[card.suit]}
+        </span>
+      </div>
+    </div>
+  );
+}
 
-    const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
+function StatBox({
+  label,
+  value,
+  accent = false,
+  pulse = false,
+}: {
+  label: string;
+  value: string | number;
+  accent?: boolean;
+  pulse?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "rounded-xl border-[3px] border-black bg-[#0f2146] px-2 py-2 shadow-[4px_4px_0_#000] transition md:px-2 md:py-2 lg:px-4 lg:py-3",
+        pulse ? "scale-105 bg-[#ffe975]" : "",
+      ].join(" ")}
+    >
+      <p
+        className={[
+          "text-[10px] font-black tracking-widest",
+          pulse ? "text-[#d43d4f]" : "text-[#ffe975]",
+        ].join(" ")}
+      >
+        {label}
+      </p>
+      <p
+        className={[
+          "mt-1 text-xl font-black leading-none lg:text-2xl",
+          pulse ? "text-black" : accent ? "text-[#ffe975]" : "text-white",
+        ].join(" ")}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
 
-    const context = audioContextRef.current ?? new AudioContextClass();
-    audioContextRef.current = context;
+const roleExamples = [
+    {
+      name: "Pair",
+      cards: [
+        { rank: "7", suit: "heart" as Suit },
+        { rank: "7", suit: "spade" as Suit },
+      ],
+      score: "10 × 2",
+      clear: "KEEP",
+    },
+    {
+      name: "Three",
+      cards: [
+        { rank: "Q", suit: "heart" as Suit },
+        { rank: "Q", suit: "diamond" as Suit },
+        { rank: "Q", suit: "club" as Suit },
+      ],
+      score: "40 × 3",
+      clear: "CLEAR",
+    },
+    {
+      name: "Straight",
+      cards: [
+        { rank: "5", suit: "spade" as Suit },
+        { rank: "6", suit: "heart" as Suit },
+        { rank: "7", suit: "club" as Suit },
+      ],
+      score: "60 × N",
+      clear: "CLEAR",
+    },
+    {
+      name: "Flush",
+      cards: [
+        { rank: "2", suit: "diamond" as Suit },
+        { rank: "5", suit: "diamond" as Suit },
+        { rank: "K", suit: "diamond" as Suit },
+      ],
+      score: "70 × N",
+      clear: "CLEAR",
+    },
+    {
+      name: "Full House",
+      cards: [
+        { rank: "9", suit: "heart" as Suit },
+        { rank: "9", suit: "spade" as Suit },
+        { rank: "9", suit: "club" as Suit },
+        { rank: "K", suit: "diamond" as Suit },
+        { rank: "K", suit: "heart" as Suit },
+      ],
+      score: "150 × 5",
+      clear: "CLEAR",
+    },
+    {
+      name: "Royal",
+      cards: [
+        { rank: "10", suit: "spade" as Suit },
+        { rank: "J", suit: "heart" as Suit },
+        { rank: "Q", suit: "club" as Suit },
+        { rank: "K", suit: "diamond" as Suit },
+        { rank: "A", suit: "spade" as Suit },
+      ],
+      score: "500 × 5",
+      clear: "CLEAR",
+    },
+  ];
 
-    const now = context.currentTime;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const frequency =
-      type === "hit" ? 740 :
-      type === "start" ? 520 :
-      type === "gameover" ? 130 :
-      type === "miss" ? 190 :
-      type === "button" ? 420 :
-      310;
 
-    oscillator.type = type === "gameover" ? "sawtooth" : "square";
-    oscillator.frequency.setValueAtTime(frequency, now);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.001, settings.sfxVolume * 0.08), now + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.14);
-  }
+function RoleListPanel() {
+  const roles = roleExamples;
 
-  function createFreshGame() {
-    return {
-      ...createInitialGame(),
-      bestScore: savedBestScore,
-    };
-  }
+  function MiniCard({ rank, suit }: { rank: string; suit: Suit }) {
+    const isRed = suit === "heart" || suit === "diamond";
 
-  function startGame() {
-    playTone("start");
-    setGame(createFreshGame());
-    setSettingsOpen(false);
-    setScreen("GAME");
-  }
-
-  function restart() {
-    playTone("button");
-    setGame(createFreshGame());
-    setSettingsOpen(false);
-    setScreen("GAME");
-  }
-
-  function backToTitle() {
-    playTone("button");
-    setSettingsOpen(false);
-    setScreen("HOME");
-  }
-
-  function placeCard(targetIndex: number) {
-    setGame((currentGame) => {
-      if (currentGame.status !== "PLAYING") return currentGame;
-      if (currentGame.board[targetIndex]) return currentGame;
-
-      playTone("place");
-
-      const placedBoard = [...currentGame.board];
-      placedBoard[targetIndex] = currentGame.currentCard;
-
-      const hand = evaluatePlacedCard(placedBoard, targetIndex);
-      const drawn = drawCard(currentGame.deck);
-
-      let nextBoard = placedBoard;
-      let nextCombo = currentGame.combo;
-      let nextTurnsSinceHand = currentGame.turnsSinceHand + 1;
-      let gainedScore = 0;
-      let message = "No hand.";
-      let selectedCells: number[] = [targetIndex];
-      let nextHistory = currentGame.history;
-
-      if (hand) {
-        const comboContinues = currentGame.combo > 0 && currentGame.turnsSinceHand <= COMBO_GRACE_TURNS;
-        nextCombo = comboContinues ? currentGame.combo + 1 : 1;
-        nextTurnsSinceHand = 0;
-        gainedScore = hand.score * comboMultiplier(nextCombo);
-        message = `${hand.label} +${gainedScore}`;
-        selectedCells = hand.cells;
-
-        if (hand.remove) {
-          nextBoard = removeCells(placedBoard, hand.cells);
-        }
-
-        nextHistory = [
-          {
-            id: makeId(),
-            label: hand.label,
-            score: gainedScore,
-            combo: nextCombo,
-            cleared: hand.remove,
-          },
-          ...currentGame.history,
-        ].slice(0, 6);
-      } else if (currentGame.turnsSinceHand >= COMBO_GRACE_TURNS) {
-        nextCombo = 0;
-        message = currentGame.combo > 0 ? "Combo lost." : "No hand.";
-      }
-
-      const nextScore = currentGame.score + gainedScore;
-      const nextBestScore = Math.max(currentGame.bestScore, savedBestScore, nextScore);
-      const nextStatus: GameStatus = isBoardFull(nextBoard) ? "GAME_OVER" : "PLAYING";
-
-      if (nextBestScore > savedBestScore) {
-        setSavedBestScore(nextBestScore);
-      }
-
-      if (hand) {
-        window.setTimeout(() => playTone("hit"), 80);
-      } else {
-        window.setTimeout(() => playTone("miss"), 80);
-      }
-
-      if (nextStatus === "GAME_OVER") {
-        window.setTimeout(() => playTone("gameover"), 170);
-      }
-
-      return {
-        ...currentGame,
-        board: nextBoard,
-        deck: drawn.deck,
-        currentCard: drawn.card,
-        score: nextScore,
-        bestScore: nextBestScore,
-        combo: nextCombo,
-        turnsSinceHand: nextTurnsSinceHand,
-        status: nextStatus,
-        lastHand: hand,
-        lastMessage: nextStatus === "GAME_OVER" ? "Game Over" : message,
-        lastScoreDelta: gainedScore,
-        selectedCells,
-        history: nextHistory,
-      };
-    });
+    return (
+      <div
+        className={[
+          "flex h-10 w-8 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff3cf] text-[11px] font-black leading-none shadow-[2px_2px_0_#000]",
+          isRed ? "text-red-600" : "text-blue-950",
+        ].join(" ")}
+      >
+        <span>{rank}</span>
+        <span className="text-base">{suitSymbols[suit]}</span>
+      </div>
+    );
   }
 
   return (
-    <main className={`nuts-root ${settings.reducedMotion ? "motion-off" : ""}`}>
-      <div className="bg-grid" />
-      <div className="casino-glow" aria-hidden="true" />
+    <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border-[5px] border-black bg-[#0f2146] p-3 shadow-[6px_6px_0_#000] lg:flex lg:flex-col">
+      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffe975] px-3 py-2 text-black shadow-[3px_3px_0_#000] lg:mb-3">
+        <p className="text-[11px] font-black tracking-[0.25em]">HANDS</p>
+      </div>
 
-      <button className="settings-button" type="button" onClick={() => { playTone("button"); setSettingsOpen(true); }} aria-label="Open settings" title="Settings">
-        ⚙
-      </button>
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+        {roles.map((role) => (
+          <div
+            key={role.name}
+            className="rounded-xl border-[3px] border-black bg-[#2b1a4a] p-2 shadow-[3px_3px_0_#000]"
+          >
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-sm font-black leading-none text-[#ffe975]">
+                {role.name}
+              </p>
 
-      {settingsOpen && (
-        <div className="modal-layer" role="dialog" aria-modal="true" aria-label="Settings">
-          <div className="modal-card">
-            <div className="modal-head">
-              <div>
-                <p className="eyebrow">NUTS</p>
-                <h2>Settings</h2>
-              </div>
-              <button className="modal-close" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
-                ×
-              </button>
             </div>
 
-            <label className="setting-row">
-              <span>Sound</span>
-              <input
-                type="checkbox"
-                checked={settings.sound}
-                onChange={(event) => setSettings((value) => ({ ...value, sound: event.target.checked }))}
-              />
-            </label>
+            <div className="mb-1 flex items-center gap-1">
+              {role.cards.map((card, index) => (
+                <MiniCard
+                  key={`${role.name}-${card.rank}-${card.suit}-${index}`}
+                  rank={card.rank}
+                  suit={card.suit}
+                />
+              ))}
+            </div>
 
-            <label className="range-row">
-              <span>SFX Volume <b>{Math.round(settings.sfxVolume * 100)}%</b></span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={settings.sfxVolume}
-                onChange={(event) => setSettings((value) => ({ ...value, sfxVolume: Number(event.target.value) }))}
-              />
-            </label>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
 
-            <label className="range-row">
-              <span>BGM Volume <b>{settings.bgmVolume <= 0 ? "OFF" : `${Math.round(settings.bgmVolume * 100)}%`}</b></span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={settings.bgmVolume}
-                onChange={(event) => setSettings((value) => ({ ...value, bgmVolume: Number(event.target.value) }))}
-              />
-            </label>
 
-            <label className="setting-row">
-              <span>Show Debug</span>
-              <input
-                type="checkbox"
-                checked={settings.showDebug}
-                onChange={(event) => setSettings((value) => ({ ...value, showDebug: event.target.checked }))}
-              />
-            </label>
+function MobileRoleListPanel() {
+  function MiniCard({ rank, suit }: { rank: string; suit: Suit }) {
+    const isRed = suit === "heart" || suit === "diamond";
 
-            <label className="setting-row">
-              <span>Reduced Motion</span>
-              <input
-                type="checkbox"
-                checked={settings.reducedMotion}
-                onChange={(event) => setSettings((value) => ({ ...value, reducedMotion: event.target.checked }))}
-              />
-            </label>
+    return (
+      <div
+        className={[
+          "flex h-8 w-6 shrink-0 flex-col items-center justify-center rounded-md border-[2px] border-black bg-[#fff3cf] text-[9px] font-black leading-none shadow-[2px_2px_0_#000]",
+          isRed ? "text-red-600" : "text-blue-950",
+        ].join(" ")}
+      >
+        <span>{rank}</span>
+        <span className="text-sm">{suitSymbols[suit]}</span>
+      </div>
+    );
+  }
 
-            <div className="settings-help">
-              <h3>HOW TO PLAY</h3>
-              <p>Place one card into an empty cell. Hands are checked only in rows and columns. Pair keeps the card. Three, Straight, and Full House clear the exact hand cards.</p>
+  return (
+    <aside className="mt-2 hidden rounded-2xl border-[5px] border-black bg-[#0f2146] p-2 shadow-[6px_6px_0_#000] md:block lg:hidden">
+      <div className="mb-2 rounded-xl border-[4px] border-black bg-[#ffe975] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
+        <p className="text-[10px] font-black tracking-[0.25em]">HANDS</p>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {roleExamples.map((role) => (
+          <div
+            key={role.name}
+            className="min-w-[116px] rounded-xl border-[3px] border-black bg-[#2b1a4a] p-2 shadow-[3px_3px_0_#000]"
+          >
+            <p className="mb-1 text-xs font-black leading-none text-[#ffe975]">
+              {role.name}
+            </p>
+
+            <div className="flex items-center gap-1">
+              {role.cards.map((card, index) => (
+                <MiniCard
+                  key={`${role.name}-${card.rank}-${card.suit}-${index}`}
+                  rank={card.rank}
+                  suit={card.suit}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function HomeScreen({
+  highScore,
+  onStart,
+}: {
+  highScore: number;
+  onStart: () => void;
+}) {
+  return (
+    <main className="relative h-screen overflow-hidden bg-[#17102b] text-white">
+      <style>{`
+        @keyframes titleFloat {
+          0%, 100% { transform: translateY(0) rotate(-1deg); }
+          50% { transform: translateY(-8px) rotate(1deg); }
+        }
+
+        @keyframes cardDriftA {
+          0%, 100% { transform: translateY(0) rotate(-12deg); }
+          50% { transform: translateY(-14px) rotate(-8deg); }
+        }
+
+        @keyframes cardDriftB {
+          0%, 100% { transform: translateY(0) rotate(10deg); }
+          50% { transform: translateY(12px) rotate(14deg); }
+        }
+
+        @keyframes pulseGlow {
+          0%, 100% { box-shadow: 8px 8px 0 #000; }
+          50% { box-shadow: 0 0 0 4px #ffef7a, 10px 10px 0 #000; }
+        }
+      `}</style>
+
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,211,74,0.22),transparent_26%),radial-gradient(circle_at_85%_20%,rgba(64,151,255,0.25),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(255,73,96,0.22),transparent_32%)]" />
+
+      <div className="pointer-events-none absolute inset-0 opacity-[0.075] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
+
+      <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[#17102b] px-6 text-center text-white md:hidden landscape:hidden">
+        <div className="rounded-2xl border-[5px] border-black bg-[#d93555] p-6 shadow-[8px_8px_0_#000]">
+          <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#ffe975]">
+            NUTS
+          </p>
+          <p className="text-xl font-black leading-tight">
+            Rotate your phone
+          </p>
+          <p className="mt-3 text-xs font-bold leading-5">
+            This game is designed for landscape play.
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="pointer-events-none absolute left-[8%] top-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff3cf] shadow-[8px_8px_0_#000] md:block"
+        style={{ animation: "cardDriftA 3.4s ease-in-out infinite" }}
+      >
+        <div className="flex h-full flex-col items-center justify-center text-blue-950">
+          <p className="text-4xl font-black">A</p>
+          <p className="text-6xl font-black">♠</p>
+        </div>
+      </div>
+
+      <div
+        className="pointer-events-none absolute right-[8%] bottom-[18%] hidden h-40 w-28 rounded-2xl border-[5px] border-black bg-[#fff3cf] shadow-[8px_8px_0_#000] md:block"
+        style={{ animation: "cardDriftB 3.8s ease-in-out infinite" }}
+      >
+        <div className="flex h-full flex-col items-center justify-center text-red-600">
+          <p className="text-4xl font-black">K</p>
+          <p className="text-6xl font-black">♥</p>
+        </div>
+      </div>
+
+      <div className="relative z-10 mx-auto flex h-screen max-w-5xl flex-col items-center justify-center px-4">
+        <section
+          className="w-full max-w-3xl rounded-[2rem] border-[6px] border-black bg-[#2b1a4a] p-5 text-center shadow-[12px_12px_0_#000] md:p-8"
+          style={{ animation: "titleFloat 4s ease-in-out infinite" }}
+        >
+          <div className="mb-5 rounded-[1.5rem] border-[5px] border-black bg-[#d93555] px-5 py-6 shadow-[7px_7px_0_#000]">
+            <p className="mb-2 text-sm font-black tracking-[0.55em] text-[#ffe975]">
+              GRID POKER
+            </p>
+
+            <h1 className="text-5xl font-black leading-none text-white drop-shadow-[5px_5px_0_#000] md:text-8xl">
+              CARD
+              <br />
+              PUZZLE
+            </h1>
+          </div>
+
+          <div className="mx-auto mb-5 grid max-w-md grid-cols-3 gap-2">
+            <div className="rotate-[-4deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
+              <p className="text-2xl font-black">Q</p>
+              <p className="text-4xl font-black">♣</p>
+            </div>
+
+            <div className="rotate-[2deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-3 text-red-600 shadow-[4px_4px_0_#000]">
+              <p className="text-2xl font-black">10</p>
+              <p className="text-4xl font-black">♦</p>
+            </div>
+
+            <div className="rotate-[5deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-3 text-blue-950 shadow-[4px_4px_0_#000]">
+              <p className="text-2xl font-black">J</p>
+              <p className="text-4xl font-black">♠</p>
+            </div>
+          </div>
+
+          <div className="mx-auto mb-5 grid max-w-md grid-cols-2 gap-3">
+            <button
+              onClick={onStart}
+              className="rounded-2xl border-[5px] border-black bg-[#ffe975] px-5 py-4 text-2xl font-black text-black shadow-[7px_7px_0_#000] transition hover:-translate-y-1 hover:shadow-[9px_9px_0_#000]"
+              style={{ animation: "pulseGlow 1.8s ease-in-out infinite" }}
+            >
+              PLAY
+            </button>
+
+            <div className="rounded-2xl border-[5px] border-black bg-[#0f2146] px-4 py-3 text-left shadow-[7px_7px_0_#000]">
+              <p className="text-[10px] font-black tracking-[0.25em] text-[#62e7ff]">
+                BEST
+              </p>
+              <p className="text-3xl font-black text-[#ffe975]">{highScore}</p>
+            </div>
+          </div>
+
+          <div className="mx-auto max-w-md rounded-2xl border-[4px] border-black bg-[#0f2146] p-4 text-left shadow-[5px_5px_0_#000]">
+            <p className="mb-2 text-xs font-black tracking-[0.3em] text-[#ffe975]">
+              RULE
+            </p>
+
+            <div className="grid gap-2 text-xs font-bold leading-5 text-white">
+              <p>Only the left card can be placed.</p>
+              <p>The next 2 cards are visible.</p>
+              <p>Plan ahead and survive.</p>
+                          </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+export default function Home() {
+  const [game, setGame] = useState<GameState>(() => createInitialGame(0));
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [screen, setScreen] = useState<ScreenState>("home");
+
+  const [placedCell, setPlacedCell] = useState<string | null>(null);
+  const [highlightCells, setHighlightCells] = useState<Set<string>>(new Set());
+  const [clearingCells, setClearingCells] = useState<Set<string>>(new Set());
+  const [scorePulse, setScorePulse] = useState(false);
+  const [comboPulse, setComboPulse] = useState(false);
+  const [resultPulse, setResultPulse] = useState(false);
+  const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
+
+  useEffect(() => {
+    const savedHighScore = getSavedHighScore();
+
+    setGame((prev) => ({
+      ...prev,
+      highScore: savedHighScore,
+    }));
+
+    setIsLoaded(true);
+  }, []);
+
+  const selectedCard = game.hand[0] ?? null;
+
+  const isResolvingHand = highlightCells.size > 0;
+
+  function resetEffects() {
+    setPlacedCell(null);
+    setHighlightCells(new Set());
+    setClearingCells(new Set());
+    setScorePulse(false);
+    setComboPulse(false);
+    setResultPulse(false);
+    setFloatingScores([]);
+  }
+
+  function restartGame() {
+    resetEffects();
+    setGame((prev) => createInitialGame(prev.highScore));
+  }
+
+  function startGame() {
+    resetEffects();
+    setGame((prev) => createInitialGame(prev.highScore));
+    setScreen("game");
+  }
+
+  function selectHandCard(index: number) {
+    if (game.isGameOver) return;
+    if (index !== 0) return;
+
+    setGame((prev) => ({
+      ...prev,
+      selectedHandIndex: 0,
+      lastResult: `${prev.hand[0].rank}${suitSymbols[prev.hand[0].suit]} READY`,
+      lastScore: 0,
+    }));
+  }
+
+  function placeCard(row: number, col: number) {
+    if (game.isGameOver) return;
+    if (!game.hand[0]) return;
+    if (game.board[row][col]) return;
+
+    const selected = game.hand[0];
+
+    const newBoard = game.board.map((boardRow) => [...boardRow]);
+    newBoard[row][col] = selected;
+
+    const results = evaluateBoard(newBoard, row, col);
+    const hasHand = results.length > 0;
+
+    const baseScore = results.reduce((sum, result) => sum + result.score, 0);
+    const gainedScore = hasHand ? baseScore * game.combo : 0;
+
+    let nextCombo = game.combo;
+    let nextComboWindow = game.comboWindow;
+
+    if (hasHand) {
+      nextCombo = Math.min(game.combo + 1, MAX_COMBO);
+      nextComboWindow = MAX_COMBO_WINDOW;
+    } else if (game.combo > 1) {
+      nextComboWindow = game.comboWindow - 1;
+
+      if (nextComboWindow <= 0) {
+        nextCombo = 1;
+        nextComboWindow = MAX_COMBO_WINDOW;
+      }
+    } else {
+      nextCombo = 1;
+      nextComboWindow = MAX_COMBO_WINDOW;
+    }
+
+    const clearTargets = new Set<string>();
+    const handTargets = new Set<string>();
+
+    for (const result of results) {
+      for (const cardPosition of result.cards) {
+        handTargets.add(keyOf(cardPosition.row, cardPosition.col));
+      }
+
+      if (!result.shouldClear) continue;
+
+      for (const cardPosition of result.cards) {
+        clearTargets.add(keyOf(cardPosition.row, cardPosition.col));
+      }
+    }
+
+    const boardBeforeClear = newBoard.map((boardRow) => [...boardRow]);
+
+    if (clearTargets.size > 0) {
+      for (const key of clearTargets) {
+        const [targetRow, targetCol] = key.split("-").map(Number);
+        newBoard[targetRow][targetCol] = null;
+      }
+    }
+
+    const newHand = [...game.hand];
+    newHand.shift();
+
+    const drawResult = drawCardsForBoard(game.deck, 1, newBoard);
+    newHand.push(...drawResult.drawn);
+
+    const nextScore = game.score + gainedScore;
+    const nextHighScore = Math.max(game.highScore, nextScore);
+
+    if (nextHighScore > game.highScore) {
+      saveHighScore(nextHighScore);
+    }
+
+    const nextGameOver = isBoardFull(newBoard);
+
+    const resultText = hasHand
+      ? `${results.map((result) => result.name).join(" + ")}`
+      : game.combo > 1 && nextCombo === 1
+      ? "COMBO BROKEN"
+      : game.combo > 1
+      ? `NO HAND - ${nextComboWindow} LEFT`
+      : "NO HAND";
+
+    setPlacedCell(keyOf(row, col));
+    setHighlightCells(handTargets);
+    setClearingCells(clearTargets);
+    setResultPulse(hasHand || resultText === "COMBO BROKEN");
+    setScorePulse(gainedScore > 0);
+    setComboPulse(hasHand || nextCombo === 1);
+
+    if (gainedScore > 0) {
+      const floatingId = Date.now();
+
+      setFloatingScores((prev) => [
+        ...prev,
+        {
+          id: floatingId,
+          value: gainedScore,
+        },
+      ]);
+
+      window.setTimeout(() => {
+        setFloatingScores((prev) =>
+          prev.filter((score) => score.id !== floatingId)
+        );
+      }, 900);
+    }
+
+    window.setTimeout(() => {
+      setGame({
+        board: newBoard,
+        deck: drawResult.rest,
+        hand: newHand,
+        score: nextScore,
+        highScore: nextHighScore,
+        combo: nextCombo,
+        comboWindow: nextComboWindow,
+        selectedHandIndex: nextGameOver ? null : 0,
+        lastResult: nextGameOver ? "GAME OVER" : resultText,
+        lastScore: gainedScore,
+        isGameOver: nextGameOver,
+      });
+    }, clearTargets.size > 0 ? 320 : 120);
+
+    window.setTimeout(() => {
+      setPlacedCell(null);
+      setHighlightCells(new Set());
+      setClearingCells(new Set());
+      setScorePulse(false);
+      setComboPulse(false);
+      setResultPulse(false);
+    }, 760);
+
+    if (clearTargets.size > 0) {
+      setGame((prev) => ({
+        ...prev,
+        board: boardBeforeClear,
+        selectedHandIndex: 0,
+      }));
+    }
+  }
+
+  if (!isLoaded) {
+    return (
+      <main className="flex h-screen items-center justify-center overflow-hidden bg-[#17102b] text-white">
+        <div className="rounded-2xl border-[4px] border-black bg-[#d93555] px-8 py-5 shadow-[8px_8px_0_#000]">
+          <p className="text-2xl font-black tracking-[0.3em] text-[#ffe975]">
+            NUTS
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (screen === "home") {
+    return <HomeScreen highScore={game.highScore} onStart={startGame} />;
+  }
+
+  return (
+    <main className="relative h-screen overflow-hidden bg-[#17102b] text-white">
+      <style>{`
+        @keyframes floatScore {
+          0% { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-3deg); }
+          15% { opacity: 1; transform: translateY(0) scale(1.08) rotate(2deg); }
+          100% { opacity: 0; transform: translateY(-80px) scale(1.2) rotate(-2deg); }
+        }
+
+        @keyframes cardPop {
+          0% { transform: scale(0.88) rotate(-3deg); }
+          45% { transform: scale(1.1) rotate(2deg); }
+          100% { transform: scale(1) rotate(-1deg); }
+        }
+
+        @keyframes handGlow {
+          0%, 100% { box-shadow: 0 0 0 4px #ffef7a, 0 0 22px rgba(110,231,255,0.95), 5px 5px 0 #000; }
+          50% { box-shadow: 0 0 0 7px #6ee7ff, 0 0 32px rgba(255,239,122,1), 7px 7px 0 #000; }
+        }
+
+        @keyframes clearShake {
+          0% { transform: rotate(-2deg) scale(1); opacity: 1; filter: brightness(1); }
+          35% { transform: rotate(3deg) scale(1.12); opacity: 1; filter: brightness(1.35); }
+          70% { transform: rotate(-4deg) scale(1.04); opacity: 0.85; filter: brightness(1.1); }
+          100% { transform: rotate(-2deg) scale(0.78); opacity: 0.25; filter: brightness(0.7); }
+        }
+
+        @keyframes resultBounce {
+          0% { transform: scale(1) rotate(0deg); }
+          35% { transform: scale(1.06) rotate(-1deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes hitBadge {
+          0% { transform: translate(-50%, -50%) scale(0.8) rotate(-8deg); opacity: 0; }
+          30% { transform: translate(-50%, -50%) scale(1.15) rotate(4deg); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1) rotate(-3deg); opacity: 1; }
+        }
+
+        @keyframes targetBanner {
+          0% { transform: scale(0.92); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(255,233,117,0.16),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(98,231,255,0.18),transparent_30%),radial-gradient(circle_at_50%_95%,rgba(217,53,85,0.28),transparent_34%)]" />
+
+      <div className="pointer-events-none absolute inset-0 opacity-[0.075] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:18px_18px]" />
+
+      {floatingScores.map((score) => (
+        <div
+          key={score.id}
+          className="pointer-events-none fixed left-1/2 top-[20%] z-[70] -translate-x-1/2 rounded-2xl border-[5px] border-black bg-[#ffe975] px-6 py-3 text-5xl font-black text-[#d43d4f] shadow-[8px_8px_0_#000]"
+          style={{ animation: "floatScore 900ms ease-out forwards" }}
+        >
+          +{score.value}
+        </div>
+      ))}
+
+      {game.isGameOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 px-5">
+          <div className="w-full max-w-md rotate-[-1deg] rounded-[2rem] border-[5px] border-black bg-[#d93555] p-6 text-center shadow-[12px_12px_0_#000]">
+            <p className="mb-2 text-sm font-black tracking-[0.5em] text-[#ffe975]">
+              GAME OVER
+            </p>
+
+            <h2 className="mb-4 text-5xl font-black text-white drop-shadow-[3px_3px_0_#000]">
+              {game.score}
+            </h2>
+
+            <div className="mb-5 rounded-2xl border-[4px] border-black bg-[#0f2146] p-4 shadow-[5px_5px_0_#000]">
+              <p className="text-xs font-black tracking-widest text-[#62e7ff]">
+                BEST SCORE
+              </p>
+              <p className="mt-1 text-3xl font-black text-[#ffe975]">
+                {game.highScore}
+              </p>
             </div>
 
             <button
-              className="secondary-button privacy-button"
-              type="button"
-              onClick={() => { setSettingsOpen(false); setPrivacyOpen(true); }}
+              onClick={restartGame}
+              className="w-full rounded-2xl border-[4px] border-black bg-[#ffe975] px-5 py-4 text-xl font-black text-black shadow-[6px_6px_0_#000] transition hover:-translate-y-1 hover:shadow-[8px_8px_0_#000]"
             >
-              Privacy Policy
+              RESTART
             </button>
           </div>
         </div>
       )}
 
-      {privacyOpen && (
-        <div className="modal-layer" role="dialog" aria-modal="true" aria-label="Privacy Policy">
-          <div className="modal-card privacy-card">
-            <div className="modal-head">
-              <div>
-                <p className="eyebrow">NUTS</p>
-                <h2>Privacy Policy</h2>
-              </div>
-              <button className="modal-close" type="button" onClick={() => setPrivacyOpen(false)} aria-label="Close privacy policy">
-                ×
-              </button>
-            </div>
-            <div className="privacy-body">
-              <h3>Local Data</h3>
-              <p>Best score and settings are saved only in this browser when local storage is available.</p>
-              <h3>No Account Required</h3>
-              <p>NUTS does not require account registration and does not intentionally collect personal information.</p>
-              <h3>Gameplay</h3>
-              <p>The game may store simple gameplay preferences such as sound, debug view, and reduced motion.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1920px] flex-col justify-center px-1 py-1">
+        <section className="w-full rounded-2xl border-[5px] border-black bg-[#2b1a4a] p-2 shadow-[8px_8px_0_#000]">
+          <header className="mb-2 grid gap-2 md:grid-cols-[1fr_360px] md:items-end lg:grid-cols-[1fr_620px]">
+            <div className="rounded-2xl border-[5px] border-black bg-[#d93555] px-3 py-2 shadow-[5px_5px_0_#000] lg:px-4">
+              <p className="mb-1 text-xs font-black tracking-[0.4em] text-[#ffe975]">
+                GRID POKER
+              </p>
 
-      {screen === "HOME" ? (
-        <section className="home-shell">
-          <div className="home-card">
-            <div className="brand-mark" aria-hidden="true">
-              <span>N</span>
-              <i />
-            </div>
-            <p className="eyebrow">Grid Poker / Restored Spec v6</p>
-            <h1>NUTS</h1>
-            <p className="home-copy">
-              A compact grid-poker puzzle. Place cards, make row/column hands, chain combos, and keep the board alive.
-            </p>
-
-            <div className="home-stats">
-              <span>Best Score</span>
-              <strong>{savedBestScore}</strong>
+              <h1 className="text-3xl font-black leading-none text-white drop-shadow-[3px_3px_0_#000] lg:text-5xl">
+                NUTS
+              </h1>
             </div>
 
-            <div className="home-actions">
-              <button className="primary-button start-button" type="button" onClick={startGame}>
-                PLAY SOLO
-              </button>
-              <button className="secondary-button" type="button" onClick={() => { playTone("button"); setSettingsOpen(true); }}>
-                SETTINGS
-              </button>
+            <div className="grid grid-cols-4 gap-2">
+              <StatBox
+                label="SCORE"
+                value={game.score}
+                accent
+                pulse={scorePulse}
+              />
+              <StatBox label="BEST" value={game.highScore} accent />
+              <StatBox
+                label="COMBO"
+                value={`x${game.combo}`}
+                pulse={comboPulse}
+              />
+              <StatBox label="DECK" value={game.deck.length} />
             </div>
-          </div>
+          </header>
 
-          <div className="home-rules">
-            <RuleCard title="PAIR" score="Small" note="same rank ×2 / combo + small score" cards={[1, 1]} />
-            <RuleCard title="THREE" score="Base" note="same rank ×3 / combo + score + clear" cards={[2, 2, 2]} />
-            <RuleCard title="STRAIGHT" score="Middle" note="3 consecutive ranks / combo + middle score + clear" cards={[2, 3, 4]} />
-            <RuleCard title="FULL HOUSE" score="Big" note="3 + 2 in 5 cards / combo + big score + clear" cards={[3, 3, 3, 5, 5]} />
-          </div>
-        </section>
-      ) : (
-        <section className="game-shell">
-          <aside className="panel left-panel">
-            <p className="eyebrow">Score</p>
-            <div className="score">{game.score}</div>
+          <div className="grid h-[calc(100vh-142px)] max-h-[760px] justify-center gap-2 md:h-[calc(100vh-118px)] md:grid-cols-[minmax(360px,1fr)_260px] lg:h-[calc(100vh-142px)] lg:grid-cols-[230px_minmax(620px,840px)_380px] xl:gap-3 2xl:grid-cols-[250px_minmax(660px,920px)_410px]">
+            <RoleListPanel />
 
-            <div className="score-subline">
-              <span>Best {Math.max(savedBestScore, game.bestScore)}</span>
-              {game.lastScoreDelta > 0 && <strong>+{game.lastScoreDelta}</strong>}
-            </div>
+            <div className="flex min-h-0 flex-col">
+              <section className="flex min-h-0 flex-1 flex-col rounded-2xl border-[5px] border-black bg-[#0f2146] p-2 shadow-[6px_6px_0_#000]">
+                <div className="mb-1 flex h-5 items-center justify-between">
+                  <p className="text-xs font-black tracking-[0.25em] text-[#ffe975]">
+                    BOARD
+                  </p>
 
-            <div className="metric-grid">
-              <div className="metric-card">
-                <span>Combo</span>
-                <strong>{game.combo}</strong>
-              </div>
-              <div className="metric-card">
-                <span>Empty</span>
-                <strong>{emptyCells}</strong>
-              </div>
-              <div className="metric-card">
-                <span>Multiplier</span>
-                <strong>x{currentMultiplier}</strong>
-              </div>
-              <div className="metric-card">
-                <span>Deck</span>
-                <strong>{deckLeft}</strong>
-              </div>
-            </div>
-
-            <div className={`pressure-card pressure-${pressure.toLowerCase()}`}>
-              <div>
-                <span>Board Pressure</span>
-                <strong>{pressure}</strong>
-              </div>
-              <p>{emptyCells} spaces left. Clears are the key to survival.</p>
-            </div>
-
-            <div className={`combo-card ${game.combo > 0 ? "combo-active" : ""}`}>
-              <div className="combo-card-top">
-                <span>Combo Grace</span>
-                <strong>{game.combo > 0 ? graceLeft : "-"}</strong>
-              </div>
-              <div className="grace-dots" aria-hidden="true">
-                {[0, 1, 2].map((dot) => (
-                  <i key={dot} className={game.combo > 0 && dot < graceLeft ? "on" : ""} />
-                ))}
-              </div>
-              <p>Make the next hand within 3 turns to continue the chain.</p>
-            </div>
-
-            <div className="next-card-wrap">
-              <p className="eyebrow">Next Card</p>
-              <CardView card={game.currentCard} large />
-              <div className="deck-stack" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-            </div>
-
-            <div className="button-stack">
-              <button className="primary-button" type="button" onClick={restart}>
-                Restart
-              </button>
-              <button className="secondary-button" type="button" onClick={backToTitle}>
-                Title
-              </button>
-            </div>
-          </aside>
-
-          <section className="board-section">
-            <header className="title-area">
-              <p className="eyebrow">Grid Poker / Restored Spec v6</p>
-              <h1>NUTS</h1>
-              <div className="status-bar">
-                <span className={`hand-badge ${game.lastHand ? "active" : ""} ${lastHandClass}`}>
-                  {game.lastHand ? game.lastHand.label : "NO HAND"}
-                </span>
-                <p className="status-text">{game.lastMessage}</p>
-              </div>
-            </header>
-
-            <div className="board-wrap">
-              <div className={`board pressure-${pressure.toLowerCase()}`} aria-label="NUTS board">
-                {game.board.map((cell, index) => {
-                  const isHit = game.selectedCells.includes(index);
-
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      className={`cell ${cell ? "filled" : "empty"} ${isHit ? "hit" : ""}`}
-                      onClick={() => placeCard(index)}
-                      disabled={game.status !== "PLAYING" || cell !== null}
-                      aria-label={`cell ${index + 1}`}
+                  {isResolvingHand && (
+                    <div
+                      className="rounded-full border-[3px] border-black bg-[#ffe975] px-3 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                      style={{ animation: "targetBanner 180ms ease-out" }}
                     >
-                      {cell ? <CardView card={cell} /> : <span className="empty-dot" />}
-                    </button>
-                  );
-                })}
-              </div>
-              {game.lastScoreDelta > 0 && (
-                <div key={`score-${game.score}`} className={`score-pop ${lastHandClass}`}>
-                  +{game.lastScoreDelta}
-                </div>
-              )}
-            </div>
-
-            {game.status === "GAME_OVER" && (
-              <div className="game-over-layer">
-                <div className="game-over-card">
-                  <p className="eyebrow">Result</p>
-                  <h2>GAME OVER</h2>
-                  <p>Final Score: {game.score}</p>
-                  <p>Hands Made: {game.history.length}</p>
-                  <p className="result-best">Best Score: {Math.max(savedBestScore, game.bestScore)}</p>
-                  <button className="primary-button" type="button" onClick={restart}>
-                    Play Again
-                  </button>
-                  <button className="secondary-button game-over-secondary" type="button" onClick={backToTitle}>
-                    Title
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
-
-          <aside className="panel right-panel">
-            <p className="eyebrow">Hand Board</p>
-
-            <div className="hand-list">
-              <RuleCard title="PAIR" score="Small" note="same rank ×2 / no clear" cards={[1, 1]} />
-              <RuleCard title="THREE" score="Base" note="same rank ×3 / clear" cards={[2, 2, 2]} />
-              <RuleCard title="STRAIGHT" score="Middle" note="3 consecutive ranks / clear" cards={[2, 3, 4]} />
-              <RuleCard title="FULL HOUSE" score="Big" note="3 + 2 in 5 cards / clear" cards={[3, 3, 3, 5, 5]} />
-            </div>
-
-            <div className="history-box">
-              <p className="eyebrow">Recent Hits</p>
-              {game.history.length === 0 ? (
-                <p className="history-empty">No hands yet.</p>
-              ) : (
-                <div className="history-list">
-                  {game.history.map((item) => (
-                    <div key={item.id} className="history-item">
-                      <span>{item.label}</span>
-                      <strong>+{item.score}</strong>
-                      <small>x{item.combo}{item.cleared ? " / clear" : ""}</small>
+                      CLEAR TARGETS
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+
+                <div className="mx-auto grid aspect-square min-h-0 w-full max-h-full flex-1 grid-cols-5 grid-rows-5 gap-1.5 rounded-2xl border-[4px] border-black bg-[#081735] p-2 shadow-[inset_0_0_0_2px_rgba(255,233,117,0.08),inset_0_18px_40px_rgba(0,0,0,0.22)] lg:aspect-auto lg:max-h-none">
+                  {game.board.map((boardRow, rowIndex) =>
+                    boardRow.map((cell, colIndex) => {
+                      const cellKey = keyOf(rowIndex, colIndex);
+
+                      const canPlace =
+                        !cell &&
+                        !game.isGameOver &&
+                        game.hand.length > 0;
+
+                      const isPlaced = placedCell === cellKey;
+                      const isHighlighted = highlightCells.has(cellKey);
+                      const isClearing = clearingCells.has(cellKey);
+                      const shouldDim =
+                        isResolvingHand && !!cell && !isHighlighted;
+
+                      return (
+                        <button
+                          key={cellKey}
+                          onClick={() => placeCard(rowIndex, colIndex)}
+                          disabled={!!cell || game.isGameOver}
+                          className={[
+                            "relative h-full min-h-0 rounded-xl border-[3px] transition duration-200",
+                            cell
+                              ? "rotate-[-1deg] border-black bg-[#fff3cf] p-1 shadow-[3px_3px_0_#000]"
+                              : "border-black bg-[#122a59] shadow-[2px_2px_0_#000]",
+                            canPlace
+                              ? "cursor-pointer bg-[#2853a7] shadow-[0_0_0_3px_#ffef7a,4px_4px_0_#000] hover:-translate-y-1 hover:bg-[#3268d4]"
+                              : "",
+                            !cell && !canPlace ? "hover:bg-[#223b7c]" : "",
+                            isHighlighted
+                              ? "z-20 bg-[#ffe975] shadow-[0_0_0_4px_#6ee7ff,0_0_24px_rgba(255,239,122,0.85),5px_5px_0_#000]"
+                              : "",
+                            shouldDim ? "opacity-35 grayscale" : "",
+                          ].join(" ")}
+                          style={{
+                            animation: isClearing
+                              ? "clearShake 520ms ease-in-out forwards"
+                              : isHighlighted
+                              ? "handGlow 580ms ease-in-out infinite"
+                              : isPlaced
+                              ? "cardPop 360ms ease-out"
+                              : undefined,
+                          }}
+                        >
+                          {cell ? (
+                            <>
+                              <CardFace card={cell} size="normal" />
+
+                              {isHighlighted && (
+                                <div
+                                  className="pointer-events-none absolute left-1/2 top-1/2 z-30 rounded-full border-[3px] border-black bg-[#62e7ff] px-2 py-1 text-[10px] font-black text-black shadow-[3px_3px_0_#000]"
+                                  style={{
+                                    animation: "hitBadge 220ms ease-out forwards",
+                                  }}
+                                >
+                                  HIT
+                                </div>
+                              )}
+
+                              {isHighlighted && (
+                                <div className="pointer-events-none absolute inset-[-6px] z-[-1] rounded-2xl bg-[#ffe975] blur-md" />
+                              )}
+                            </>
+                          ) : (
+                            <span
+                              className={[
+                                "text-2xl font-black",
+                                canPlace ? "text-[#ffe975]" : "text-white/20",
+                              ].join(" ")}
+                            >
+                              ＋
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
+              
+              <MobileRoleListPanel />
             </div>
 
-            {settings.showDebug && (
-              <div className="debug-box">
-                <p className="eyebrow">Debug</p>
-                <pre>{JSON.stringify(
-                  {
-                    lastHand: game.lastHand?.label ?? null,
-                    hitCells: game.lastHand?.cells ?? [],
-                    ranks: game.lastHand?.ranks ?? [],
-                    combo: game.combo,
-                    turnsSinceHand: game.turnsSinceHand,
-                    graceLeft,
-                  },
-                  null,
-                  2,
-                )}</pre>
+            <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
+<div className="rounded-2xl border-[5px] border-black bg-[#d93555] p-2 shadow-[6px_6px_0_#000] lg:p-3">
+                <div className="mb-3 rounded-xl border-[3px] border-black bg-[#ffe975] px-3 py-2 text-black shadow-[3px_3px_0_#000]">
+                  <p className="text-[10px] font-black tracking-[0.25em]">
+                    NOW
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => selectHandCard(0)}
+                  disabled={game.isGameOver || !game.hand[0]}
+                  className="mb-3 flex w-full items-center gap-3 rounded-2xl border-[4px] border-black bg-[#274b96] p-2 text-left shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:shadow-[6px_6px_0_#000] lg:mb-4 lg:gap-4 lg:p-3"
+                >
+                  <div className="w-20 shrink-0 rotate-[-2deg] rounded-xl border-[4px] border-black bg-[#fff3cf] p-1 shadow-[4px_4px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}>
+                    {game.hand[0] ? (
+                      <CardFace card={game.hand[0]} size="small" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center rounded-xl bg-[#fff3cf] text-center text-xs font-black text-black/50">
+                        EMPTY
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-black tracking-widest text-[#62e7ff]">
+                      PLACE THIS
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-white drop-shadow-[2px_2px_0_#000]">
+                      {game.hand[0]
+                        ? `${game.hand[0].rank}${suitSymbols[game.hand[0].suit]}`
+                        : "-"}
+                    </p>
+                  </div>
+                </button>
+
+                <div className="rounded-xl border-[3px] border-black bg-[#0f2146] p-3 shadow-[3px_3px_0_#000]">
+                  <p className="mb-2 text-[10px] font-black tracking-[0.25em] text-[#ffe975]">
+                    NEXT
+                  </p>
+
+                  <div className="grid grid-cols-2 items-center justify-items-center gap-2 lg:gap-3">
+                    {game.hand.slice(1, 3).map((card, index) => (
+                      <div
+                        key={card.id}
+                        className="relative mx-auto w-20 rounded-xl border-[3px] border-black bg-[#fff3cf] p-1.5 opacity-90 shadow-[3px_3px_0_#000] lg:w-28" style={{ aspectRatio: "5 / 7" }}
+                      >
+                        <div className="pointer-events-none absolute left-1 top-1 z-20 rounded-md border-[2px] border-black bg-[#0f2146] px-1.5 py-0.5 text-[11px] font-black leading-none text-[#ffe975] shadow-[2px_2px_0_#000]">
+                          +{index + 1}
+                        </div>
+                        <CardFace card={card} size="tiny" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            )}
-          </aside>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={restartGame}
+                  className="rounded-xl border-[4px] border-black bg-[#ffe975] px-3 py-3 text-base font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:brightness-105 hover:shadow-[6px_6px_0_#000]"
+                >
+                  RESTART
+                </button>
+
+                <button
+                  onClick={() => setScreen("home")}
+                  className="rounded-xl border-[4px] border-black bg-[#62e7ff] px-3 py-3 text-base font-black text-black shadow-[4px_4px_0_#000] transition hover:-translate-y-1 hover:brightness-105 hover:shadow-[6px_6px_0_#000]"
+                >
+                  HOME
+                </button>
+              </div>
+            </aside>
+          </div>
         </section>
-      )}
-
-      <style jsx>{`
-        :global(*) {
-          box-sizing: border-box;
-        }
-
-        :global(html),
-        :global(body) {
-          margin: 0;
-          min-height: 100%;
-          background: #06140f;
-          overscroll-behavior: none;
-        }
-
-        :global(body) {
-          overflow: hidden;
-        }
-
-        button,
-        input {
-          font: inherit;
-        }
-
-        .nuts-root {
-          position: relative;
-          width: 100vw;
-          min-height: 100svh;
-          height: 100svh;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: clamp(12px, 2vw, 24px);
-          color: #f7efe3;
-          background:
-            radial-gradient(circle at 50% 10%, rgba(242, 184, 74, 0.22), transparent 32%),
-            radial-gradient(circle at 18% 86%, rgba(32, 208, 181, 0.12), transparent 30%),
-            linear-gradient(145deg, #0b3328 0%, #06140f 52%, #102117 100%);
-          font-family:
-            Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-          user-select: none;
-        }
-
-        .bg-grid {
-          position: absolute;
-          inset: 0;
-          opacity: 0.18;
-          pointer-events: none;
-          background-image:
-            linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-          background-size: 18px 18px;
-          mask-image: radial-gradient(circle at center, black, transparent 76%);
-        }
-
-        .home-shell,
-        .game-shell {
-          position: relative;
-          z-index: 1;
-        }
-
-        .casino-glow {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background-image:
-            radial-gradient(circle at 25% 20%, rgba(242, 184, 74, 0.16), transparent 22%),
-            radial-gradient(circle at 80% 72%, rgba(32, 208, 181, 0.12), transparent 24%);
-          filter: blur(1px);
-        }
-
-        .home-shell {
-          width: min(1040px, 100%);
-          min-height: min(680px, calc(100svh - 24px));
-          display: grid;
-          grid-template-columns: minmax(320px, 1.1fr) minmax(300px, 0.9fr);
-          gap: clamp(14px, 2vw, 26px);
-          align-items: stretch;
-        }
-
-        .home-card,
-        .home-rules,
-        .panel,
-        .board-section,
-        .game-over-card,
-        .modal-card {
-          border: 1px solid rgba(255, 230, 190, 0.22);
-          background: rgba(17, 14, 10, 0.74);
-          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          backdrop-filter: blur(18px);
-        }
-
-        .home-card,
-        .home-rules {
-          border-radius: 34px;
-          padding: clamp(22px, 3vw, 36px);
-        }
-
-        .home-card {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .home-card::after {
-          content: "";
-          position: absolute;
-          inset: auto -70px -90px auto;
-          width: 260px;
-          height: 260px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(244, 195, 110, 0.22), transparent 68%);
-          pointer-events: none;
-        }
-
-        .brand-mark {
-          position: relative;
-          width: 74px;
-          height: 74px;
-          border-radius: 22px;
-          display: grid;
-          place-items: center;
-          margin-bottom: 18px;
-          color: #201309;
-          background: linear-gradient(145deg, #f7d78e, #c9822f);
-          box-shadow: 0 18px 48px rgba(201, 130, 47, 0.28);
-          font-weight: 1000;
-          font-size: 34px;
-          letter-spacing: -0.04em;
-        }
-
-        .brand-mark i {
-          position: absolute;
-          width: 22px;
-          height: 4px;
-          transform: translate(21px, 22px) rotate(-22deg);
-          border-radius: 999px;
-          background: rgba(32, 19, 9, 0.32);
-        }
-
-        .home-card h1 {
-          text-align: left;
-          font-size: clamp(64px, 11vw, 132px);
-          margin-bottom: 18px;
-        }
-
-        .home-copy {
-          max-width: 560px;
-          color: #ead8bd;
-          font-size: clamp(16px, 2vw, 20px);
-          line-height: 1.7;
-          font-weight: 700;
-        }
-
-        .home-stats {
-          width: fit-content;
-          min-width: 180px;
-          border: 1px solid rgba(255, 230, 190, 0.16);
-          border-radius: 20px;
-          padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.055);
-        }
-
-        .home-stats span {
-          display: block;
-          color: #b7a991;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .home-stats strong {
-          display: block;
-          margin-top: 3px;
-          font-size: 28px;
-        }
-
-        .home-actions {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
-          gap: 12px;
-          margin-top: 28px;
-        }
-
-        .home-rules {
-          display: grid;
-          align-content: center;
-          gap: 12px;
-        }
-
-        .game-shell {
-          width: min(1280px, 100%);
-          height: min(780px, calc(100svh - 24px));
-          display: grid;
-          grid-template-columns: minmax(220px, 0.82fr) minmax(360px, 1.45fr) minmax(250px, 0.95fr);
-          gap: clamp(12px, 1.6vw, 22px);
-          align-items: stretch;
-        }
-
-        .panel {
-          border-radius: 28px;
-          padding: clamp(16px, 2vw, 24px);
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          min-width: 0;
-          overflow: hidden;
-        }
-
-        .board-section {
-          position: relative;
-          border-radius: 34px;
-          padding: clamp(14px, 1.8vw, 24px);
-          display: grid;
-          grid-template-rows: auto 1fr;
-          gap: 14px;
-          overflow: hidden;
-        }
-
-        .title-area {
-          text-align: center;
-        }
-
-        .eyebrow {
-          margin: 0 0 6px;
-          color: #c89d63;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-        }
-
-        h1,
-        h2,
-        p {
-          margin-top: 0;
-        }
-
-        h1 {
-          margin-bottom: 4px;
-          font-size: clamp(34px, 5vw, 64px);
-          line-height: 0.9;
-          letter-spacing: 0.08em;
-          text-shadow: 0 10px 36px rgba(230, 164, 72, 0.22);
-        }
-
-        h2 {
-          margin-bottom: 8px;
-        }
-
-        .status-bar {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          min-height: 38px;
-          padding: 7px 12px;
-          border-radius: 999px;
-          border: 1px solid rgba(255, 230, 190, 0.13);
-          background: rgba(255, 255, 255, 0.045);
-        }
-
-        .status-text {
-          min-height: 1.5em;
-          margin-bottom: 0;
-          color: #ead8bd;
-          font-weight: 800;
-        }
-
-        .hand-badge {
-          min-width: 86px;
-          border-radius: 999px;
-          padding: 6px 9px;
-          color: #8c7f6a;
-          background: rgba(255, 255, 255, 0.06);
-          font-size: 11px;
-          font-weight: 950;
-          letter-spacing: 0.08em;
-        }
-
-        .hand-badge.active {
-          color: #241507;
-          background: linear-gradient(180deg, #f7d78e, #c9822f);
-        }
-
-        .hand-badge.three {
-          background: linear-gradient(180deg, #ffe9a8, #c9822f);
-        }
-
-        .hand-badge.straight {
-          background: linear-gradient(180deg, #d7f0ff, #4da1c8);
-        }
-
-        .hand-badge.full-house {
-          background: linear-gradient(180deg, #ffd1e8, #b9578c);
-        }
-
-        .score {
-          font-size: clamp(40px, 5vw, 72px);
-          font-weight: 900;
-          line-height: 0.95;
-          letter-spacing: -0.04em;
-        }
-
-        .score-subline {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          margin-top: -8px;
-          color: #b7a991;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .score-subline strong {
-          color: #f4c36e;
-          font-size: 16px;
-        }
-
-        .metric-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-
-        .metric-card,
-        .combo-card,
-        .history-item,
-        .home-stats {
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
-        }
-
-        .metric-card {
-          border: 1px solid rgba(255, 230, 190, 0.16);
-          border-radius: 18px;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.045);
-        }
-
-        .metric-card span,
-        .combo-card span {
-          display: block;
-          margin-bottom: 4px;
-          color: #b7a991;
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .metric-card strong {
-          font-size: 28px;
-        }
-
-        .metric-card.wide {
-          grid-column: 1 / -1;
-        }
-
-        .pressure-card {
-          border: 1px solid rgba(255, 230, 190, 0.15);
-          border-radius: 20px;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.042);
-        }
-
-        .pressure-card div {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .pressure-card span {
-          color: #b7a991;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .pressure-card strong {
-          font-size: 16px;
-          letter-spacing: 0.08em;
-        }
-
-        .pressure-card p {
-          margin: 8px 0 0;
-          color: #b7a991;
-          font-size: 11px;
-          font-weight: 700;
-          line-height: 1.45;
-        }
-
-        .pressure-card.pressure-danger,
-        .pressure-card.pressure-critical {
-          border-color: rgba(236, 100, 74, 0.42);
-          background: rgba(236, 100, 74, 0.09);
-        }
-
-        .pressure-card.pressure-critical strong {
-          color: #ff8f6f;
-        }
-
-        .combo-card {
-          border: 1px solid rgba(255, 230, 190, 0.15);
-          border-radius: 20px;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.042);
-        }
-
-        .combo-card.combo-active {
-          border-color: rgba(244, 195, 110, 0.34);
-          background: rgba(244, 195, 110, 0.085);
-        }
-
-        .combo-card-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .combo-card-top strong {
-          font-size: 24px;
-        }
-
-        .grace-dots {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 6px;
-          margin: 8px 0;
-        }
-
-        .grace-dots i {
-          height: 7px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.09);
-        }
-
-        .grace-dots i.on {
-          background: linear-gradient(90deg, #f7d78e, #c9822f);
-        }
-
-        .combo-card p {
-          margin: 0;
-          color: #b7a991;
-          font-size: 11px;
-          font-weight: 700;
-          line-height: 1.45;
-        }
-
-        .next-card-wrap {
-          position: relative;
-          margin-top: auto;
-        }
-
-        .deck-stack {
-          position: absolute;
-          right: 12px;
-          bottom: 4px;
-          width: 42px;
-          height: 56px;
-          pointer-events: none;
-        }
-
-        .deck-stack span {
-          position: absolute;
-          inset: 0;
-          border-radius: 9px;
-          border: 1px solid rgba(255, 230, 190, 0.18);
-          background:
-            linear-gradient(135deg, rgba(244, 195, 110, 0.22), transparent 45%),
-            rgba(255, 255, 255, 0.06);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
-        }
-
-        .deck-stack span:nth-child(1) { transform: translate(-8px, 6px) rotate(-8deg); opacity: 0.45; }
-        .deck-stack span:nth-child(2) { transform: translate(-3px, 2px) rotate(-3deg); opacity: 0.68; }
-        .deck-stack span:nth-child(3) { transform: translate(3px, -3px) rotate(4deg); opacity: 0.9; }
-
-        .primary-button,
-        .settings-button,
-        .modal-close,
-        .cell {
-          border: 0;
-          cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .primary-button {
-          width: 100%;
-          border-radius: 18px;
-          padding: 14px 16px;
-          color: #1d1309;
-          background: linear-gradient(180deg, #f4c36e, #c9822f);
-          font-weight: 900;
-          box-shadow: 0 10px 28px rgba(193, 117, 40, 0.28);
-        }
-
-        .secondary-button {
-          width: 100%;
-          border: 1px solid rgba(255, 230, 190, 0.2);
-          border-radius: 18px;
-          padding: 14px 16px;
-          color: #f7efe3;
-          background: rgba(255, 255, 255, 0.07);
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .secondary-button:hover {
-          background: rgba(244, 195, 110, 0.13);
-          border-color: rgba(244, 195, 110, 0.42);
-        }
-
-        .button-stack {
-          display: grid;
-          gap: 10px;
-        }
-
-        .game-over-secondary {
-          margin-top: 10px;
-        }
-
-        .settings-button {
-          position: fixed;
-          bottom: max(14px, env(safe-area-inset-bottom));
-          left: max(14px, env(safe-area-inset-left));
-          z-index: 50;
-          width: 46px;
-          height: 46px;
-          border-radius: 999px;
-          color: #f7efe3;
-          background: rgba(18, 14, 10, 0.92);
-          border: 1px solid rgba(255, 230, 190, 0.24);
-          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
-        }
-
-        .modal-layer {
-          position: fixed;
-          inset: 0;
-          z-index: 100;
-          display: grid;
-          place-items: center;
-          padding: 18px;
-          background: rgba(0, 0, 0, 0.66);
-        }
-
-        .modal-card {
-          width: min(420px, 100%);
-          border-radius: 28px;
-          padding: 22px;
-        }
-
-        .modal-head {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 16px;
-          margin-bottom: 16px;
-        }
-
-        .modal-close {
-          width: 38px;
-          height: 38px;
-          border-radius: 999px;
-          color: #f7efe3;
-          background: rgba(255, 255, 255, 0.08);
-          font-size: 24px;
-          line-height: 1;
-        }
-
-        .setting-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          padding: 14px 0;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          color: #ead8bd;
-          font-weight: 800;
-        }
-
-        .setting-row input {
-          width: 22px;
-          height: 22px;
-          accent-color: #d28a36;
-        }
-
-        .board-wrap {
-          position: relative;
-          display: grid;
-          place-items: center;
-          min-height: 0;
-        }
-
-        .score-pop {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          z-index: 4;
-          transform: translate(-50%, -50%);
-          border: 1px solid rgba(255, 230, 190, 0.28);
-          border-radius: 999px;
-          padding: 10px 18px;
-          color: #221407;
-          background: linear-gradient(180deg, #f7d78e, #c9822f);
-          box-shadow: 0 20px 55px rgba(201, 130, 47, 0.28);
-          font-size: clamp(26px, 5vw, 54px);
-          font-weight: 1000;
-          pointer-events: none;
-          animation: scorePop 820ms ease both;
-        }
-
-        .score-pop.straight {
-          background: linear-gradient(180deg, #d7f0ff, #4da1c8);
-        }
-
-        .score-pop.full-house {
-          background: linear-gradient(180deg, #ffd1e8, #b9578c);
-        }
-
-        @keyframes scorePop {
-          0% { opacity: 0; transform: translate(-50%, -40%) scale(0.82); }
-          22% { opacity: 1; transform: translate(-50%, -58%) scale(1.04); }
-          100% { opacity: 0; transform: translate(-50%, -96%) scale(0.92); }
-        }
-
-        .board {
-          width: min(100%, calc(100svh - 190px), 560px);
-          aspect-ratio: 1;
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: clamp(7px, 1.2vw, 12px);
-          padding: clamp(10px, 1.5vw, 16px);
-          border-radius: 28px;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent),
-            rgba(0, 0, 0, 0.32);
-          border: 1px solid rgba(255, 230, 190, 0.18);
-        }
-
-        .board.pressure-danger,
-        .board.pressure-critical {
-          border-color: rgba(236, 100, 74, 0.35);
-          box-shadow: inset 0 0 40px rgba(236, 100, 74, 0.06), 0 0 38px rgba(236, 100, 74, 0.08);
-        }
-
-        .cell {
-          position: relative;
-          min-width: 0;
-          min-height: 0;
-          border-radius: clamp(12px, 1.5vw, 20px);
-          background:
-            radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 56%),
-            rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 230, 190, 0.14);
-          display: grid;
-          place-items: center;
-          color: #f7efe3;
-          transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-        }
-
-        .cell:not(:disabled):hover {
-          transform: translateY(-2px);
-          border-color: rgba(244, 195, 110, 0.62);
-          background: rgba(244, 195, 110, 0.14);
-        }
-
-        .cell:disabled {
-          cursor: default;
-        }
-
-        .cell.hit {
-          border-color: rgba(244, 195, 110, 0.92);
-          box-shadow: 0 0 0 2px rgba(244, 195, 110, 0.18), 0 0 30px rgba(244, 195, 110, 0.22);
-          animation: hitPulse 520ms ease both;
-        }
-
-        @keyframes hitPulse {
-          0% { transform: scale(1); }
-          42% { transform: scale(1.055); }
-          100% { transform: scale(1); }
-        }
-
-        .empty-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(255, 230, 190, 0.18);
-        }
-
-        .card {
-          width: min(80%, 82px);
-          aspect-ratio: 0.72;
-          border-radius: 12px;
-          display: grid;
-          place-items: center;
-          background: #f4eadb;
-          color: #21170f;
-          box-shadow: 0 8px 18px rgba(0, 0, 0, 0.26);
-          border: 1px solid rgba(0, 0, 0, 0.12);
-        }
-
-        .card.large {
-          width: min(150px, 70%);
-          margin-inline: auto;
-          border-radius: 18px;
-        }
-
-        .card.red {
-          color: #b73a2c;
-        }
-
-        .card-inner {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          font-weight: 950;
-          line-height: 1;
-        }
-
-        .card-rank {
-          font-size: clamp(20px, 3vw, 34px);
-        }
-
-        .card.large .card-rank {
-          font-size: 48px;
-        }
-
-        .card-suit {
-          margin-top: 5px;
-          font-size: clamp(15px, 2vw, 24px);
-        }
-
-        .card.large .card-suit {
-          font-size: 34px;
-        }
-
-        .hand-list {
-          display: grid;
-          gap: 10px;
-          overflow: auto;
-          padding-right: 4px;
-        }
-
-        .rule-card {
-          border: 1px solid rgba(255, 230, 190, 0.13);
-          border-radius: 18px;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.045);
-        }
-
-        .rule-card-head {
-          display: flex;
-          align-items: baseline;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 8px;
-        }
-
-        .rule-card-title {
-          font-weight: 950;
-          letter-spacing: 0.04em;
-        }
-
-        .rule-card-score {
-          color: #c89d63;
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .rule-cards {
-          display: flex;
-          gap: 4px;
-          margin-bottom: 8px;
-        }
-
-        .mini-card {
-          width: 24px;
-          height: 34px;
-          border-radius: 6px;
-          display: grid;
-          place-items: center;
-          background: #f4eadb;
-          color: #21170f;
-          font-size: 12px;
-          font-weight: 950;
-        }
-
-        .rule-note {
-          margin: 0;
-          color: #b7a991;
-          font-size: 12px;
-          font-weight: 700;
-          line-height: 1.45;
-        }
-
-        .history-box {
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          padding-top: 14px;
-        }
-
-        .history-empty {
-          margin: 0;
-          color: #b7a991;
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .history-list {
-          display: grid;
-          gap: 8px;
-        }
-
-        .history-item {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          gap: 2px 10px;
-          border: 1px solid rgba(255, 230, 190, 0.11);
-          border-radius: 14px;
-          padding: 9px 10px;
-          background: rgba(255, 255, 255, 0.04);
-        }
-
-        .history-item span {
-          font-size: 12px;
-          font-weight: 950;
-        }
-
-        .history-item strong {
-          color: #f4c36e;
-          font-size: 12px;
-        }
-
-        .history-item small {
-          grid-column: 1 / -1;
-          color: #9f917c;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .debug-box {
-          margin-top: auto;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          padding-top: 14px;
-        }
-
-        .debug-box pre {
-          margin: 0;
-          max-height: 180px;
-          overflow: auto;
-          color: #d8c9b1;
-          font-size: 11px;
-          line-height: 1.45;
-          white-space: pre-wrap;
-        }
-
-        .game-over-layer {
-          position: absolute;
-          inset: 0;
-          z-index: 3;
-          display: grid;
-          place-items: center;
-          padding: 24px;
-          background: rgba(8, 7, 6, 0.58);
-        }
-
-        .game-over-card {
-          width: min(360px, 100%);
-          border-radius: 24px;
-          padding: 22px;
-          text-align: center;
-        }
-
-        .result-best {
-          color: #c89d63;
-          font-weight: 900;
-        }
-
-
-        .home-card,
-        .home-rules,
-        .panel,
-        .board-section,
-        .game-over-card,
-        .modal-card {
-          border-width: 4px;
-          border-color: #d9912c;
-          background: rgba(8, 37, 29, 0.88);
-          box-shadow: 8px 8px 0 #020806, inset 0 0 0 3px rgba(242, 184, 74, 0.12), 0 20px 80px rgba(0, 0, 0, 0.42);
-          backdrop-filter: blur(10px);
-        }
-
-        .primary-button,
-        .secondary-button,
-        .settings-button,
-        .modal-close {
-          border: 3px solid #06140f;
-          box-shadow: 5px 5px 0 #020806, inset 0 0 0 2px rgba(255, 244, 207, 0.14);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .primary-button:hover,
-        .secondary-button:hover,
-        .settings-button:hover {
-          transform: translate(-1px, -1px);
-          filter: brightness(1.08);
-        }
-
-        .settings-help {
-          margin-top: 12px;
-          border: 3px solid #06140f;
-          border-radius: 18px;
-          padding: 14px;
-          background: #071b15;
-          box-shadow: 4px 4px 0 #020806;
-        }
-
-        .settings-help h3,
-        .privacy-body h3 {
-          margin: 0 0 8px;
-          color: #f2b84a;
-          font-size: 13px;
-          font-weight: 1000;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-        }
-
-        .settings-help p,
-        .privacy-body p {
-          margin: 0 0 14px;
-          color: #d9efe4;
-          font-size: 13px;
-          font-weight: 750;
-          line-height: 1.65;
-        }
-
-        .privacy-button {
-          margin-top: 12px;
-        }
-
-        .range-row {
-          display: grid;
-          gap: 9px;
-          padding: 14px 0;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          color: #ead8bd;
-          font-weight: 900;
-        }
-
-        .range-row span {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .range-row input {
-          width: 100%;
-          accent-color: #20d0b5;
-        }
-
-        .board {
-          border-width: 4px;
-          border-color: #06140f;
-          background:
-            linear-gradient(135deg, rgba(242, 184, 74, 0.11), transparent 38%),
-            repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 8px),
-            #08251d;
-          box-shadow: 6px 6px 0 #020806, inset 0 0 0 3px rgba(242, 184, 74, 0.14);
-        }
-
-        .cell {
-          border-width: 3px;
-          border-color: #06140f;
-          background:
-            radial-gradient(circle at 50% 20%, rgba(242, 184, 74, 0.18), transparent 52%),
-            #123f32;
-          box-shadow: 3px 3px 0 #020806, inset 0 0 0 2px rgba(255,255,255,0.04);
-        }
-
-        .cell.filled {
-          background: #0a221b;
-        }
-
-        .cell.hit {
-          border-color: #f2b84a;
-          box-shadow: 4px 4px 0 #020806, 0 0 0 3px rgba(242, 184, 74, 0.24), 0 0 28px rgba(242, 184, 74, 0.24);
-        }
-
-        .card {
-          border: 3px solid #06140f;
-          border-radius: 10px;
-          background: linear-gradient(145deg, #fff4cf, #e8cf94);
-          box-shadow: 4px 4px 0 rgba(2, 8, 6, 0.8);
-        }
-
-        .rule-card,
-        .metric-card,
-        .combo-card,
-        .pressure-card,
-        .history-item {
-          border: 3px solid #06140f;
-          background: #071b15;
-          box-shadow: 4px 4px 0 #020806;
-        }
-
-        @media (max-width: 980px) {
-          :global(body) {
-            overflow: auto;
-          }
-
-          .nuts-root {
-            height: auto;
-            min-height: 100svh;
-            overflow: visible;
-            align-items: flex-start;
-          }
-
-          .home-shell,
-          .game-shell {
-            grid-template-columns: 1fr;
-            height: auto;
-            min-height: auto;
-          }
-
-          .home-actions {
-            grid-template-columns: 1fr;
-          }
-
-          .panel {
-            order: 2;
-          }
-
-          .board-section {
-            order: 1;
-            min-height: auto;
-          }
-
-          .board {
-            width: min(100%, 520px);
-          }
-
-          .right-panel {
-            order: 3;
-          }
-        }
-
-        @media (max-width: 560px) {
-          .nuts-root {
-            padding: 10px;
-          }
-
-          .home-card,
-          .home-rules,
-          .panel,
-          .board-section {
-            border-radius: 22px;
-            padding: 14px;
-          }
-
-          .game-shell {
-            gap: 10px;
-          }
-
-          .status-bar {
-            width: 100%;
-            border-radius: 18px;
-            align-items: flex-start;
-            flex-direction: column;
-            text-align: left;
-          }
-
-          .board {
-            gap: 6px;
-            padding: 8px;
-            border-radius: 20px;
-          }
-
-          .cell {
-            border-radius: 12px;
-          }
-
-          .card {
-            border-radius: 8px;
-          }
-
-          .settings-button {
-            width: 42px;
-            height: 42px;
-          }
-        }
-
-        .motion-off .cell,
-        .motion-off .primary-button,
-        .motion-off .cell.hit,
-        .motion-off .score-pop {
-          transition: none;
-          animation: none;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .cell,
-          .primary-button,
-          .cell.hit,
-          .score-pop {
-            transition: none;
-            animation: none;
-          }
-        }
-      `}</style>
+      </div>
     </main>
-  );
-}
-
-function CardView({ card, large = false }: { card: Card; large?: boolean }) {
-  const isRed = card.suit === "♥" || card.suit === "♦";
-
-  return (
-    <div className={`card ${large ? "large" : ""} ${isRed ? "red" : "black"}`}>
-      <div className="card-inner">
-        <span className="card-rank">{rankLabel(card.rank)}</span>
-        <span className="card-suit">{card.suit}</span>
-      </div>
-    </div>
-  );
-}
-
-function RuleCard({ title, score, note, cards }: { title: string; score: string; note: string; cards: number[] }) {
-  return (
-    <div className="rule-card">
-      <div className="rule-card-head">
-        <span className="rule-card-title">{title}</span>
-        <span className="rule-card-score">{score}</span>
-      </div>
-      <div className="rule-cards">
-        {cards.map((rank, index) => (
-          <span key={`${rank}-${index}`} className="mini-card">
-            {rank === 1 ? "A" : rank}
-          </span>
-        ))}
-      </div>
-      <p className="rule-note">{note}</p>
-    </div>
   );
 }
