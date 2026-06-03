@@ -755,6 +755,23 @@ function overlapsOutsidePlaced(
   });
 }
 
+function getResultCenterDistance(
+  result: HandResult,
+  placedRow: number,
+  placedCol: number
+): number {
+  const rows = result.cards.map((cardPosition) => cardPosition.row);
+  const cols = result.cards.map((cardPosition) => cardPosition.col);
+  const isHorizontal = rows.every((row) => row === rows[0]);
+  const values = isHorizontal ? cols : rows;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const center = (min + max) / 2;
+  const placedValue = isHorizontal ? placedCol : placedRow;
+
+  return Math.abs(center - placedValue);
+}
+
 function chooseBestHandResults(
   results: HandResult[],
   placedRow: number,
@@ -763,6 +780,13 @@ function chooseBestHandResults(
   const sorted = [...results].sort((a, b) => {
     if (b.priority !== a.priority) return b.priority - a.priority;
     if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
+
+    const centerDiff =
+      getResultCenterDistance(a, placedRow, placedCol) -
+      getResultCenterDistance(b, placedRow, placedCol);
+
+    if (centerDiff !== 0) return centerDiff;
+
     return getResultKey(a).localeCompare(getResultKey(b));
   });
 
@@ -795,7 +819,8 @@ function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): H
     }
   }
 
-  return chooseBestHandResults(results, placedRow, placedCol);
+  const [bestResult] = chooseBestHandResults(results, placedRow, placedCol);
+  return bestResult ? [bestResult] : [];
 }
 
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
