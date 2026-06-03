@@ -1817,6 +1817,34 @@ function HomeScreen({
           touch-action: manipulation;
         }
 
+        .game-fixed-viewport > .portrait-outer {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 10 !important;
+          width: 100vw !important;
+          max-width: 1920px !important;
+          height: 100svh !important;
+          min-height: 0 !important;
+          max-height: 100svh !important;
+          margin-inline: auto !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .game-fixed-viewport > .portrait-outer > .portrait-frame {
+          height: calc(100svh - 0.75rem) !important;
+          min-height: 0 !important;
+          max-height: calc(100svh - 0.75rem) !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .combo-fixed-layer {
+          z-index: 60 !important;
+        }
+
         .portrait-board button,
         .queue-card-well,
         .control-image-button {
@@ -4877,6 +4905,34 @@ export default function Home() {
           touch-action: manipulation;
         }
 
+        .game-fixed-viewport > .portrait-outer {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 10 !important;
+          width: 100vw !important;
+          max-width: 1920px !important;
+          height: 100svh !important;
+          min-height: 0 !important;
+          max-height: 100svh !important;
+          margin-inline: auto !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .game-fixed-viewport > .portrait-outer > .portrait-frame {
+          height: calc(100svh - 0.75rem) !important;
+          min-height: 0 !important;
+          max-height: calc(100svh - 0.75rem) !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .combo-fixed-layer {
+          z-index: 60 !important;
+        }
+
         .portrait-board button,
         .queue-card-well,
         .control-image-button {
@@ -7507,6 +7563,34 @@ export default function Home() {
           overflow: hidden !important;
           overscroll-behavior: none !important;
           touch-action: manipulation;
+        }
+
+        .game-fixed-viewport > .portrait-outer {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 10 !important;
+          width: 100vw !important;
+          max-width: 1920px !important;
+          height: 100svh !important;
+          min-height: 0 !important;
+          max-height: 100svh !important;
+          margin-inline: auto !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .game-fixed-viewport > .portrait-outer > .portrait-frame {
+          height: calc(100svh - 0.75rem) !important;
+          min-height: 0 !important;
+          max-height: calc(100svh - 0.75rem) !important;
+          overflow: hidden !important;
+          transform: none !important;
+          translate: none !important;
+        }
+
+        .combo-fixed-layer {
+          z-index: 60 !important;
         }
 
         .portrait-board button,
