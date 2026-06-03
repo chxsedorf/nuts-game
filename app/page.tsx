@@ -534,20 +534,20 @@ const handRules: Record<HandKind, HandRule> = {
     shouldClear: false,
     priority: 10,
   },
+  Straight: {
+    scorePerCard: scoreTable.straight,
+    shouldClear: true,
+    priority: 20,
+  },
   "Three Card": {
     scorePerCard: scoreTable.three,
     shouldClear: true,
     priority: 30,
   },
-  Straight: {
-    scorePerCard: scoreTable.straight,
-    shouldClear: true,
-    priority: 40,
-  },
   "Full House": {
     scorePerCard: scoreTable.fullHouse,
     shouldClear: true,
-    priority: 70,
+    priority: 40,
   },
 };
 
@@ -565,6 +565,7 @@ function getResultKey(result: HandResult): string {
 function getCardRank(card: Card): number | null {
   const rankText = String(card.rank).trim().toUpperCase();
 
+  // In this game, Ace behaves as 1 for A-2-3 style straights.
   if (rankText === "A" || rankText === "1" || rankText === "ACE") return 1;
   if (rankText === "J") return 11;
   if (rankText === "Q") return 12;
@@ -584,46 +585,6 @@ function getCardRank(card: Card): number | null {
   return null;
 }
 
-function getRankCounts(cards: LineCard[]): Map<number, number> {
-  const counts = new Map<number, number>();
-
-  for (const item of cards) {
-    const rank = getCardRank(item.card);
-    if (rank === null) return new Map();
-    counts.set(rank, (counts.get(rank) ?? 0) + 1);
-  }
-
-  return counts;
-}
-
-function hasSameRank(cards: LineCard[], count: number): boolean {
-  if (cards.length !== count) return false;
-
-  const counts = getRankCounts(cards);
-  return counts.size === 1 && counts.get(getCardRank(cards[0].card) ?? -1) === count;
-}
-
-function isStraight(cards: LineCard[]): boolean {
-  if (cards.length !== 3) return false;
-
-  const values = cards
-    .map((item) => getCardRank(item.card))
-    .filter((rank): rank is number => rank !== null)
-    .sort((a, b) => a - b);
-
-  if (values.length !== 3) return false;
-  if (new Set(values).size !== 3) return false;
-
-  return values[1] === values[0] + 1 && values[2] === values[1] + 1;
-}
-
-function isFullHouse(cards: LineCard[]): boolean {
-  if (cards.length !== 5) return false;
-
-  const counts = [...getRankCounts(cards).values()].sort((a, b) => a - b);
-  return counts.length === 2 && counts[0] === 2 && counts[1] === 3;
-}
-
 function makeHandResult(kind: HandKind, cards: LineCard[]): HandResult {
   const rule = handRules[kind];
 
@@ -634,83 +595,6 @@ function makeHandResult(kind: HandKind, cards: LineCard[]): HandResult {
     shouldClear: rule.shouldClear,
     priority: rule.priority,
   };
-}
-
-function classifyWindow(cards: LineCard[]): HandResult | null {
-  if (cards.length === 5 && isFullHouse(cards)) {
-    return makeHandResult("Full House", cards);
-  }
-
-  if (cards.length === 3) {
-    if (hasSameRank(cards, 3)) return makeHandResult("Three Card", cards);
-    if (isStraight(cards)) return makeHandResult("Straight", cards);
-  }
-
-  if (cards.length === 2 && hasSameRank(cards, 2)) {
-    return makeHandResult("Pair", cards);
-  }
-
-  return null;
-}
-
-function containsPosition(cards: LineCard[], row: number, col: number): boolean {
-  return cards.some((item) => item.row === row && item.col === col);
-}
-
-function getContiguousLine(
-  board: Board,
-  row: number,
-  col: number,
-  dRow: number,
-  dCol: number
-): LineCard[] {
-  const line: LineCard[] = [];
-  let startRow = row;
-  let startCol = col;
-
-  while (
-    startRow - dRow >= 0 &&
-    startRow - dRow < BOARD_SIZE &&
-    startCol - dCol >= 0 &&
-    startCol - dCol < BOARD_SIZE &&
-    board[startRow - dRow][startCol - dCol]
-  ) {
-    startRow -= dRow;
-    startCol -= dCol;
-  }
-
-  let currentRow = startRow;
-  let currentCol = startCol;
-
-  while (
-    currentRow >= 0 &&
-    currentRow < BOARD_SIZE &&
-    currentCol >= 0 &&
-    currentCol < BOARD_SIZE &&
-    board[currentRow][currentCol]
-  ) {
-    line.push({
-      row: currentRow,
-      col: currentCol,
-      card: board[currentRow][currentCol] as Card,
-    });
-
-    currentRow += dRow;
-    currentCol += dCol;
-  }
-
-  return line;
-}
-
-function getContiguousWindows(line: LineCard[], size: number): LineCard[][] {
-  if (line.length < size) return [];
-
-  const windows: LineCard[][] = [];
-  for (let start = 0; start + size <= line.length; start++) {
-    windows.push(line.slice(start, start + size));
-  }
-
-  return windows;
 }
 
 function addUniqueHandResult(results: HandResult[], result: HandResult) {
@@ -727,7 +611,172 @@ function addUniqueHandResult(results: HandResult[], result: HandResult) {
   results.push(result);
 }
 
-function overlapsOutsidePlaced(
+function containsPosition(cards: LineCard[], row: number, col: number): boolean {
+  return cards.some((item) => item.row === row && item.col === col);
+}
+
+function getFullBoardLine(board: Board, index: number, direction: "row" | "col"): LineCard[] {
+  const line: LineCard[] = [];
+
+  for (let i = 0; i < BOARD_SIZE; i++) {
+    const row = direction === "row" ? index : i;
+    const col = direction === "row" ? i : index;
+    const card = board[row][col];
+
+    if (!card) continue;
+
+    line.push({ row, col, card });
+  }
+
+  return line;
+}
+
+function getLineCells(board: Board, index: number, direction: "row" | "col"): Array<LineCard | null> {
+  const cells: Array<LineCard | null> = [];
+
+  for (let i = 0; i < BOARD_SIZE; i++) {
+    const row = direction === "row" ? index : i;
+    const col = direction === "row" ? i : index;
+    const card = board[row][col];
+
+    cells.push(card ? { row, col, card } : null);
+  }
+
+  return cells;
+}
+
+function getContiguousSegments(cells: Array<LineCard | null>): LineCard[][] {
+  const segments: LineCard[][] = [];
+  let current: LineCard[] = [];
+
+  for (const cell of cells) {
+    if (cell) {
+      current.push(cell);
+      continue;
+    }
+
+    if (current.length > 0) {
+      segments.push(current);
+      current = [];
+    }
+  }
+
+  if (current.length > 0) {
+    segments.push(current);
+  }
+
+  return segments;
+}
+
+function getContiguousWindows(line: LineCard[], size: number): LineCard[][] {
+  if (line.length < size) return [];
+
+  const windows: LineCard[][] = [];
+  for (let start = 0; start + size <= line.length; start++) {
+    windows.push(line.slice(start, start + size));
+  }
+
+  return windows;
+}
+
+function isSameRankWindow(cards: LineCard[], size: number): boolean {
+  if (cards.length !== size) return false;
+
+  const firstRank = getCardRank(cards[0].card);
+  if (firstRank === null) return false;
+
+  return cards.every((item) => getCardRank(item.card) === firstRank);
+}
+
+function isStraightWindow(cards: LineCard[]): boolean {
+  if (cards.length < 3) return false;
+
+  const ranksInBoardOrder = cards.map((item) => getCardRank(item.card));
+  if (ranksInBoardOrder.some((rank) => rank === null)) return false;
+
+  const ranks = ranksInBoardOrder as number[];
+
+  // No duplicate number can be part of a straight.
+  if (new Set(ranks).size !== ranks.length) return false;
+
+  const ascending = ranks.every((rank, index) => index === 0 || rank === ranks[index - 1] + 1);
+  const descending = ranks.every((rank, index) => index === 0 || rank === ranks[index - 1] - 1);
+
+  return ascending || descending;
+}
+
+function isFullHouseLine(line: LineCard[]): boolean {
+  if (line.length !== BOARD_SIZE) return false;
+
+  const counts = new Map<number, number>();
+
+  for (const item of line) {
+    const rank = getCardRank(item.card);
+    if (rank === null) return false;
+    counts.set(rank, (counts.get(rank) ?? 0) + 1);
+  }
+
+  const sortedCounts = [...counts.values()].sort((a, b) => b - a);
+  return sortedCounts.length === 2 && sortedCounts[0] === 3 && sortedCounts[1] === 2;
+}
+
+function detectFullHouseInLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+  if (!containsPosition(line, placedRow, placedCol)) return [];
+  if (!isFullHouseLine(line)) return [];
+
+  return [makeHandResult("Full House", line)];
+}
+
+function detectThreeInSegment(segment: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (const windowCards of getContiguousWindows(segment, 3)) {
+    if (!containsPosition(windowCards, placedRow, placedCol)) continue;
+    if (!isSameRankWindow(windowCards, 3)) continue;
+
+    addUniqueHandResult(results, makeHandResult("Three Card", windowCards));
+  }
+
+  return results;
+}
+
+function detectStraightsInSegment(segment: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (let size = segment.length; size >= 3; size--) {
+    for (const windowCards of getContiguousWindows(segment, size)) {
+      if (!containsPosition(windowCards, placedRow, placedCol)) continue;
+      if (!isStraightWindow(windowCards)) continue;
+
+      addUniqueHandResult(results, makeHandResult("Straight", windowCards));
+    }
+
+    // Prefer the longest straight in this contiguous segment.
+    if (results.length > 0) return results;
+  }
+
+  return results;
+}
+
+function detectPairsInSegment(segment: LineCard[], placedRow: number, placedCol: number): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (const windowCards of getContiguousWindows(segment, 2)) {
+    if (!containsPosition(windowCards, placedRow, placedCol)) continue;
+    if (!isSameRankWindow(windowCards, 2)) continue;
+
+    addUniqueHandResult(results, makeHandResult("Pair", windowCards));
+  }
+
+  return results;
+}
+
+function resultsOverlap(a: HandResult, b: HandResult): boolean {
+  const aKeys = new Set(a.cards.map(({ row, col }) => keyOf(row, col)));
+  return b.cards.some(({ row, col }) => aKeys.has(keyOf(row, col)));
+}
+
+function resultsOverlapOutsidePlaced(
   a: HandResult,
   b: HandResult,
   placedRow: number,
@@ -742,47 +791,39 @@ function overlapsOutsidePlaced(
   });
 }
 
-function getResultCenterDistance(
-  result: HandResult,
-  placedRow: number,
-  placedCol: number
-): number {
-  const rows = result.cards.map((cardPosition) => cardPosition.row);
-  const cols = result.cards.map((cardPosition) => cardPosition.col);
-  const isHorizontal = rows.every((row) => row === rows[0]);
-  const values = isHorizontal ? cols : rows;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const center = (min + max) / 2;
-  const placedValue = isHorizontal ? placedCol : placedRow;
-
-  return Math.abs(center - placedValue);
+function sortHandResults(results: HandResult[]): HandResult[] {
+  return [...results].sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
+    if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
+    return getResultKey(a).localeCompare(getResultKey(b));
+  });
 }
 
-function chooseBestHandResults(
+function chooseBestHandResults(results: HandResult[]): HandResult[] {
+  const accepted: HandResult[] = [];
+
+  for (const result of sortHandResults(results)) {
+    if (accepted.some((existing) => resultsOverlap(existing, result))) {
+      continue;
+    }
+
+    accepted.push(result);
+  }
+
+  return sortHandResults(accepted);
+}
+
+function chooseBestBoardResults(
   results: HandResult[],
   placedRow: number,
   placedCol: number
 ): HandResult[] {
-  const sorted = [...results].sort((a, b) => {
-    if (b.priority !== a.priority) return b.priority - a.priority;
-    if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
-
-    const centerDiff =
-      getResultCenterDistance(a, placedRow, placedCol) -
-      getResultCenterDistance(b, placedRow, placedCol);
-
-    if (centerDiff !== 0) return centerDiff;
-
-    return getResultKey(a).localeCompare(getResultKey(b));
-  });
-
   const accepted: HandResult[] = [];
 
-  for (const result of sorted) {
+  for (const result of sortHandResults(results)) {
     if (
       accepted.some((existing) =>
-        overlapsOutsidePlaced(existing, result, placedRow, placedCol)
+        resultsOverlapOutsidePlaced(existing, result, placedRow, placedCol)
       )
     ) {
       continue;
@@ -791,40 +832,59 @@ function chooseBestHandResults(
     accepted.push(result);
   }
 
-  return accepted.sort((a, b) => b.priority - a.priority || getResultKey(a).localeCompare(getResultKey(b)));
+  return sortHandResults(accepted);
 }
 
-function evaluateLine(line: LineCard[], placedRow: number, placedCol: number): HandResult[] {
-  const results: HandResult[] = [];
+function evaluateLine(
+  board: Board,
+  lineIndex: number,
+  direction: "row" | "col",
+  placedRow: number,
+  placedCol: number
+): HandResult[] {
+  const wholeLine = getFullBoardLine(board, lineIndex, direction);
+  const fullHouseResults = detectFullHouseInLine(wholeLine, placedRow, placedCol);
 
-  for (const size of [5, 3, 2]) {
-    for (const windowCards of getContiguousWindows(line, size)) {
-      if (!containsPosition(windowCards, placedRow, placedCol)) continue;
-
-      const result = classifyWindow(windowCards);
-      if (result) addUniqueHandResult(results, result);
-    }
+  // Full House has absolute priority for the whole 5-cell line.
+  if (fullHouseResults.length > 0) {
+    return fullHouseResults;
   }
 
-  const [bestResult] = chooseBestHandResults(results, placedRow, placedCol);
-  return bestResult ? [bestResult] : [];
-}
-
-function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  const lines = [
-    getContiguousLine(board, row, col, 0, 1),
-    getContiguousLine(board, row, col, 1, 0),
-  ];
-
+  const cells = getLineCells(board, lineIndex, direction);
+  const segments = getContiguousSegments(cells);
   const results: HandResult[] = [];
 
-  for (const line of lines) {
-    for (const result of evaluateLine(line, row, col)) {
+  for (const segment of segments) {
+    if (!containsPosition(segment, placedRow, placedCol)) continue;
+
+    for (const result of detectThreeInSegment(segment, placedRow, placedCol)) {
+      addUniqueHandResult(results, result);
+    }
+
+    for (const result of detectStraightsInSegment(segment, placedRow, placedCol)) {
+      addUniqueHandResult(results, result);
+    }
+
+    for (const result of detectPairsInSegment(segment, placedRow, placedCol)) {
       addUniqueHandResult(results, result);
     }
   }
 
-  return chooseBestHandResults(results, row, col);
+  return chooseBestHandResults(results);
+}
+
+function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
+  const results: HandResult[] = [];
+
+  for (const result of evaluateLine(board, row, "row", row, col)) {
+    addUniqueHandResult(results, result);
+  }
+
+  for (const result of evaluateLine(board, col, "col", row, col)) {
+    addUniqueHandResult(results, result);
+  }
+
+  return chooseBestBoardResults(results, row, col);
 }
 
 function createInitialGame(highScore = 0): GameState {
