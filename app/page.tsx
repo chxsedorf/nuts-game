@@ -480,20 +480,29 @@ function getContiguousCardSegments(cells: LineCell[]): LineCell[][] {
   return segments;
 }
 
+function getRankValue(rank: Rank): number {
+  // Ace is always low only. A-K-Q / Q-K-A must never become a straight.
+  if (rank === "A") return 1;
+  if (rank === "J") return 11;
+  if (rank === "Q") return 12;
+  if (rank === "K") return 13;
+  return Number(rank);
+}
+
 function isStraightCells(cells: LineCell[]): boolean {
   if (cells.length < 3) return false;
   if (cells.some((cell) => !cell.card)) return false;
 
-  const cards = cells.map((cell) => cell.card as Card);
+  const values = cells.map((cell) => getRankValue((cell.card as Card).rank));
 
-  // A is only 1. No dual-value Ace logic is allowed.
-  // Valid: A-2-3, 3-2-A, 10-J-Q, Q-J-10.
-  // Invalid as a 3-card straight: A-K-Q, Q-K-A, K-A-2.
-  const ascending = cards.every((card, index) =>
-    index === 0 ? true : card.value - cards[index - 1].value === 1
+  // 3-card straights are valid as long as the adjacent cells step exactly by 1.
+  // Valid: A-2-3, 3-2-A, 2-3-4, 4-3-2, 10-J-Q, Q-J-10, J-Q-K, K-Q-J.
+  // Invalid: A-K-Q, Q-K-A, K-A-2, 2-A-K, and any gap/duplicate like 2-3-3.
+  const ascending = values.every((value, index) =>
+    index === 0 ? true : value - values[index - 1] === 1
   );
-  const descending = cards.every((card, index) =>
-    index === 0 ? true : card.value - cards[index - 1].value === -1
+  const descending = values.every((value, index) =>
+    index === 0 ? true : value - values[index - 1] === -1
   );
 
   return ascending || descending;
@@ -2381,7 +2390,9 @@ export default function Home() {
       window.setTimeout(() => playSound("gameover"), 220);
     } else if (hasHand) {
       playSound("hit");
-    } else {
+    } else if (isComboBroken) {
+      // Do not play the miss/drop sound for an ordinary card placement.
+      // It should only fire when the 3-turn combo grace actually reaches 0.
       playSound("miss");
     }
 
