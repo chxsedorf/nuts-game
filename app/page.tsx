@@ -825,18 +825,48 @@ function getConnectedSegments(cells: HandCardSnapshot[]): HandCardSnapshot[][] {
   return segments;
 }
 
+function hasDuplicateRankInSegment(cells: HandCardSnapshot[]): boolean {
+  const values = new Set<number>();
+
+  for (const cell of cells) {
+    const value = rankToValue(cell.card.rank);
+    if (values.has(value)) return true;
+    values.add(value);
+  }
+
+  return false;
+}
+
 function findStraight(cells: HandCardSnapshot[], lineLabel: string): HandResult | null {
   if (cells.length < 3) return null;
 
-  // Important: judge Straight by the whole connected occupied segment, not by
-  // a partial sub-window inside a mixed line. This prevents patterns such as
-  // 1,2,3,3,1 from clearing only the 1,2,3 part.
-  const straightSegments = getConnectedSegments(cells)
-    .filter((segment) => segment.length >= 3 && isStepStraightRun(segment))
-    .sort((a, b) => b.length - a.length);
+  // Judge Straight inside each connected occupied segment.
+  // 7,8,9 must be detected even when it is exactly a 3-card run.
+  // However, mixed duplicate segments such as 1,2,3,3,1 must not clear
+  // only the partial 1,2,3 window, so segments containing duplicate ranks
+  // are excluded from Straight detection.
+  let bestRun: HandCardSnapshot[] = [];
 
-  const bestRun = straightSegments[0];
-  if (!bestRun) return null;
+  for (const segment of getConnectedSegments(cells)) {
+    if (segment.length < 3) continue;
+    if (hasDuplicateRankInSegment(segment)) continue;
+
+    const sortedSegment = sortCellsByBoardOrder(segment);
+
+    for (let start = 0; start <= sortedSegment.length - 3; start++) {
+      for (let end = start + 3; end <= sortedSegment.length; end++) {
+        const candidateRun = sortedSegment.slice(start, end);
+
+        if (!isStepStraightRun(candidateRun)) continue;
+
+        if (candidateRun.length > bestRun.length) {
+          bestRun = candidateRun;
+        }
+      }
+    }
+  }
+
+  if (bestRun.length < 3) return null;
 
   return createHandResult({
     type: "STRAIGHT",
