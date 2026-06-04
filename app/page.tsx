@@ -921,8 +921,16 @@ function clearHands(board: Board, results: HandResult[]): Board {
   return nextBoard;
 }
 
-function evaluateBoard(board: Board, _row: number, _col: number): HandResult[] {
-  return judgeBoard(board);
+function resultContainsPlacedCell(result: HandResult, placedRow: number, placedCol: number): boolean {
+  return result.cards.some((target) => target.row === placedRow && target.col === placedCol);
+}
+
+function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
+  // Judge the board with the inserted hand-judge logic, but only accept hands
+  // that include the card placed this turn.
+  // This prevents old Pair / Three / Straight / Full House results from scoring
+  // again on later turns.
+  return judgeBoard(board).filter((result) => resultContainsPlacedCell(result, row, col));
 }
 
 function createInitialGame(highScore = 0): GameState {
