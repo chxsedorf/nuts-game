@@ -2660,16 +2660,16 @@ export default function Home() {
         : "EMPTY";
 
     return (
-      <div className="fixed right-2 top-2 z-[99999] w-[min(620px,calc(100vw-1rem))] rounded-xl border-[3px] border-[#8cffb8] bg-black/90 p-2 font-mono text-[10px] leading-snug text-[#d8ffe6] shadow-[5px_5px_0_rgba(0,0,0,0.75)] backdrop-blur-sm">
-        <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="fixed left-4 top-4 z-[99999] w-[min(900px,calc(100vw-2rem))] rounded-2xl border-[4px] border-[#8cffb8] bg-black/92 p-4 font-mono text-[14px] leading-relaxed text-[#d8ffe6] shadow-[8px_8px_0_rgba(0,0,0,0.8)] backdrop-blur-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setDebugOpen((prev) => !prev)}
-            className="rounded border border-[#53d48b] px-2 py-1 text-left font-black text-[#8cffb8]"
+            className="rounded-lg border-2 border-[#53d48b] px-3 py-2 text-left text-[15px] font-black text-[#8cffb8]"
           >
             DEBUG PANEL {debugOpen ? "ON" : "OFF"}
           </button>
-          <div className="flex flex-1 flex-wrap justify-end gap-x-3 gap-y-1 text-right text-[#ffe28a]">
+          <div className="flex flex-1 flex-wrap justify-end gap-x-5 gap-y-2 text-right text-[13px] font-bold text-[#ffe28a]">
             <span>MODE:{mode}</span>
             <span>NOW:{handText}</span>
             <span>COMBO:{game.combo}</span>
@@ -2679,7 +2679,7 @@ export default function Home() {
           <button
             type="button"
             onClick={clearDebugLogs}
-            className="rounded border border-[#ffcf67] px-2 py-1 font-black text-[#ffcf67]"
+            className="rounded-lg border-2 border-[#ffcf67] px-3 py-2 text-[15px] font-black text-[#ffcf67]"
           >
             CLEAR
           </button>
@@ -2687,24 +2687,24 @@ export default function Home() {
 
         {debugOpen && (
           <>
-            <div className="mb-1 grid grid-cols-5 gap-1 text-center text-[9px] text-white/80">
+            <div className="mb-3 grid grid-cols-5 gap-2 text-center text-[13px] font-bold text-white/90">
               {board.flatMap((boardRow, rowIndex) =>
                 boardRow.map((cell, colIndex) => (
                   <span
                     key={`dbg-${rowIndex}-${colIndex}`}
-                    className="rounded bg-white/10 px-1 py-0.5"
+                    className="rounded-lg bg-white/10 px-2 py-1"
                   >
                     {debugCardLabel(cell)}
                   </span>
                 ))
               )}
             </div>
-            <div className="max-h-44 overflow-y-auto rounded bg-[#06120d] p-1">
+            <div className="max-h-72 overflow-y-auto rounded-xl bg-[#06120d] p-3">
               {debugLogs.length === 0 ? (
                 <p className="text-white/50">No logs yet. Place a card.</p>
               ) : (
                 debugLogs.slice(0, 32).map((entry) => (
-                  <div key={entry.id} className="border-b border-white/10 py-0.5 last:border-b-0">
+                  <div key={entry.id} className="border-b border-white/10 py-1.5 last:border-b-0">
                     <span className="text-white/45">{entry.time}</span>{" "}
                     <span className="font-black text-[#7ee7ff]">[{entry.tag}]</span>{" "}
                     <span>{entry.message}</span>
