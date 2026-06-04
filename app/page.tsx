@@ -2660,14 +2660,14 @@ export default function Home() {
         : "EMPTY";
 
     return (
-      <div className="fixed bottom-2 left-2 z-[9999] w-[min(560px,calc(100vw-1rem))] rounded-xl border-[3px] border-black bg-black/80 p-2 font-mono text-[10px] leading-snug text-[#d8ffe6] shadow-[5px_5px_0_rgba(0,0,0,0.55)] backdrop-blur-sm">
+      <div className="fixed right-2 top-2 z-[99999] w-[min(620px,calc(100vw-1rem))] rounded-xl border-[3px] border-[#8cffb8] bg-black/90 p-2 font-mono text-[10px] leading-snug text-[#d8ffe6] shadow-[5px_5px_0_rgba(0,0,0,0.75)] backdrop-blur-sm">
         <div className="mb-1 flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => setDebugOpen((prev) => !prev)}
             className="rounded border border-[#53d48b] px-2 py-1 text-left font-black text-[#8cffb8]"
           >
-            DEBUG {debugOpen ? "ON" : "OFF"}
+            DEBUG PANEL {debugOpen ? "ON" : "OFF"}
           </button>
           <div className="flex flex-1 flex-wrap justify-end gap-x-3 gap-y-1 text-right text-[#ffe28a]">
             <span>MODE:{mode}</span>
