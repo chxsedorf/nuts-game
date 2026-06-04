@@ -2915,7 +2915,7 @@ export default function Home() {
 
       window.setTimeout(() => {
         setResultBanner((prev) => (prev?.id === bannerId ? null : prev));
-      }, 980);
+      }, clearTargets.size > 0 ? 980 : 1320);
     }
 
     if (gainedScore > 0) {
@@ -2973,7 +2973,7 @@ export default function Home() {
       setScorePulse(false);
       setComboPulse(false);
       setResultPulse(false);
-    }, 760);
+    }, clearTargets.size > 0 ? 760 : hasHand ? 1320 : 760);
   }
 
   if (!isLoaded) {
@@ -5226,6 +5226,18 @@ export default function Home() {
           contain: layout paint style;
           transform: translateX(-50%);
           will-change: transform, opacity;
+        }
+
+
+
+        @keyframes resultBannerPop {
+          0% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.82) rotate(-2deg); }
+          28% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.08) rotate(1deg); }
+          100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+        }
+
+        .hand-result-toast {
+          animation: resultBannerPop 260ms cubic-bezier(.2,1.3,.25,1) both;
         }
 
         @keyframes cardPop {
@@ -7617,6 +7629,23 @@ export default function Home() {
         <div className="micro-shake-overlay pointer-events-none fixed inset-0 z-[34] overflow-hidden" aria-hidden="true">
           <div className="micro-shake-scan absolute inset-0" />
           <div className="micro-shake-flash absolute inset-0" />
+        </div>
+      )}
+
+
+      {resultBanner && (
+        <div className="hand-result-toast pointer-events-none fixed left-1/2 top-[82px] z-[80] min-w-[260px] -translate-x-1/2 rounded-2xl border-[5px] border-[#061811] bg-[#f5d06f] px-5 py-3 text-center text-[#061811] shadow-[8px_8px_0_#020806,0_0_0_3px_#fff4cf_inset]">
+          <p className="text-[10px] font-black tracking-[0.32em] text-[#0b3a2b]">
+            HAND HIT
+          </p>
+          <p className="mt-1 text-2xl font-black leading-none tracking-[0.08em]">
+            {resultBanner.text}
+          </p>
+          {resultBanner.score > 0 && (
+            <p className="mt-1 text-xl font-black text-[#b45309]">
+              +{resultBanner.score}
+            </p>
+          )}
         </div>
       )}
 
