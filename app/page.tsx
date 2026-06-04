@@ -57,6 +57,13 @@ type ResultBanner = {
   isBreak?: boolean;
 };
 
+type DebugEntry = {
+  id: number;
+  time: string;
+  tag: string;
+  message: string;
+};
+
 type ScreenState = "home" | "game";
 type GameMode = "solo" | "duel";
 type PlayerId = 1 | 2;
@@ -392,17 +399,6 @@ function getCardColor(card: Card): string {
 }
 
 
-// ============================================================
-// 役判定 — 仕様
-//   ペア      : 同じ数字が隣接して2枚連続        消えない 小得点
-//   スリー    : 同じ数字が隣接して3枚連続        消える   中得点
-//   ストレート: 連続した数字が隣接して3枚以上    消える   中得点
-//   フルハウス: 1ライン5枚が 3+2 の構成          消える   大得点
-// 優先度: フルハウス > スリー > ストレート > ペア
-// 役は「隣り合っている場合のみ有効」
-// ストレートは昇順/降順に1ずつ増減する配置のみ有効
-// ============================================================
-
 type HandKind = "full-house" | "three" | "straight" | "pair";
 
 type LineCell = {
@@ -439,16 +435,10 @@ function getCellKey(cell: Pick<LineCell, "row" | "col">) {
   return keyOf(cell.row, cell.col);
 }
 
-function getRankValue(rank: Rank): number {
-  // Ace は常に 1 (low only)
-  if (rank === "A") return 1;
-  if (rank === "J") return 11;
-  if (rank === "Q") return 12;
-  if (rank === "K") return 13;
-  return Number(rank);
-}
-
 function sameRank(a: Card, b: Card): boolean {
+  // Compare normalized rank values instead of object identity or raw card.value.
+  // This makes Ace pairs reliable even if an older saved/generated card still
+  // has value 14. Ace is always treated as 1 in every hand check.
   return getRankValue(a.rank) === getRankValue(b.rank);
 }
 
@@ -462,7 +452,6 @@ function getHandLabel(kind: HandKind): string {
 function makeHandResult(kind: HandKind, cells: LineCell[]): HandResult {
   const cellKeys = cells.map(getCellKey);
   const sortedKey = [...cellKeys].sort().join("|");
-  // ストレートは 3 枚を超えた分だけボーナス
   const lengthBonus = kind === "straight" ? Math.max(0, cells.length - 3) * 70 : 0;
 
   return {
@@ -471,7 +460,7 @@ function makeHandResult(kind: HandKind, cells: LineCell[]): HandResult {
     name: getHandLabel(kind),
     score: HAND_BASE_SCORE[kind] + lengthBonus,
     cells: cellKeys,
-    clears: kind !== "pair",   // ペアのみ消えない
+    clears: kind !== "pair",
     priority: HAND_PRIORITY[kind],
   };
 }
@@ -484,7 +473,6 @@ function getColCells(board: Board, col: number): LineCell[] {
   return board.map((boardRow, row) => ({ row, col, card: boardRow[col] }));
 }
 
-/** カードが埋まっている連続セグメントを抽出する */
 function getContiguousCardSegments(cells: LineCell[]): LineCell[][] {
   const segments: LineCell[][] = [];
   let current: LineCell[] = [];
@@ -502,175 +490,244 @@ function getContiguousCardSegments(cells: LineCell[]): LineCell[][] {
   return segments;
 }
 
+function getRankValue(rank: Rank): number {
+  // Ace is always low only. A-K-Q / Q-K-A must never become a straight.
+  if (rank === "A") return 1;
+  if (rank === "J") return 11;
+  if (rank === "Q") return 12;
+  if (rank === "K") return 13;
+  return Number(rank);
+}
+
+function isStraightCells(cells: LineCell[]): boolean {
+  if (cells.length < 3) return false;
+  if (cells.some((cell) => !cell.card)) return false;
+
+  const values = cells.map((cell) => getRankValue((cell.card as Card).rank));
+
+  // 3-card straights are valid as long as the adjacent cells step exactly by 1.
+  // Valid: A-2-3, 3-2-A, 2-3-4, 4-3-2, 10-J-Q, Q-J-10, J-Q-K, K-Q-J.
+  // Invalid: A-K-Q, Q-K-A, K-A-2, 2-A-K, and any gap/duplicate like 2-3-3.
+  const ascending = values.every((value, index) =>
+    index === 0 ? true : value - values[index - 1] === 1
+  );
+  const descending = values.every((value, index) =>
+    index === 0 ? true : value - values[index - 1] === -1
+  );
+
+  return ascending || descending;
+}
+
 function containsCell(cells: LineCell[], targetKey: string): boolean {
   return cells.some((cell) => getCellKey(cell) === targetKey);
 }
 
-function dedupeHandResults(results: HandResult[]): HandResult[] {
-  const map = new Map<string, HandResult>();
-  for (const result of results) {
-    map.set(result.id, result);
-  }
-  return [...map.values()].sort((a, b) => b.priority - a.priority || b.score - a.score);
+function resultTouchesPlaced(result: HandResult, placedKey: string): boolean {
+  return result.cells.includes(placedKey);
 }
 
-// ----------------------------------------------------------
-// フルハウス判定
-// 条件: ライン 5 枚すべて埋まっていて、ランク構成が 3+2
-// 連続配置は不要（5 枚全部なので必然的にライン全体）
-// ----------------------------------------------------------
-function detectFullHouseInLine(lineCells: LineCell[], placedKey: string): HandResult | null {
-  if (lineCells.length !== BOARD_SIZE) return null;
-  if (!containsCell(lineCells, placedKey)) return null;
-  if (lineCells.some((c) => !c.card)) return null;
+function filterResultsTouchingPlaced(results: HandResult[], placedKey: string): HandResult[] {
+  return dedupeHandResults(results.filter((result) => resultTouchesPlaced(result, placedKey)));
+}
+
+function detectFullHouse(cells: LineCell[], placedKey: string): HandResult[] {
+  // Full House is valid only when all 5 cells in one whole row/column are filled,
+  // the placed card is part of that line, and the rank pattern is exactly 3 + 2.
+  if (cells.length !== BOARD_SIZE) return [];
+  if (!containsCell(cells, placedKey)) return [];
+  if (cells.some((cell) => !cell.card)) return [];
 
   const counts = new Map<number, number>();
-  for (const c of lineCells) {
-    const v = getRankValue((c.card as Card).rank);
-    counts.set(v, (counts.get(v) ?? 0) + 1);
+  for (const cell of cells) {
+    const card = cell.card as Card;
+    const rankValue = getRankValue(card.rank);
+    counts.set(rankValue, (counts.get(rankValue) ?? 0) + 1);
   }
 
   const pattern = [...counts.values()].sort((a, b) => b - a);
   if (pattern.length === 2 && pattern[0] === 3 && pattern[1] === 2) {
-    return makeHandResult("full-house", lineCells);
+    return [makeHandResult("full-house", cells)];
   }
-  return null;
+
+  return [];
 }
 
-// ----------------------------------------------------------
-// スリー判定
-// 条件: 連続した同じランクが 3 枚（隣接セグメント内のウィンドウ）
-// ----------------------------------------------------------
-function detectThreesInSegments(segments: LineCell[][], placedKey: string): HandResult[] {
+function detectThrees(segments: LineCell[][], placedKey: string): HandResult[] {
   const results: HandResult[] = [];
 
-  for (const seg of segments) {
-    for (let i = 0; i <= seg.length - 3; i++) {
-      const window = seg.slice(i, i + 3);
+  for (const segment of segments) {
+    for (let start = 0; start <= segment.length - 3; start++) {
+      const window = segment.slice(start, start + 3);
       if (!containsCell(window, placedKey)) continue;
 
-      const cards = window.map((c) => c.card as Card);
-      if (cards.every((c) => sameRank(c, cards[0]))) {
+      const cards = window.map((cell) => cell.card as Card);
+      if (cards.every((card) => sameRank(card, cards[0]))) {
         results.push(makeHandResult("three", window));
       }
     }
   }
 
-  return dedupeHandResults(results.filter((r) => r.cells.includes(placedKey)));
+  return filterResultsTouchingPlaced(results, placedKey);
 }
 
-// ----------------------------------------------------------
-// ストレート判定
-// 条件: 隣接セグメント内で数値が 1 ずつ連続（昇順 or 降順）する 3 枚以上
-// 最長のものだけを残して重複サブ列を除去する
-// ----------------------------------------------------------
-function isStraightValues(values: number[]): boolean {
-  if (values.length < 3) return false;
-  const asc = values.every((v, i) => i === 0 || v - values[i - 1] === 1);
-  const desc = values.every((v, i) => i === 0 || v - values[i - 1] === -1);
-  return asc || desc;
-}
-
-function detectStraightsInSegments(segments: LineCell[][], placedKey: string): HandResult[] {
+function detectStraights(segments: LineCell[][], placedKey: string): HandResult[] {
   const candidates: HandResult[] = [];
 
-  for (const seg of segments) {
-    // ウィンドウ長 3 から seg.length まで全パターンを試す
-    for (let start = 0; start <= seg.length - 3; start++) {
-      for (let end = start + 3; end <= seg.length; end++) {
-        const window = seg.slice(start, end);
+  for (const segment of segments) {
+    for (let start = 0; start <= segment.length - 3; start++) {
+      for (let end = start + 3; end <= segment.length; end++) {
+        const window = segment.slice(start, end);
         if (!containsCell(window, placedKey)) continue;
 
-        const values = window.map((c) => getRankValue((c.card as Card).rank));
-        if (isStraightValues(values)) {
+        if (isStraightCells(window)) {
           candidates.push(makeHandResult("straight", window));
         }
       }
     }
   }
 
-  // サブ列を除去 — 他の候補に完全に含まれる短い列は捨てる
-  const maximal = candidates.filter((cand) =>
-    !candidates.some(
-      (other) =>
-        other.id !== cand.id &&
-        other.cells.length > cand.cells.length &&
-        cand.cells.every((k) => other.cells.includes(k))
-    )
-  );
+  // Keep only maximal straight windows touching the placed card, so 1-2-3-4
+  // clears as one 4-card straight instead of duplicated sub-hands.
+  const maximal = candidates.filter((candidate) => {
+    return !candidates.some((other) => {
+      if (other.id === candidate.id) return false;
+      if (other.cells.length <= candidate.cells.length) return false;
+      return candidate.cells.every((cellKey) => other.cells.includes(cellKey));
+    });
+  });
 
-  return dedupeHandResults(maximal.filter((r) => r.cells.includes(placedKey)));
+  return filterResultsTouchingPlaced(maximal, placedKey);
 }
 
-// ----------------------------------------------------------
-// ペア判定
-// 条件: 隣接した同じランクが 2 枚
-// ペアは消えない。ただし新たに置いたカードが関係するペアのみカウント。
-// ----------------------------------------------------------
-function detectPairsInSegments(segments: LineCell[][], placedKey: string): HandResult[] {
+function detectPairs(segments: LineCell[][], placedKey: string): HandResult[] {
   const results: HandResult[] = [];
 
-  for (const seg of segments) {
-    for (let i = 0; i <= seg.length - 2; i++) {
-      const window = seg.slice(i, i + 2);
-      if (!containsCell(window, placedKey)) continue;
+  for (const segment of segments) {
+    for (let start = 0; start <= segment.length - 2; start++) {
+      const pair = segment.slice(start, start + 2);
+      if (!containsCell(pair, placedKey)) continue;
 
-      const [a, b] = window.map((c) => c.card as Card);
-      if (sameRank(a, b)) {
-        results.push(makeHandResult("pair", window));
+      const first = pair[0].card as Card;
+      const second = pair[1].card as Card;
+      if (sameRank(first, second)) {
+        results.push(makeHandResult("pair", pair));
       }
     }
   }
 
-  return dedupeHandResults(results.filter((r) => r.cells.includes(placedKey)));
+  return filterResultsTouchingPlaced(results, placedKey);
 }
 
-// ----------------------------------------------------------
-// 1 ライン（行 or 列）の役判定
-// 優先度: フルハウス → スリー → ストレート → ペア
-// 上位役が見つかったらそれだけを返す（ペアと上位役が共存しない）
-// ----------------------------------------------------------
-function evaluateLine(lineCells: LineCell[], placedKey: string): HandResult[] {
-  if (!containsCell(lineCells, placedKey)) return [];
 
-  // フルハウス
-  const fh = detectFullHouseInLine(lineCells, placedKey);
-  if (fh) return [fh];
+function detectPlacedAdjacentPairs(board: Board, placedRow: number, placedCol: number): HandResult[] {
+  const placedCard = board[placedRow]?.[placedCol];
+  if (!placedCard) return [];
 
-  const segments = getContiguousCardSegments(lineCells);
+  const results: HandResult[] = [];
+  const directions = [
+    { dr: 0, dc: -1 },
+    { dr: 0, dc: 1 },
+    { dr: -1, dc: 0 },
+    { dr: 1, dc: 0 },
+  ];
 
-  // スリー
-  const threes = detectThreesInSegments(segments, placedKey);
+  for (const { dr, dc } of directions) {
+    const row = placedRow + dr;
+    const col = placedCol + dc;
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) continue;
+
+    const neighbor = board[row][col];
+    if (!neighbor) continue;
+
+    // Compare by normalized rank value so A is 1 and every numbered pair,
+    // especially 2-2, is caught regardless of suit or card object identity.
+    if (getRankValue(neighbor.rank) !== getRankValue(placedCard.rank)) continue;
+
+    const cells: LineCell[] = [
+      { row, col, card: neighbor },
+      { row: placedRow, col: placedCol, card: placedCard },
+    ].sort((a, b) => a.row - b.row || a.col - b.col);
+
+    results.push(makeHandResult("pair", cells));
+  }
+
+  return dedupeHandResults(results);
+}
+
+function evaluateLine(cells: LineCell[], placedKey: string): HandResult[] {
+  // Strict priority per row/column, but ONLY for hands that include the newly
+  // placed card. This prevents old pairs/straights elsewhere in the same line
+  // from re-scoring or triggering combo after an unrelated placement.
+  if (!containsCell(cells, placedKey)) return [];
+
+  const fullHouse = detectFullHouse(cells, placedKey);
+  if (fullHouse.length > 0) return fullHouse;
+
+  const segments = getContiguousCardSegments(cells);
+
+  const threes = detectThrees(segments, placedKey);
   if (threes.length > 0) return threes;
 
-  // ストレート
-  const straights = detectStraightsInSegments(segments, placedKey);
+  const straights = detectStraights(segments, placedKey);
   if (straights.length > 0) return straights;
 
-  // ペア（消えない）
-  return detectPairsInSegments(segments, placedKey);
+  return detectPairs(segments, placedKey);
 }
 
-// ----------------------------------------------------------
-// ボード全体の評価
-// 置いたセルを含む行・列それぞれを評価し、結果をマージ。
-// 行と列で独立して優先度を適用する。
-// ----------------------------------------------------------
+function evaluateLineWithoutPairs(cells: LineCell[], placedKey: string): HandResult[] {
+  if (!containsCell(cells, placedKey)) return [];
+
+  const fullHouse = detectFullHouse(cells, placedKey);
+  if (fullHouse.length > 0) return fullHouse;
+
+  const segments = getContiguousCardSegments(cells);
+
+  const threes = detectThrees(segments, placedKey);
+  if (threes.length > 0) return threes;
+
+  const straights = detectStraights(segments, placedKey);
+  if (straights.length > 0) return straights;
+
+  return [];
+}
+
+function detectLinePairsOnly(cells: LineCell[], placedKey: string): HandResult[] {
+  if (!containsCell(cells, placedKey)) return [];
+  return detectPairs(getContiguousCardSegments(cells), placedKey);
+}
+
+function dedupeHandResults(results: HandResult[]): HandResult[] {
+  const map = new Map<string, HandResult>();
+
+  for (const result of results) {
+    map.set(result.id, result);
+  }
+
+  return [...map.values()].sort((a, b) => b.priority - a.priority || b.score - a.score);
+}
+
 function evaluateBoard(board: Board, placedRow: number, placedCol: number): HandResult[] {
   const placedKey = keyOf(placedRow, placedCol);
+  const rowCells = getRowCells(board, placedRow);
+  const colCells = getColCells(board, placedCol);
 
-  const rowResults = evaluateLine(getRowCells(board, placedRow), placedKey);
-  const colResults = evaluateLine(getColCells(board, placedCol), placedKey);
+  // First resolve clearing/higher-priority hands only.
+  // Pair is checked separately below so Ace-Ace and 2-2 cannot be swallowed by
+  // line-priority edge cases or stale card values.
+  const highPriorityResults = dedupeHandResults([
+    ...evaluateLineWithoutPairs(rowCells, placedKey),
+    ...evaluateLineWithoutPairs(colCells, placedKey),
+  ]);
 
-  // 行・列それぞれで上位役があれば、ペアはその行/列からは除外する
-  // （上位役とペアが同一ラインで重複しないようにする）
-  const rowHasClearing = rowResults.some((r) => r.clears);
-  const colHasClearing = colResults.some((r) => r.clears);
+  if (highPriorityResults.length > 0) return highPriorityResults;
 
-  const filteredRow = rowHasClearing ? rowResults.filter((r) => r.clears) : rowResults;
-  const filteredCol = colHasClearing ? colResults.filter((r) => r.clears) : colResults;
-
-  return dedupeHandResults([...filteredRow, ...filteredCol]);
+  // Pair-only pass. It requires the newly placed card and adjacent cells, so old
+  // pairs elsewhere cannot re-score, while A-A is always caught as 1-1.
+  return dedupeHandResults([
+    ...detectLinePairsOnly(rowCells, placedKey),
+    ...detectLinePairsOnly(colCells, placedKey),
+    ...detectPlacedAdjacentPairs(board, placedRow, placedCol),
+  ]);
 }
 
 function getUniqueCells(results: HandResult[], onlyClearing = false): string[] {
@@ -695,6 +752,31 @@ function getHandSummary(results: HandResult[]): string {
   return [...counts.entries()]
     .map(([name, count]) => (count > 1 ? `${name} x${count}` : name))
     .join(" + ");
+}
+
+function debugCardLabel(card: BoardCell): string {
+  if (!card) return "__";
+  return `${card.rank}${suitSymbols[card.suit]}`;
+}
+
+function debugLineLabel(cells: LineCell[]): string {
+  return cells.map((cell) => debugCardLabel(cell.card)).join(" ");
+}
+
+function debugResultLabel(result: HandResult): string {
+  const cells = result.cells.map((cell) => cell.replace("-", ",")).join("|");
+  return `${result.name}[${cells}] +${result.score}${result.clears ? " CLEAR" : " KEEP"}`;
+}
+
+function safeDebugString(value: unknown): string {
+  if (value === undefined) return "";
+  if (typeof value === "string") return value;
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 
@@ -1665,9 +1747,35 @@ export default function Home() {
   const [sfxVolume, setSfxVolume] = useState(0.65);
   const [bgmEnabled, setBgmEnabled] = useState(false);
   const [bgmVolume, setBgmVolume] = useState(0.18);
+  const [debugOpen, setDebugOpen] = useState(true);
+  const [debugLogs, setDebugLogs] = useState<DebugEntry[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgmTrackRef = useRef<string>("");
+
+  function pushDebug(tag: string, message: string, detail?: unknown) {
+    const detailText = safeDebugString(detail);
+    const finalMessage = detailText ? `${message} ${detailText}` : message;
+    const now = new Date();
+    const entry: DebugEntry = {
+      id: now.getTime() + Math.random(),
+      time: now.toLocaleTimeString("ja-JP", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+      tag,
+      message: finalMessage,
+    };
+
+    console.log(`[NUTS DEBUG][${tag}] ${message}`, detail ?? "");
+    setDebugLogs((prev) => [entry, ...prev].slice(0, 80));
+  }
+
+  function clearDebugLogs() {
+    setDebugLogs([]);
+  }
 
   useEffect(() => {
     if (typeof document === "undefined" || typeof window === "undefined") return;
@@ -1867,10 +1975,18 @@ export default function Home() {
   }
 
   function playSound(sound: SoundName) {
-    if (!soundEnabled || sfxVolume <= 0) return;
+    pushDebug("SOUND", `request=${sound}`, { enabled: soundEnabled, volume: sfxVolume });
+
+    if (!soundEnabled || sfxVolume <= 0) {
+      pushDebug("SOUND", `blocked=${sound}`, "sound disabled or volume 0");
+      return;
+    }
 
     const context = getAudioContext();
-    if (!context) return;
+    if (!context) {
+      pushDebug("SOUND", `blocked=${sound}`, "no AudioContext");
+      return;
+    }
 
     const now = context.currentTime;
 
@@ -2300,6 +2416,19 @@ export default function Home() {
     const hitCells = getUniqueCells(handResults, false);
     const handSummary = getHandSummary(handResults);
 
+    pushDebug("DUEL PLACE", `${debugCardLabel(selected)} -> r${row + 1}c${col + 1}`, {
+      player: duel.currentPlayer,
+      row: debugLineLabel(getRowCells(newBoard, row)),
+      col: debugLineLabel(getColCells(newBoard, col)),
+    });
+    pushDebug(
+      "DUEL EVAL",
+      handResults.length > 0
+        ? handResults.map(debugResultLabel).join(" / ")
+        : "NO HAND",
+      { hitCells, claimCells }
+    );
+
     const nextOwners = duel.owners.map((ownerRow) => [...ownerRow]);
 
     for (const cellKey of claimCells) {
@@ -2391,6 +2520,20 @@ export default function Home() {
     const nextHighScore = Math.max(game.highScore, nextScore);
     const handSummary = getHandSummary(handResults);
 
+    pushDebug("PLACE", `${debugCardLabel(selected)} -> r${row + 1}c${col + 1}`, {
+      row: debugLineLabel(getRowCells(newBoard, row)),
+      col: debugLineLabel(getColCells(newBoard, col)),
+      comboBefore: game.combo,
+      comboWindowBefore: game.comboWindow,
+    });
+    pushDebug(
+      "EVAL",
+      handResults.length > 0
+        ? handResults.map(debugResultLabel).join(" / ")
+        : "NO HAND",
+      { hitCells, clearingCellKeys, baseScore, scoreGain }
+    );
+
     const boardAfterClear = newBoard.map((boardRow) => [...boardRow]);
     for (const cellKey of clearingCellKeys) {
       const [clearRow, clearCol] = cellKey.split("-").map(Number);
@@ -2409,6 +2552,16 @@ export default function Home() {
     const isComboBroken = !hasHand && game.combo > 1 && nextComboWindow === 0;
     const nextCombo = hasHand ? game.combo + 1 : isComboBroken ? 1 : game.combo;
     const nextGameOver = isBoardFull(boardAfterClear);
+
+    pushDebug("COMBO", hasHand ? "HAND HIT" : isComboBroken ? "COMBO BREAK" : "NO HAND / GRACE", {
+      hasHand,
+      comboBefore: game.combo,
+      comboAfter: nextCombo,
+      comboWindowBefore: game.comboWindow,
+      comboWindowAfter: hasHand ? MAX_COMBO_WINDOW : nextComboWindow,
+      isComboBroken,
+      nextGameOver,
+    });
 
     if (nextGameOver) {
       window.setTimeout(() => playSound("gameover"), 220);
@@ -2482,6 +2635,7 @@ export default function Home() {
       setFloatingScores([]);
 
       if (clearingCellKeys.length > 0) {
+        pushDebug("CLEAR", `remove ${clearingCellKeys.join(",")}`, { afterClearFull: isBoardFull(boardAfterClear) });
         setGame((prev) => ({
           ...prev,
           board: boardAfterClear,
@@ -2490,6 +2644,78 @@ export default function Home() {
         }));
       }
     }, clearingCellKeys.length > 0 ? 620 : 420);
+  }
+
+  function renderDebugPanel() {
+    if (screen !== "game") return null;
+
+    const board = mode === "duel" ? duel.board : game.board;
+    const handText =
+      mode === "duel"
+        ? duel.currentCard
+          ? debugCardLabel(duel.currentCard)
+          : "EMPTY"
+        : game.hand[0]
+        ? debugCardLabel(game.hand[0])
+        : "EMPTY";
+
+    return (
+      <div className="fixed bottom-2 left-2 z-[9999] w-[min(560px,calc(100vw-1rem))] rounded-xl border-[3px] border-black bg-black/80 p-2 font-mono text-[10px] leading-snug text-[#d8ffe6] shadow-[5px_5px_0_rgba(0,0,0,0.55)] backdrop-blur-sm">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setDebugOpen((prev) => !prev)}
+            className="rounded border border-[#53d48b] px-2 py-1 text-left font-black text-[#8cffb8]"
+          >
+            DEBUG {debugOpen ? "ON" : "OFF"}
+          </button>
+          <div className="flex flex-1 flex-wrap justify-end gap-x-3 gap-y-1 text-right text-[#ffe28a]">
+            <span>MODE:{mode}</span>
+            <span>NOW:{handText}</span>
+            <span>COMBO:{game.combo}</span>
+            <span>WINDOW:{game.comboWindow}</span>
+            <span>LOGS:{debugLogs.length}</span>
+          </div>
+          <button
+            type="button"
+            onClick={clearDebugLogs}
+            className="rounded border border-[#ffcf67] px-2 py-1 font-black text-[#ffcf67]"
+          >
+            CLEAR
+          </button>
+        </div>
+
+        {debugOpen && (
+          <>
+            <div className="mb-1 grid grid-cols-5 gap-1 text-center text-[9px] text-white/80">
+              {board.flatMap((boardRow, rowIndex) =>
+                boardRow.map((cell, colIndex) => (
+                  <span
+                    key={`dbg-${rowIndex}-${colIndex}`}
+                    className="rounded bg-white/10 px-1 py-0.5"
+                  >
+                    {debugCardLabel(cell)}
+                  </span>
+                ))
+              )}
+            </div>
+            <div className="max-h-44 overflow-y-auto rounded bg-[#06120d] p-1">
+              {debugLogs.length === 0 ? (
+                <p className="text-white/50">No logs yet. Place a card.</p>
+              ) : (
+                debugLogs.slice(0, 32).map((entry) => (
+                  <div key={entry.id} className="border-b border-white/10 py-0.5 last:border-b-0">
+                    <span className="text-white/45">{entry.time}</span>{" "}
+                    <span className="font-black text-[#7ee7ff]">[{entry.tag}]</span>{" "}
+                    <span>{entry.message}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
   }
 
   if (!isLoaded) {
@@ -2521,6 +2747,7 @@ export default function Home() {
           }}
           onStartDuel={startDuelGame}
         />
+        {renderDebugPanel()}
         {renderSettingsButtonAndModal()}
       </>
     );
@@ -4527,7 +4754,7 @@ export default function Home() {
                         const isPlaced = placedCell === cellKey;
                         const isHit = highlightCells.has(cellKey);
                         const isClearing = clearingCells.has(cellKey);
-                        const canPlace = !cell && !duel.isGameOver && Boolean(duel.currentCard);
+                        const canPlace = !cell && !duel.isGameOver && Boolean(duel.currentCard) && !isResolvingHand;
                         const ownerGlow = owner === 1
                           ? "after:absolute after:inset-1 after:border-[3px] after:border-[#6ee7ff]/75 after:content-['']"
                           : owner === 2
@@ -4687,6 +4914,7 @@ export default function Home() {
             </div>
           </section>
         </div>
+        {renderDebugPanel()}
         {renderSettingsButtonAndModal()}
       </main>
     );
@@ -7348,7 +7576,8 @@ export default function Home() {
                       const canPlace =
                         !cell &&
                         !game.isGameOver &&
-                        game.hand.length > 0;
+                        game.hand.length > 0 &&
+                        !isResolvingHand;
 
                       const isPlaced = placedCell === cellKey;
                       const isHighlighted = highlightCells.has(cellKey);
@@ -7360,7 +7589,7 @@ export default function Home() {
                         <button
                           key={cellKey}
                           onClick={() => placeCard(rowIndex, colIndex)}
-                          disabled={!!cell || game.isGameOver}
+                          disabled={!!cell || game.isGameOver || isResolvingHand}
                           tabIndex={-1}
                           onMouseDown={(event) => event.preventDefault()}
                           className={[
@@ -7511,6 +7740,7 @@ export default function Home() {
           </div>
         </section>
       </div>
+        {renderDebugPanel()}
         {renderSettingsButtonAndModal()}
     </main>
   );
