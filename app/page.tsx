@@ -565,8 +565,46 @@ function cardRankValue(card: Card): number {
   return card.value;
 }
 
+function getRankKey(card: Card): string {
+  const normalizedRank = String(card.rank).trim().toUpperCase();
+
+  if (normalizedRank === "A" || normalizedRank === "ACE" || card.value === 1 || card.value === 14) return "A";
+  if (normalizedRank === "J" || normalizedRank === "JACK" || card.value === 11) return "J";
+  if (normalizedRank === "Q" || normalizedRank === "QUEEN" || card.value === 12) return "Q";
+  if (normalizedRank === "K" || normalizedRank === "KING" || card.value === 13) return "K";
+
+  if (
+    normalizedRank === "2" ||
+    normalizedRank === "3" ||
+    normalizedRank === "4" ||
+    normalizedRank === "5" ||
+    normalizedRank === "6" ||
+    normalizedRank === "7" ||
+    normalizedRank === "8" ||
+    normalizedRank === "9" ||
+    normalizedRank === "10"
+  ) {
+    return normalizedRank as Rank;
+  }
+
+  const valueRank = ranks.find(({ value }) => value === card.value)?.rank;
+  return valueRank ?? `UNKNOWN-${card.id}`;
+}
+
 function isSameRankCard(a: Card, b: Card): boolean {
-  return cardRankValue(a) === cardRankValue(b);
+  return getRankKey(a) === getRankKey(b);
+}
+
+function isValidPairResult(board: Board, result: HandResult): boolean {
+  if (result.name !== "Pair") return true;
+  if (result.cards.length !== 2) return false;
+
+  const [firstPosition, secondPosition] = result.cards;
+  const firstCard = board[firstPosition.row]?.[firstPosition.col];
+  const secondCard = board[secondPosition.row]?.[secondPosition.col];
+
+  if (!firstCard || !secondCard) return false;
+  return isSameRankCard(firstCard, secondCard);
 }
 
 function cloneBoard(board: Board): Board {
@@ -848,7 +886,7 @@ function findPairForPlaced(
       const pair = sorted.slice(start, start + 2);
       if (!containsPlacedCell(pair, placedRow, placedCol)) continue;
 
-      if (cardRankValue(pair[0].card) === cardRankValue(pair[1].card)) {
+      if (isSameRankCard(pair[0].card, pair[1].card)) {
         return createHandResult({
           type: "PAIR",
           name: "Pair",
@@ -963,7 +1001,9 @@ function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   results.push(...judgeLineForPlaced(rowCells, `Row ${row + 1}`, row, col));
   results.push(...judgeLineForPlaced(colCells, `Column ${col + 1}`, row, col));
 
-  const normalizedResults = normalizeResults(results);
+  const normalizedResults = normalizeResults(results).filter((result) =>
+    isValidPairResult(board, result)
+  );
 
   // Safety net for adjacent pairs.
   // Pair has no clearing, so it is easy to miss visually if the main line judge is blocked
