@@ -37,6 +37,7 @@ type GameState = {
   highScore: number;
   combo: number;
   comboWindow: number;
+  scoredPairIds: string[];
   selectedHandIndex: number | null;
   lastResult: string;
   lastScore: number;
@@ -706,14 +707,19 @@ function dedupeHandResults(results: HandResult[]): HandResult[] {
   return [...map.values()].sort((a, b) => b.priority - a.priority || b.score - a.score);
 }
 
-function evaluateBoard(board: Board, placedRow: number, placedCol: number): HandResult[] {
+function evaluateBoard(
+  board: Board,
+  placedRow: number,
+  placedCol: number,
+  scoredPairIds: string[] = []
+): HandResult[] {
   const placedKey = keyOf(placedRow, placedCol);
   const rowCells = getRowCells(board, placedRow);
   const colCells = getColCells(board, placedCol);
 
-  // First resolve clearing/higher-priority hands only.
-  // Pair is checked separately below so Ace-Ace and 2-2 cannot be swallowed by
-  // line-priority edge cases or stale card values.
+  // Full House / Three / Straight keep strict placed-card priority.
+  // They clear cards, so they should only fire when the current placement is
+  // part of the hand.
   const highPriorityResults = dedupeHandResults([
     ...evaluateLineWithoutPairs(rowCells, placedKey),
     ...evaluateLineWithoutPairs(colCells, placedKey),
@@ -721,15 +727,17 @@ function evaluateBoard(board: Board, placedRow: number, placedCol: number): Hand
 
   if (highPriorityResults.length > 0) return highPriorityResults;
 
-  // Pair-only pass. It requires the newly placed card and adjacent cells, so old
-  // pairs elsewhere cannot re-score, while A-A is always caught as 1-1.
+  // Pair is non-clearing. Therefore placed-card-only logic can permanently miss
+  // a pair if a previous detection failed. To make pairs reliable, scan every
+  // row/column for adjacent unscored pairs, while scoredPairIds prevents the same
+  // non-clearing pair from giving points every turn.
   return dedupeHandResults([
     ...detectLinePairsOnly(rowCells, placedKey),
     ...detectLinePairsOnly(colCells, placedKey),
     ...detectPlacedAdjacentPairs(board, placedRow, placedCol),
+    ...detectAllBoardPairs(board, scoredPairIds),
   ]);
 }
-
 
 function detectPairsContainingCardId(board: Board, placedCardId: string): HandResult[] {
   const results: HandResult[] = [];
@@ -754,6 +762,55 @@ function detectPairsContainingCardId(board: Board, placedCardId: string): HandRe
   }
 
   return dedupeHandResults(results);
+}
+
+function detectAllBoardPairs(board: Board, scoredPairIds: string[] = []): HandResult[] {
+  const scored = new Set(scoredPairIds);
+  const results: HandResult[] = [];
+
+  function scanLine(cells: LineCell[]) {
+    for (let start = 0; start <= cells.length - 2; start++) {
+      const first = cells[start];
+      const second = cells[start + 1];
+      if (!first.card || !second.card) continue;
+      if (!sameRank(first.card, second.card)) continue;
+
+      const result = makeHandResult("pair", [first, second]);
+      if (scored.has(result.id)) continue;
+      results.push(result);
+    }
+  }
+
+  for (let row = 0; row < BOARD_SIZE; row++) scanLine(getRowCells(board, row));
+  for (let col = 0; col < BOARD_SIZE; col++) scanLine(getColCells(board, col));
+
+  return dedupeHandResults(results);
+}
+
+function pairResultIds(results: HandResult[]): string[] {
+  return results.filter((result) => result.kind === "pair").map((result) => result.id);
+}
+
+function prunePairIdsTouchingClearedCells(pairIds: string[], clearingCellKeys: string[]): string[] {
+  if (clearingCellKeys.length === 0) return pairIds;
+  const clearing = new Set(clearingCellKeys);
+
+  return pairIds.filter((pairId) => {
+    if (!pairId.startsWith("pair:")) return true;
+    const cellPart = pairId.slice("pair:".length);
+    const cells = cellPart.split("|");
+    return !cells.some((cellKey) => clearing.has(cellKey));
+  });
+}
+
+function nextScoredPairIds(
+  previousPairIds: string[],
+  results: HandResult[],
+  clearingCellKeys: string[]
+): string[] {
+  const merged = new Set(previousPairIds);
+  for (const pairId of pairResultIds(results)) merged.add(pairId);
+  return prunePairIdsTouchingClearedCells([...merged], clearingCellKeys);
 }
 
 function getUniqueCells(results: HandResult[], onlyClearing = false): string[] {
@@ -868,6 +925,7 @@ function createInitialGame(highScore = 0): GameState {
     highScore,
     combo: 1,
     comboWindow: MAX_COMBO_WINDOW,
+    scoredPairIds: [],
     selectedHandIndex: 0,
     lastResult: "PLACE LEFT CARD",
     lastScore: 0,
@@ -2547,7 +2605,7 @@ export default function Home() {
     const newBoard = game.board.map((boardRow) => [...boardRow]);
     newBoard[row][col] = selected;
 
-    let handResults = evaluateBoard(newBoard, row, col);
+    let handResults = evaluateBoard(newBoard, row, col, game.scoredPairIds);
     const strictPairFallbackResults = handResults.length === 0
       ? detectPairsContainingCardId(newBoard, selected.id)
       : [];
@@ -2579,7 +2637,7 @@ export default function Home() {
       handResults.length > 0
         ? handResults.map(debugResultLabel).join(" / ")
         : "NO HAND",
-      { hitCells, clearingCellKeys, baseScore, scoreGain }
+      { hitCells, clearingCellKeys, baseScore, scoreGain, scoredPairIdsBefore: game.scoredPairIds }
     );
 
     const boardAfterClear = newBoard.map((boardRow) => [...boardRow]);
@@ -2600,6 +2658,7 @@ export default function Home() {
     const isComboBroken = !hasHand && game.combo > 1 && nextComboWindow === 0;
     const nextCombo = hasHand ? game.combo + 1 : isComboBroken ? 1 : game.combo;
     const nextGameOver = isBoardFull(boardAfterClear);
+    const updatedScoredPairIds = nextScoredPairIds(game.scoredPairIds, handResults, clearingCellKeys);
 
     pushDebug("COMBO", hasHand ? "HAND HIT" : isComboBroken ? "COMBO BREAK" : "NO HAND / GRACE", {
       hasHand,
@@ -2665,6 +2724,7 @@ export default function Home() {
       highScore: nextHighScore,
       combo: nextCombo,
       comboWindow: hasHand ? MAX_COMBO_WINDOW : nextComboWindow,
+      scoredPairIds: updatedScoredPairIds,
       selectedHandIndex: nextGameOver ? null : 0,
       lastResult: nextGameOver ? "GAME OVER" : hasHand ? handSummary : "PLACED",
       lastScore: scoreGain,
@@ -2759,6 +2819,7 @@ export default function Home() {
             <span>MODE:{mode}</span>
             <span>NOW:{handText}</span>
             <span>COMBO:{game.combo}</span>
+              <span>PAIRS:{game.scoredPairIds.length}</span>
             <span>WINDOW:{game.comboWindow}</span>
             <span>LOGS:{debugLogs.length}</span>
           </div>
