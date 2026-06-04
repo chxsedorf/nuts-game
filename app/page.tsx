@@ -124,7 +124,7 @@ const MAX_COMBO_WINDOW = 3;
 const suits: Suit[] = ["spade", "heart", "diamond", "club"];
 
 const ranks: { rank: Rank; value: number }[] = [
-  { rank: "A", value: 14 },
+  { rank: "A", value: 1 },
   { rank: "2", value: 2 },
   { rank: "3", value: 3 },
   { rank: "4", value: 4 },
@@ -590,7 +590,7 @@ function getRankGroups(cells: HandCardSnapshot[]): Map<number, HandCardSnapshot[
   const groups = new Map<number, HandCardSnapshot[]>();
 
   for (const cell of cells) {
-    const value = cell.card.value;
+    const value = rankToValue(cell.card.rank);
     if (!groups.has(value)) groups.set(value, []);
     groups.get(value)!.push(cell);
   }
@@ -653,7 +653,7 @@ function getSameRankConnectedRuns(cells: HandCardSnapshot[]): HandCardSnapshot[]
 
     if (
       previous &&
-      cell.card.value === previous.card.value &&
+      rankToValue(cell.card.rank) === rankToValue(previous.card.rank) &&
       areCellsConnected([previous, cell])
     ) {
       currentRun.push(cell);
@@ -745,10 +745,8 @@ function findPair(cells: HandCardSnapshot[], lineLabel: string): HandResult | nu
 }
 
 function getStraightValueOptions(card: Card): number[] {
-  // Inserted from the provided stable judge code.
-  // A can work as 1 or 14 in this judge.
-  if (card.rank === "A") return [1, 14];
-  return [card.value];
+  // A is fixed to 1 only. A-K-Q / Q-K-A must not become Straight.
+  return [rankToValue(card.rank)];
 }
 
 function canCardsStepAsStraight(previous: Card, current: Card): boolean {
@@ -806,39 +804,39 @@ function isStepStraightRun(cells: HandCardSnapshot[]): boolean {
   return canRunBecomeStepStraight(cells);
 }
 
-function findStraight(cells: HandCardSnapshot[], lineLabel: string): HandResult | null {
-  if (cells.length < 3) return null;
-
+function getConnectedSegments(cells: HandCardSnapshot[]): HandCardSnapshot[][] {
   const sortedCells = sortCellsByBoardOrder(cells);
-  let bestRun: HandCardSnapshot[] = [];
+  const segments: HandCardSnapshot[][] = [];
+  let currentSegment: HandCardSnapshot[] = [];
 
-  for (let start = 0; start < sortedCells.length; start++) {
-    let currentRun: HandCardSnapshot[] = [sortedCells[start]];
+  for (const cell of sortedCells) {
+    const previous = currentSegment[currentSegment.length - 1];
 
-    for (let i = start + 1; i < sortedCells.length; i++) {
-      const previous = currentRun[currentRun.length - 1];
-      const current = sortedCells[i];
-
-      if (!areCellsConnected([previous, current])) break;
-      if (!canCardsStepAsStraight(previous.card, current.card)) break;
-
-      const candidateRun = [...currentRun, current];
-
-      if (!canRunBecomeStepStraight(candidateRun)) break;
-
-      currentRun = candidateRun;
-    }
-
-    if (
-      currentRun.length >= 3 &&
-      isStepStraightRun(currentRun) &&
-      currentRun.length > bestRun.length
-    ) {
-      bestRun = currentRun;
+    if (previous && areCellsConnected([previous, cell])) {
+      currentSegment.push(cell);
+    } else {
+      if (currentSegment.length > 0) segments.push(currentSegment);
+      currentSegment = [cell];
     }
   }
 
-  if (bestRun.length < 3) return null;
+  if (currentSegment.length > 0) segments.push(currentSegment);
+
+  return segments;
+}
+
+function findStraight(cells: HandCardSnapshot[], lineLabel: string): HandResult | null {
+  if (cells.length < 3) return null;
+
+  // Important: judge Straight by the whole connected occupied segment, not by
+  // a partial sub-window inside a mixed line. This prevents patterns such as
+  // 1,2,3,3,1 from clearing only the 1,2,3 part.
+  const straightSegments = getConnectedSegments(cells)
+    .filter((segment) => segment.length >= 3 && isStepStraightRun(segment))
+    .sort((a, b) => b.length - a.length);
+
+  const bestRun = straightSegments[0];
+  if (!bestRun) return null;
 
   return createHandResult({
     type: "STRAIGHT",
@@ -925,12 +923,56 @@ function resultContainsPlacedCell(result: HandResult, placedRow: number, placedC
   return result.cards.some((target) => target.row === placedRow && target.col === placedCol);
 }
 
+function findPlacedAdjacentPair(board: Board, row: number, col: number): HandResult | null {
+  const placedCard = board[row]?.[col];
+  if (!placedCard) return null;
+
+  const directions = [
+    { dr: 0, dc: -1, label: `Row ${row + 1}` },
+    { dr: 0, dc: 1, label: `Row ${row + 1}` },
+    { dr: -1, dc: 0, label: `Column ${col + 1}` },
+    { dr: 1, dc: 0, label: `Column ${col + 1}` },
+  ];
+
+  for (const direction of directions) {
+    const targetRow = row + direction.dr;
+    const targetCol = col + direction.dc;
+    if (targetRow < 0 || targetRow >= BOARD_SIZE || targetCol < 0 || targetCol >= BOARD_SIZE) continue;
+
+    const neighborCard = board[targetRow]?.[targetCol];
+    if (!neighborCard) continue;
+    if (rankToValue(neighborCard.rank) !== rankToValue(placedCard.rank)) continue;
+
+    return createHandResult({
+      type: "PAIR",
+      name: "Pair",
+      cards: [
+        { row, col, card: placedCard },
+        { row: targetRow, col: targetCol, card: neighborCard },
+      ],
+      lineLabel: direction.label,
+      shouldClear: false,
+    });
+  }
+
+  return null;
+}
+
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  // Judge the board with the inserted hand-judge logic, but only accept hands
-  // that include the card placed this turn.
+  // Judge only hands that include the card placed this turn.
   // This prevents old Pair / Three / Straight / Full House results from scoring
   // again on later turns.
-  return judgeBoard(board).filter((result) => resultContainsPlacedCell(result, row, col));
+  const results = judgeBoard(board).filter((result) => resultContainsPlacedCell(result, row, col));
+
+  // Safety fallback for adjacent Pair, especially ranks with string labels like "10".
+  // It only runs when no stronger/normal result was detected, so it will not override
+  // Full House / Three / Straight priority.
+  if (results.length === 0) {
+    const placedPair = findPlacedAdjacentPair(board, row, col);
+    if (placedPair) return [placedPair];
+  }
+
+  return results;
 }
 
 function createInitialGame(highScore = 0): GameState {
