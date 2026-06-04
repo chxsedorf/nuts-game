@@ -408,6 +408,12 @@ type LineCell = {
   card: Card | null;
 };
 
+type HandCardSnapshot = {
+  row: number;
+  col: number;
+  card: Card;
+};
+
 type HandResult = {
   id: string;
   kind: HandKind;
@@ -436,13 +442,6 @@ function getCellKey(cell: Pick<LineCell, "row" | "col">) {
   return keyOf(cell.row, cell.col);
 }
 
-function sameRank(a: Card, b: Card): boolean {
-  // Compare normalized rank values instead of object identity or raw card.value.
-  // This makes Ace pairs reliable even if an older saved/generated card still
-  // has value 14. Ace is always treated as 1 in every hand check.
-  return getRankValue(a.rank) === getRankValue(b.rank);
-}
-
 function getHandLabel(kind: HandKind): string {
   if (kind === "full-house") return "FULL HOUSE";
   if (kind === "three") return "THREE";
@@ -450,10 +449,132 @@ function getHandLabel(kind: HandKind): string {
   return "PAIR";
 }
 
-function makeHandResult(kind: HandKind, cells: LineCell[]): HandResult {
-  const cellKeys = cells.map(getCellKey);
+function getRankValue(rank: Rank): number {
+  // Ace is low only. A-K-Q / Q-K-A are intentionally NOT straights.
+  if (rank === "A") return 1;
+  if (rank === "J") return 11;
+  if (rank === "Q") return 12;
+  if (rank === "K") return 13;
+  return Number(rank);
+}
+
+function sameRank(a: Card, b: Card): boolean {
+  return getRankValue(a.rank) === getRankValue(b.rank);
+}
+
+function getRowCells(board: Board, row: number): LineCell[] {
+  return board[row].map((card, col) => ({ row, col, card }));
+}
+
+function getColCells(board: Board, col: number): LineCell[] {
+  return board.map((boardRow, row) => ({ row, col, card: boardRow[col] }));
+}
+
+function toSnapshot(cell: LineCell): HandCardSnapshot | null {
+  if (!cell.card) return null;
+  return { row: cell.row, col: cell.col, card: cell.card };
+}
+
+function getBoardLines(board: Board): { label: string; cells: HandCardSnapshot[] }[] {
+  const lines: { label: string; cells: HandCardSnapshot[] }[] = [];
+
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    const cells = getRowCells(board, row)
+      .map(toSnapshot)
+      .filter((cell): cell is HandCardSnapshot => Boolean(cell));
+    lines.push({ label: `ROW ${row + 1}`, cells });
+  }
+
+  for (let col = 0; col < BOARD_SIZE; col++) {
+    const cells = getColCells(board, col)
+      .map(toSnapshot)
+      .filter((cell): cell is HandCardSnapshot => Boolean(cell));
+    lines.push({ label: `COL ${col + 1}`, cells });
+  }
+
+  return lines;
+}
+
+function getLineAxis(cells: HandCardSnapshot[]): "ROW" | "COL" | null {
+  if (cells.length === 0) return null;
+
+  const sameRow = cells.every((cell) => cell.row === cells[0].row);
+  const sameCol = cells.every((cell) => cell.col === cells[0].col);
+
+  if (sameRow) return "ROW";
+  if (sameCol) return "COL";
+  return null;
+}
+
+function getLineIndex(cell: HandCardSnapshot, axis: "ROW" | "COL"): number {
+  return axis === "ROW" ? cell.col : cell.row;
+}
+
+function sortSnapshotsByBoardOrder(cells: HandCardSnapshot[]): HandCardSnapshot[] {
+  const axis = getLineAxis(cells);
+
+  if (!axis) {
+    return [...cells].sort((a, b) => a.row - b.row || a.col - b.col);
+  }
+
+  return [...cells].sort((a, b) => getLineIndex(a, axis) - getLineIndex(b, axis));
+}
+
+function areSnapshotsConnected(cells: HandCardSnapshot[]): boolean {
+  if (cells.length <= 1) return true;
+
+  const axis = getLineAxis(cells);
+  if (!axis) return false;
+
+  const sorted = sortSnapshotsByBoardOrder(cells);
+
+  for (let i = 1; i < sorted.length; i++) {
+    const previousIndex = getLineIndex(sorted[i - 1], axis);
+    const currentIndex = getLineIndex(sorted[i], axis);
+
+    if (currentIndex !== previousIndex + 1) return false;
+  }
+
+  return true;
+}
+
+function getRankGroups(cells: HandCardSnapshot[]): Map<number, HandCardSnapshot[]> {
+  const groups = new Map<number, HandCardSnapshot[]>();
+
+  for (const cell of cells) {
+    const value = getRankValue(cell.card.rank);
+    if (!groups.has(value)) groups.set(value, []);
+    groups.get(value)!.push(cell);
+  }
+
+  return groups;
+}
+
+function getSameRankConnectedRuns(cells: HandCardSnapshot[]): HandCardSnapshot[][] {
+  const sorted = sortSnapshotsByBoardOrder(cells);
+  const runs: HandCardSnapshot[][] = [];
+  let currentRun: HandCardSnapshot[] = [];
+
+  for (const cell of sorted) {
+    const previous = currentRun[currentRun.length - 1];
+
+    if (previous && sameRank(cell.card, previous.card) && areSnapshotsConnected([previous, cell])) {
+      currentRun.push(cell);
+    } else {
+      if (currentRun.length > 0) runs.push(currentRun);
+      currentRun = [cell];
+    }
+  }
+
+  if (currentRun.length > 0) runs.push(currentRun);
+  return runs.sort((a, b) => b.length - a.length);
+}
+
+function makeHandResultFromSnapshots(kind: HandKind, cells: HandCardSnapshot[]): HandResult {
+  const sortedCells = sortSnapshotsByBoardOrder(cells);
+  const cellKeys = sortedCells.map((cell) => keyOf(cell.row, cell.col));
   const sortedKey = [...cellKeys].sort().join("|");
-  const lengthBonus = kind === "straight" ? Math.max(0, cells.length - 3) * 70 : 0;
+  const lengthBonus = kind === "straight" ? Math.max(0, sortedCells.length - 3) * 70 : 0;
 
   return {
     id: `${kind}:${sortedKey}`,
@@ -466,49 +587,73 @@ function makeHandResult(kind: HandKind, cells: LineCell[]): HandResult {
   };
 }
 
-function getRowCells(board: Board, row: number): LineCell[] {
-  return board[row].map((card, col) => ({ row, col, card }));
+function makeHandResult(kind: HandKind, cells: LineCell[]): HandResult {
+  const snapshots = cells
+    .map(toSnapshot)
+    .filter((cell): cell is HandCardSnapshot => Boolean(cell));
+  return makeHandResultFromSnapshots(kind, snapshots);
 }
 
-function getColCells(board: Board, col: number): LineCell[] {
-  return board.map((boardRow, row) => ({ row, col, card: boardRow[col] }));
-}
+function findFullHouse(cells: HandCardSnapshot[]): HandResult | null {
+  if (cells.length < 5) return null;
 
-function getContiguousCardSegments(cells: LineCell[]): LineCell[][] {
-  const segments: LineCell[][] = [];
-  let current: LineCell[] = [];
+  const sortedCells = sortSnapshotsByBoardOrder(cells);
 
-  for (const cell of cells) {
-    if (cell.card) {
-      current.push(cell);
-    } else {
-      if (current.length > 0) segments.push(current);
-      current = [];
+  for (let start = 0; start <= sortedCells.length - 5; start++) {
+    const window = sortedCells.slice(start, start + 5);
+    if (!areSnapshotsConnected(window)) continue;
+
+    const groups = [...getRankGroups(window).values()].sort((a, b) => b.length - a.length);
+    const pattern = groups.map((group) => group.length).sort((a, b) => b - a);
+
+    if (pattern.length === 2 && pattern[0] === 3 && pattern[1] === 2) {
+      return makeHandResultFromSnapshots("full-house", window);
     }
   }
 
-  if (current.length > 0) segments.push(current);
-  return segments;
+  return null;
 }
 
-function getRankValue(rank: Rank): number {
-  // Ace is always low only. A-K-Q / Q-K-A must never become a straight.
-  if (rank === "A") return 1;
-  if (rank === "J") return 11;
-  if (rank === "Q") return 12;
-  if (rank === "K") return 13;
-  return Number(rank);
+function findThree(cells: HandCardSnapshot[]): HandResult | null {
+  if (cells.length < 3) return null;
+
+  const connectedRuns = getSameRankConnectedRuns(cells);
+  const threeRun = connectedRuns.find((run) => run.length >= 3);
+  if (!threeRun) return null;
+
+  return makeHandResultFromSnapshots("three", threeRun.slice(0, 3));
 }
 
-function isStraightCells(cells: LineCell[]): boolean {
+function findPair(cells: HandCardSnapshot[], scoredPairIds: Set<string>): HandResult | null {
+  if (cells.length < 2) return null;
+
+  const connectedRuns = getSameRankConnectedRuns(cells);
+
+  for (const run of connectedRuns) {
+    if (run.length < 2) continue;
+
+    const sortedRun = sortSnapshotsByBoardOrder(run);
+    for (let start = 0; start <= sortedRun.length - 2; start++) {
+      const pair = sortedRun.slice(start, start + 2);
+      const result = makeHandResultFromSnapshots("pair", pair);
+      if (!scoredPairIds.has(result.id)) return result;
+    }
+  }
+
+  return null;
+}
+
+function canSnapshotsStepAsStraight(previous: HandCardSnapshot, current: HandCardSnapshot): boolean {
+  return Math.abs(getRankValue(current.card.rank) - getRankValue(previous.card.rank)) === 1;
+}
+
+function isStepStraightRun(cells: HandCardSnapshot[]): boolean {
   if (cells.length < 3) return false;
-  if (cells.some((cell) => !cell.card)) return false;
+  if (!areSnapshotsConnected(cells)) return false;
 
-  const values = cells.map((cell) => getRankValue((cell.card as Card).rank));
+  const sorted = sortSnapshotsByBoardOrder(cells);
+  const values = sorted.map((cell) => getRankValue(cell.card.rank));
 
-  // 3-card straights are valid as long as the adjacent cells step exactly by 1.
-  // Valid: A-2-3, 3-2-A, 2-3-4, 4-3-2, 10-J-Q, Q-J-10, J-Q-K, K-Q-J.
-  // Invalid: A-K-Q, Q-K-A, K-A-2, 2-A-K, and any gap/duplicate like 2-3-3.
   const ascending = values.every((value, index) =>
     index === 0 ? true : value - values[index - 1] === 1
   );
@@ -519,182 +664,49 @@ function isStraightCells(cells: LineCell[]): boolean {
   return ascending || descending;
 }
 
-function containsCell(cells: LineCell[], targetKey: string): boolean {
-  return cells.some((cell) => getCellKey(cell) === targetKey);
-}
+function findStraight(cells: HandCardSnapshot[]): HandResult | null {
+  if (cells.length < 3) return null;
 
-function resultTouchesPlaced(result: HandResult, placedKey: string): boolean {
-  return result.cells.includes(placedKey);
-}
+  const sortedCells = sortSnapshotsByBoardOrder(cells);
+  let bestRun: HandCardSnapshot[] = [];
 
-function filterResultsTouchingPlaced(results: HandResult[], placedKey: string): HandResult[] {
-  return dedupeHandResults(results.filter((result) => resultTouchesPlaced(result, placedKey)));
-}
+  for (let start = 0; start < sortedCells.length; start++) {
+    let currentRun: HandCardSnapshot[] = [sortedCells[start]];
 
-function detectFullHouse(cells: LineCell[], placedKey: string): HandResult[] {
-  // Full House is valid only when all 5 cells in one whole row/column are filled,
-  // the placed card is part of that line, and the rank pattern is exactly 3 + 2.
-  if (cells.length !== BOARD_SIZE) return [];
-  if (!containsCell(cells, placedKey)) return [];
-  if (cells.some((cell) => !cell.card)) return [];
+    for (let i = start + 1; i < sortedCells.length; i++) {
+      const previous = currentRun[currentRun.length - 1];
+      const current = sortedCells[i];
 
-  const counts = new Map<number, number>();
-  for (const cell of cells) {
-    const card = cell.card as Card;
-    const rankValue = getRankValue(card.rank);
-    counts.set(rankValue, (counts.get(rankValue) ?? 0) + 1);
+      if (!areSnapshotsConnected([previous, current])) break;
+      if (!canSnapshotsStepAsStraight(previous, current)) break;
+
+      currentRun = [...currentRun, current];
+    }
+
+    if (currentRun.length >= 3 && isStepStraightRun(currentRun) && currentRun.length > bestRun.length) {
+      bestRun = currentRun;
+    }
   }
 
-  const pattern = [...counts.values()].sort((a, b) => b - a);
-  if (pattern.length === 2 && pattern[0] === 3 && pattern[1] === 2) {
-    return [makeHandResult("full-house", cells)];
-  }
+  if (bestRun.length < 3) return null;
+  return makeHandResultFromSnapshots("straight", bestRun);
+}
+
+function judgeLine(cells: HandCardSnapshot[], scoredPairIds: Set<string>): HandResult[] {
+  // Priority is strict per line: Full House -> Three -> Straight -> Pair.
+  const fullHouse = findFullHouse(cells);
+  if (fullHouse) return [fullHouse];
+
+  const three = findThree(cells);
+  if (three) return [three];
+
+  const straight = findStraight(cells);
+  if (straight) return [straight];
+
+  const pair = findPair(cells, scoredPairIds);
+  if (pair) return [pair];
 
   return [];
-}
-
-function detectThrees(segments: LineCell[][], placedKey: string): HandResult[] {
-  const results: HandResult[] = [];
-
-  for (const segment of segments) {
-    for (let start = 0; start <= segment.length - 3; start++) {
-      const window = segment.slice(start, start + 3);
-      if (!containsCell(window, placedKey)) continue;
-
-      const cards = window.map((cell) => cell.card as Card);
-      if (cards.every((card) => sameRank(card, cards[0]))) {
-        results.push(makeHandResult("three", window));
-      }
-    }
-  }
-
-  return filterResultsTouchingPlaced(results, placedKey);
-}
-
-function detectStraights(segments: LineCell[][], placedKey: string): HandResult[] {
-  const candidates: HandResult[] = [];
-
-  for (const segment of segments) {
-    for (let start = 0; start <= segment.length - 3; start++) {
-      for (let end = start + 3; end <= segment.length; end++) {
-        const window = segment.slice(start, end);
-        if (!containsCell(window, placedKey)) continue;
-
-        if (isStraightCells(window)) {
-          candidates.push(makeHandResult("straight", window));
-        }
-      }
-    }
-  }
-
-  // Keep only maximal straight windows touching the placed card, so 1-2-3-4
-  // clears as one 4-card straight instead of duplicated sub-hands.
-  const maximal = candidates.filter((candidate) => {
-    return !candidates.some((other) => {
-      if (other.id === candidate.id) return false;
-      if (other.cells.length <= candidate.cells.length) return false;
-      return candidate.cells.every((cellKey) => other.cells.includes(cellKey));
-    });
-  });
-
-  return filterResultsTouchingPlaced(maximal, placedKey);
-}
-
-function detectPairs(segments: LineCell[][], placedKey: string): HandResult[] {
-  const results: HandResult[] = [];
-
-  for (const segment of segments) {
-    for (let start = 0; start <= segment.length - 2; start++) {
-      const pair = segment.slice(start, start + 2);
-      if (!containsCell(pair, placedKey)) continue;
-
-      const first = pair[0].card as Card;
-      const second = pair[1].card as Card;
-      if (sameRank(first, second)) {
-        results.push(makeHandResult("pair", pair));
-      }
-    }
-  }
-
-  return filterResultsTouchingPlaced(results, placedKey);
-}
-
-
-function detectPlacedAdjacentPairs(board: Board, placedRow: number, placedCol: number): HandResult[] {
-  const placedCard = board[placedRow]?.[placedCol];
-  if (!placedCard) return [];
-
-  const results: HandResult[] = [];
-  const directions = [
-    { dr: 0, dc: -1 },
-    { dr: 0, dc: 1 },
-    { dr: -1, dc: 0 },
-    { dr: 1, dc: 0 },
-  ];
-
-  for (const { dr, dc } of directions) {
-    const row = placedRow + dr;
-    const col = placedCol + dc;
-    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) continue;
-
-    const neighbor = board[row][col];
-    if (!neighbor) continue;
-
-    // Compare by normalized rank value so A is 1 and every numbered pair,
-    // especially 2-2, is caught regardless of suit or card object identity.
-    if (getRankValue(neighbor.rank) !== getRankValue(placedCard.rank)) continue;
-
-    const cells: LineCell[] = [
-      { row, col, card: neighbor },
-      { row: placedRow, col: placedCol, card: placedCard },
-    ].sort((a, b) => a.row - b.row || a.col - b.col);
-
-    results.push(makeHandResult("pair", cells));
-  }
-
-  return dedupeHandResults(results);
-}
-
-function evaluateLine(cells: LineCell[], placedKey: string): HandResult[] {
-  // Strict priority per row/column, but ONLY for hands that include the newly
-  // placed card. This prevents old pairs/straights elsewhere in the same line
-  // from re-scoring or triggering combo after an unrelated placement.
-  if (!containsCell(cells, placedKey)) return [];
-
-  const fullHouse = detectFullHouse(cells, placedKey);
-  if (fullHouse.length > 0) return fullHouse;
-
-  const segments = getContiguousCardSegments(cells);
-
-  const threes = detectThrees(segments, placedKey);
-  if (threes.length > 0) return threes;
-
-  const straights = detectStraights(segments, placedKey);
-  if (straights.length > 0) return straights;
-
-  return detectPairs(segments, placedKey);
-}
-
-function evaluateLineWithoutPairs(cells: LineCell[], placedKey: string): HandResult[] {
-  if (!containsCell(cells, placedKey)) return [];
-
-  const fullHouse = detectFullHouse(cells, placedKey);
-  if (fullHouse.length > 0) return fullHouse;
-
-  const segments = getContiguousCardSegments(cells);
-
-  const threes = detectThrees(segments, placedKey);
-  if (threes.length > 0) return threes;
-
-  const straights = detectStraights(segments, placedKey);
-  if (straights.length > 0) return straights;
-
-  return [];
-}
-
-function detectLinePairsOnly(cells: LineCell[], placedKey: string): HandResult[] {
-  if (!containsCell(cells, placedKey)) return [];
-  return detectPairs(getContiguousCardSegments(cells), placedKey);
 }
 
 function dedupeHandResults(results: HandResult[]): HandResult[] {
@@ -709,80 +721,38 @@ function dedupeHandResults(results: HandResult[]): HandResult[] {
 
 function evaluateBoard(
   board: Board,
-  placedRow: number,
-  placedCol: number,
+  _placedRow?: number,
+  _placedCol?: number,
   scoredPairIds: string[] = []
 ): HandResult[] {
-  const placedKey = keyOf(placedRow, placedCol);
-  const rowCells = getRowCells(board, placedRow);
-  const colCells = getColCells(board, placedCol);
+  // Copied/adapted from the known-good judge script:
+  // scan every row and every column, then apply strict line priority.
+  // Pair results are filtered by scoredPairIds because pairs do not clear.
+  const scored = new Set(scoredPairIds);
+  const rawResults: HandResult[] = [];
 
-  // Full House / Three / Straight keep strict placed-card priority.
-  // They clear cards, so they should only fire when the current placement is
-  // part of the hand.
-  const highPriorityResults = dedupeHandResults([
-    ...evaluateLineWithoutPairs(rowCells, placedKey),
-    ...evaluateLineWithoutPairs(colCells, placedKey),
-  ]);
+  for (const line of getBoardLines(board)) {
+    rawResults.push(...judgeLine(line.cells, scored));
+  }
 
-  if (highPriorityResults.length > 0) return highPriorityResults;
-
-  // Pair is non-clearing. Therefore placed-card-only logic can permanently miss
-  // a pair if a previous detection failed. To make pairs reliable, scan every
-  // row/column for adjacent unscored pairs, while scoredPairIds prevents the same
-  // non-clearing pair from giving points every turn.
-  return dedupeHandResults([
-    ...detectLinePairsOnly(rowCells, placedKey),
-    ...detectLinePairsOnly(colCells, placedKey),
-    ...detectPlacedAdjacentPairs(board, placedRow, placedCol),
-    ...detectAllBoardPairs(board, scoredPairIds),
-  ]);
+  return dedupeHandResults(rawResults);
 }
 
 function detectPairsContainingCardId(board: Board, placedCardId: string): HandResult[] {
+  const scored = new Set<string>();
   const results: HandResult[] = [];
 
-  function scanLine(cells: LineCell[]) {
-    for (let start = 0; start <= cells.length - 2; start++) {
-      const first = cells[start];
-      const second = cells[start + 1];
-      if (!first.card || !second.card) continue;
-      if (first.card.id !== placedCardId && second.card.id !== placedCardId) continue;
-      if (!sameRank(first.card, second.card)) continue;
-      results.push(makeHandResult("pair", [first, second]));
-    }
+  for (const line of getBoardLines(board)) {
+    const pair = findPair(line.cells, scored);
+    if (!pair) continue;
+
+    const containsPlacedCard = pair.cells.some((cellKey) => {
+      const [row, col] = cellKey.split("-").map(Number);
+      return board[row]?.[col]?.id === placedCardId;
+    });
+
+    if (containsPlacedCard) results.push(pair);
   }
-
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    scanLine(getRowCells(board, row));
-  }
-
-  for (let col = 0; col < BOARD_SIZE; col++) {
-    scanLine(getColCells(board, col));
-  }
-
-  return dedupeHandResults(results);
-}
-
-function detectAllBoardPairs(board: Board, scoredPairIds: string[] = []): HandResult[] {
-  const scored = new Set(scoredPairIds);
-  const results: HandResult[] = [];
-
-  function scanLine(cells: LineCell[]) {
-    for (let start = 0; start <= cells.length - 2; start++) {
-      const first = cells[start];
-      const second = cells[start + 1];
-      if (!first.card || !second.card) continue;
-      if (!sameRank(first.card, second.card)) continue;
-
-      const result = makeHandResult("pair", [first, second]);
-      if (scored.has(result.id)) continue;
-      results.push(result);
-    }
-  }
-
-  for (let row = 0; row < BOARD_SIZE; row++) scanLine(getRowCells(board, row));
-  for (let col = 0; col < BOARD_SIZE; col++) scanLine(getColCells(board, col));
 
   return dedupeHandResults(results);
 }
