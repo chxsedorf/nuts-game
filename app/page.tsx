@@ -882,6 +882,48 @@ function normalizeResults(results: HandResult[]): HandResult[] {
   return [...unique.values()].sort((a, b) => b.priority - a.priority);
 }
 
+function findDirectPlacedPairFallback(
+  board: Board,
+  placedRow: number,
+  placedCol: number
+): HandResult[] {
+  const placedCard = board[placedRow]?.[placedCol];
+  if (!placedCard) return [];
+
+  const candidates: { row: number; col: number; lineLabel: string }[] = [
+    { row: placedRow, col: placedCol - 1, lineLabel: `Row ${placedRow + 1}` },
+    { row: placedRow, col: placedCol + 1, lineLabel: `Row ${placedRow + 1}` },
+    { row: placedRow - 1, col: placedCol, lineLabel: `Column ${placedCol + 1}` },
+    { row: placedRow + 1, col: placedCol, lineLabel: `Column ${placedCol + 1}` },
+  ];
+
+  const fallbackResults: HandResult[] = [];
+
+  for (const candidate of candidates) {
+    if (candidate.row < 0 || candidate.row >= BOARD_SIZE) continue;
+    if (candidate.col < 0 || candidate.col >= BOARD_SIZE) continue;
+
+    const neighborCard = board[candidate.row][candidate.col];
+    if (!neighborCard) continue;
+    if (!isSameRankCard(placedCard, neighborCard)) continue;
+
+    fallbackResults.push(
+      createHandResult({
+        type: "PAIR",
+        name: "Pair",
+        cards: [
+          { row: placedRow, col: placedCol, card: placedCard },
+          { row: candidate.row, col: candidate.col, card: neighborCard },
+        ],
+        lineLabel: candidate.lineLabel,
+        shouldClear: false,
+      })
+    );
+  }
+
+  return normalizeResults(fallbackResults);
+}
+
 function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   const results: HandResult[] = [];
 
@@ -900,7 +942,15 @@ function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   results.push(...judgeLineForPlaced(rowCells, `Row ${row + 1}`, row, col));
   results.push(...judgeLineForPlaced(colCells, `Column ${col + 1}`, row, col));
 
-  return normalizeResults(results);
+  const normalizedResults = normalizeResults(results);
+
+  // Safety net for adjacent pairs.
+  // Pair has no clearing, so it is easy to miss visually if the main line judge is blocked
+  // by segment/window rules. This checks only the newly placed card's four neighbors,
+  // so old pairs never re-score and unlike ranks such as 2,3 never become Pair.
+  if (normalizedResults.length > 0) return normalizedResults;
+
+  return findDirectPlacedPairFallback(board, row, col);
 }
 
 function clearHands(board: Board, results: HandResult[]): Board {
