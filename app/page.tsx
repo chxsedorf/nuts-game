@@ -2660,7 +2660,45 @@ export default function Home() {
         : "EMPTY";
 
     return (
-      <div className="fixed left-4 top-4 z-[99999] w-[min(900px,calc(100vw-2rem))] rounded-2xl border-[4px] border-[#8cffb8] bg-black/92 p-4 font-mono text-[14px] leading-relaxed text-[#d8ffe6] shadow-[8px_8px_0_rgba(0,0,0,0.8)] backdrop-blur-sm">
+      <>
+        <style>{`
+          html,
+          body,
+          #__next,
+          [data-nextjs-scroll-focus-boundary] {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+          }
+
+          .debug-scroll-mode.game-fixed-viewport {
+            position: relative !important;
+            inset: auto !important;
+            width: 100vw !important;
+            height: auto !important;
+            min-height: 100svh !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+          }
+
+          .debug-scroll-mode.game-fixed-viewport > .portrait-outer,
+          .debug-scroll-mode.game-fixed-viewport > .portrait-outer > .portrait-frame {
+            position: relative !important;
+            inset: auto !important;
+            height: auto !important;
+            min-height: 100svh !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+
+          .debug-panel-below-board {
+            pointer-events: auto !important;
+          }
+        `}</style>
+      <div className="debug-panel-below-board relative z-[80] mx-auto mb-10 mt-6 w-[min(1100px,calc(100vw-2rem))] rounded-2xl border-[4px] border-[#8cffb8] bg-black/92 p-5 font-mono text-[15px] leading-relaxed text-[#d8ffe6] shadow-[8px_8px_0_rgba(0,0,0,0.8)] backdrop-blur-sm">
         <div className="mb-3 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -2715,6 +2753,7 @@ export default function Home() {
           </>
         )}
       </div>
+      </>
     );
   }
 
@@ -2760,7 +2799,7 @@ export default function Home() {
     const winnerText = p1Owned === p2Owned ? "DRAW" : p1Owned > p2Owned ? "P1 WINS" : "P2 WINS";
 
     return (
-      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport fixed inset-0 h-[100svh] min-h-[100svh] w-screen overflow-hidden bg-[#07120f] text-white">
+      <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport debug-scroll-mode relative min-h-[100svh] w-screen overflow-x-hidden overflow-y-visible bg-[#07120f] text-white">
         <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
@@ -4925,7 +4964,7 @@ export default function Home() {
   const isComboAuraVisible = screen === "game" && !game.isGameOver && game.combo >= 4;
 
   return (
-    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:fixed md:inset-0 md:h-[100svh] md:overflow-hidden">
+    <main className="nuts-pixel crt-lines felt-bg pixel-dither balatro-inspired-bg game-fixed-viewport debug-scroll-mode relative min-h-[100svh] overflow-x-hidden overflow-y-auto bg-[#07120f] text-white md:relative md:h-auto md:overflow-visible">
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
         
