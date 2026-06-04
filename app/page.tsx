@@ -542,12 +542,31 @@ const HAND_PRIORITY: Record<HandType, number> = {
   PAIR: 10,
 };
 
-function rankToValue(rank: Rank): number {
-  if (rank === "A") return 1;
-  if (rank === "J") return 11;
-  if (rank === "Q") return 12;
-  if (rank === "K") return 13;
-  return Number(rank);
+function rankToValue(rank: Rank | string | number): number {
+  const normalizedRank = String(rank).trim().toUpperCase();
+
+  if (normalizedRank === "A" || normalizedRank === "ACE") return 1;
+  if (normalizedRank === "J" || normalizedRank === "JACK") return 11;
+  if (normalizedRank === "Q" || normalizedRank === "QUEEN") return 12;
+  if (normalizedRank === "K" || normalizedRank === "KING") return 13;
+
+  const numericRank = Number(normalizedRank);
+  return Number.isFinite(numericRank) ? numericRank : 0;
+}
+
+function cardRankValue(card: Card): number {
+  const valueFromRank = rankToValue(card.rank);
+
+  if (valueFromRank > 0) return valueFromRank;
+
+  // Safety for older saved/generated cards where Ace may still be value: 14.
+  // In this game Ace must be treated as 1 only, never as high Ace.
+  if (card.value === 14) return 1;
+  return card.value;
+}
+
+function isSameRankCard(a: Card, b: Card): boolean {
+  return cardRankValue(a) === cardRankValue(b);
 }
 
 function cloneBoard(board: Board): Board {
@@ -590,7 +609,7 @@ function getRankGroups(cells: HandCardSnapshot[]): Map<number, HandCardSnapshot[
   const groups = new Map<number, HandCardSnapshot[]>();
 
   for (const cell of cells) {
-    const value = rankToValue(cell.card.rank);
+    const value = cardRankValue(cell.card);
     if (!groups.has(value)) groups.set(value, []);
     groups.get(value)!.push(cell);
   }
@@ -653,7 +672,7 @@ function getSameRankConnectedRuns(cells: HandCardSnapshot[]): HandCardSnapshot[]
 
     if (
       previous &&
-      rankToValue(cell.card.rank) === rankToValue(previous.card.rank) &&
+      cardRankValue(cell.card) === cardRankValue(previous.card) &&
       areCellsConnected([previous, cell])
     ) {
       currentRun.push(cell);
@@ -746,7 +765,7 @@ function findPair(cells: HandCardSnapshot[], lineLabel: string): HandResult | nu
 
 function getStraightValueOptions(card: Card): number[] {
   // A is fixed to 1 only. A-K-Q / Q-K-A must not become Straight.
-  return [rankToValue(card.rank)];
+  return [cardRankValue(card)];
 }
 
 function canCardsStepAsStraight(previous: Card, current: Card): boolean {
@@ -829,7 +848,7 @@ function hasDuplicateRankInSegment(cells: HandCardSnapshot[]): boolean {
   const values = new Set<number>();
 
   for (const cell of cells) {
-    const value = rankToValue(cell.card.rank);
+    const value = cardRankValue(cell.card);
     if (values.has(value)) return true;
     values.add(value);
   }
@@ -971,7 +990,7 @@ function findPlacedAdjacentPair(board: Board, row: number, col: number): HandRes
 
     const neighborCard = board[targetRow]?.[targetCol];
     if (!neighborCard) continue;
-    if (rankToValue(neighborCard.rank) !== rankToValue(placedCard.rank)) continue;
+    if (!isSameRankCard(neighborCard, placedCard)) continue;
 
     return createHandResult({
       type: "PAIR",
@@ -994,15 +1013,20 @@ function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   // again on later turns.
   const results = judgeBoard(board).filter((result) => resultContainsPlacedCell(result, row, col));
 
-  // Safety fallback for adjacent Pair, especially ranks with string labels like "10".
-  // It only runs when no stronger/normal result was detected, so it will not override
-  // Full House / Three / Straight priority.
-  if (results.length === 0) {
+  const hasClearingPlacedHand = results.some((result) => result.shouldClear);
+  const hasPlacedPair = results.some((result) => !result.shouldClear && result.name === "Pair");
+
+  // Safety fallback for adjacent Pair. This is intentionally checked even when
+  // another non-clearing result exists, because Ace pairs can be missed when
+  // older card objects still carry value: 14. Clearing hands keep priority.
+  if (!hasClearingPlacedHand && !hasPlacedPair) {
     const placedPair = findPlacedAdjacentPair(board, row, col);
-    if (placedPair) return [placedPair];
+    if (placedPair) {
+      return normalizeResults([...results, placedPair]);
+    }
   }
 
-  return results;
+  return normalizeResults(results);
 }
 
 function createInitialGame(highScore = 0): GameState {
