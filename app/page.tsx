@@ -1001,17 +1001,12 @@ function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
   results.push(...judgeLineForPlaced(rowCells, `Row ${row + 1}`, row, col));
   results.push(...judgeLineForPlaced(colCells, `Column ${col + 1}`, row, col));
 
-  const normalizedResults = normalizeResults(results).filter((result) =>
-    isValidPairResult(board, result)
-  );
+  // Pair safety net must always be merged, not only when no other hand exists.
+  // Otherwise a row/column Straight or Three can hide an adjacent A,A / 2,2 / ... pair
+  // made by the newly placed card on the other axis.
+  results.push(...findDirectPlacedPairFallback(board, row, col));
 
-  // Safety net for adjacent pairs.
-  // Pair has no clearing, so it is easy to miss visually if the main line judge is blocked
-  // by segment/window rules. This checks only the newly placed card's four neighbors,
-  // so old pairs never re-score and unlike ranks such as 2,3 never become Pair.
-  if (normalizedResults.length > 0) return normalizedResults;
-
-  return findDirectPlacedPairFallback(board, row, col);
+  return normalizeResults(results).filter((result) => isValidPairResult(board, result));
 }
 
 function clearHands(board: Board, results: HandResult[]): Board {
