@@ -730,6 +730,32 @@ function evaluateBoard(board: Board, placedRow: number, placedCol: number): Hand
   ]);
 }
 
+
+function detectPairsContainingCardId(board: Board, placedCardId: string): HandResult[] {
+  const results: HandResult[] = [];
+
+  function scanLine(cells: LineCell[]) {
+    for (let start = 0; start <= cells.length - 2; start++) {
+      const first = cells[start];
+      const second = cells[start + 1];
+      if (!first.card || !second.card) continue;
+      if (first.card.id !== placedCardId && second.card.id !== placedCardId) continue;
+      if (!sameRank(first.card, second.card)) continue;
+      results.push(makeHandResult("pair", [first, second]));
+    }
+  }
+
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    scanLine(getRowCells(board, row));
+  }
+
+  for (let col = 0; col < BOARD_SIZE; col++) {
+    scanLine(getColCells(board, col));
+  }
+
+  return dedupeHandResults(results);
+}
+
 function getUniqueCells(results: HandResult[], onlyClearing = false): string[] {
   const keys = new Set<string>();
 
@@ -2411,7 +2437,18 @@ export default function Home() {
     const newBoard = duel.board.map((boardRow) => [...boardRow]);
     newBoard[row][col] = selected;
 
-    const handResults = evaluateBoard(newBoard, row, col);
+    let handResults = evaluateBoard(newBoard, row, col);
+    const strictPairFallbackResults = handResults.length === 0
+      ? detectPairsContainingCardId(newBoard, selected.id)
+      : [];
+
+    if (strictPairFallbackResults.length > 0) {
+      handResults = strictPairFallbackResults;
+      pushDebug("PAIR FALLBACK", `duel-card-id:${selected.id}`, {
+        results: strictPairFallbackResults.map(debugResultLabel).join(" / "),
+      });
+    }
+
     const claimCells = getUniqueCells(handResults, true);
     const hitCells = getUniqueCells(handResults, false);
     const handSummary = getHandSummary(handResults);
@@ -2510,7 +2547,18 @@ export default function Home() {
     const newBoard = game.board.map((boardRow) => [...boardRow]);
     newBoard[row][col] = selected;
 
-    const handResults = evaluateBoard(newBoard, row, col);
+    let handResults = evaluateBoard(newBoard, row, col);
+    const strictPairFallbackResults = handResults.length === 0
+      ? detectPairsContainingCardId(newBoard, selected.id)
+      : [];
+
+    if (strictPairFallbackResults.length > 0) {
+      handResults = strictPairFallbackResults;
+      pushDebug("PAIR FALLBACK", `card-id:${selected.id}`, {
+        results: strictPairFallbackResults.map(debugResultLabel).join(" / "),
+      });
+    }
+
     const hitCells = getUniqueCells(handResults, false);
     const clearingCellKeys = getUniqueCells(handResults, true);
     const hasHand = handResults.length > 0;
