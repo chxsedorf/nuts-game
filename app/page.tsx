@@ -762,23 +762,33 @@ function findThreeForPlaced(
   return null;
 }
 
-function isWholeSegmentStepStraight(segment: HandCardSnapshot[]): boolean {
-  if (segment.length < 3) return false;
-  if (!areCellsConnected(segment)) return false;
+function isStepStraightRun(run: HandCardSnapshot[]): boolean {
+  if (run.length < 3) return false;
+  if (!areCellsConnected(run)) return false;
 
-  const sorted = sortCellsByBoardOrder(segment);
+  const sorted = sortCellsByBoardOrder(run);
   const values = sorted.map((cell) => cardRankValue(cell.card));
   const firstDiff = values[1] - values[0];
 
   if (firstDiff !== 1 && firstDiff !== -1) return false;
 
   for (let i = 2; i < values.length; i++) {
-    if (values[i] - values[i - 1] !== firstDiff) {
-      return false;
-    }
+    if (values[i] - values[i - 1] !== firstDiff) return false;
   }
 
   return true;
+}
+
+function segmentHasDuplicateRank(segment: HandCardSnapshot[]): boolean {
+  const seenValues = new Set<number>();
+
+  for (const cell of segment) {
+    const value = cardRankValue(cell.card);
+    if (seenValues.has(value)) return true;
+    seenValues.add(value);
+  }
+
+  return false;
 }
 
 function findStraightForPlaced(
@@ -793,13 +803,24 @@ function findStraightForPlaced(
     if (segment.length < 3) continue;
     if (!containsPlacedCell(segment, placedRow, placedCol)) continue;
 
-    // Straight is valid only when the connected occupied segment itself is a clean step run.
-    // This allows A,2,3 / 7,8,9 / 10,J,Q, but prevents mixed lines like A,2,3,3,A
-    // from clearing only a partial A,2,3 window.
-    if (!isWholeSegmentStepStraight(segment)) continue;
+    // If one connected block contains duplicate ranks, do not cut out only A,2,3 from
+    // mixed patterns such as A,2,3,3,A. This keeps that bug fixed.
+    if (segmentHasDuplicateRank(segment)) continue;
 
-    if (segment.length > bestRun.length) {
-      bestRun = segment;
+    const sorted = sortCellsByBoardOrder(segment);
+
+    for (let start = 0; start <= sorted.length - 3; start++) {
+      for (let end = sorted.length; end >= start + 3; end--) {
+        const run = sorted.slice(start, end);
+        if (!containsPlacedCell(run, placedRow, placedCol)) continue;
+        if (!isStepStraightRun(run)) continue;
+
+        if (run.length > bestRun.length) {
+          bestRun = run;
+        }
+
+        break;
+      }
     }
   }
 
