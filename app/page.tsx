@@ -154,17 +154,16 @@ const suitNames: Record<Suit, string> = {
 };
 
 const scoreTable = {
-  // Pair: combo + small score, no clear.
+  onePair: 10,
   pair: 10,
-
-  // Three Card: combo + score + clear.
+  twoPair: 35,
   three: 55,
-
-  // Straight: combo + medium score + clear.
   straight: 85,
-
-  // Full House: combo + large score + clear.
-  fullHouse: 220,
+  flush: 100,
+  fullHouse: 160,
+  fourCard: 240,
+  straightFlush: 420,
+  royalStraightFlush: 777,
 };
 
 const comboMilestones = [5, 10, 15, 25, 50, 100];
@@ -520,7 +519,16 @@ function keyOf(row: number, col: number) {
   return `${row}-${col}`;
 }
 
-type HandType = "PAIR" | "THREE" | "STRAIGHT" | "FULL_HOUSE";
+type HandType =
+  | "ONE_PAIR"
+  | "TWO_PAIR"
+  | "THREE_CARD"
+  | "STRAIGHT"
+  | "FLUSH"
+  | "FULL_HOUSE"
+  | "FOUR_CARD"
+  | "STRAIGHT_FLUSH"
+  | "ROYAL_STRAIGHT_FLUSH";
 
 type HandCardSnapshot = {
   row: number;
@@ -529,49 +537,48 @@ type HandCardSnapshot = {
 };
 
 const HAND_SCORE: Record<HandType, number> = {
-  PAIR: 10,
-  THREE: 40,
-  STRAIGHT: 50,
-  FULL_HOUSE: 120,
+  ONE_PAIR: 10,
+  TWO_PAIR: 35,
+  THREE_CARD: 55,
+  STRAIGHT: 85,
+  FLUSH: 100,
+  FULL_HOUSE: 160,
+  FOUR_CARD: 240,
+  STRAIGHT_FLUSH: 420,
+  ROYAL_STRAIGHT_FLUSH: 777,
 };
 
 const HAND_PRIORITY: Record<HandType, number> = {
-  FULL_HOUSE: 100,
-  THREE: 80,
-  STRAIGHT: 70,
-  PAIR: 10,
+  ROYAL_STRAIGHT_FLUSH: 900,
+  STRAIGHT_FLUSH: 800,
+  FOUR_CARD: 700,
+  FULL_HOUSE: 600,
+  FLUSH: 500,
+  STRAIGHT: 400,
+  THREE_CARD: 300,
+  TWO_PAIR: 200,
+  ONE_PAIR: 100,
 };
 
-function rankToValue(rank: Rank | string | number): number {
-  const normalizedRank = String(rank).trim().toUpperCase();
+const HAND_NAME: Record<HandType, string> = {
+  ROYAL_STRAIGHT_FLUSH: "Royal Straight Flush",
+  STRAIGHT_FLUSH: "Straight Flush",
+  FOUR_CARD: "Four Card",
+  FULL_HOUSE: "Full House",
+  FLUSH: "Flush",
+  STRAIGHT: "Straight",
+  THREE_CARD: "Three Card",
+  TWO_PAIR: "Two Pair",
+  ONE_PAIR: "One Pair",
+};
 
-  if (normalizedRank === "A" || normalizedRank === "ACE") return 1;
-  if (normalizedRank === "J" || normalizedRank === "JACK") return 11;
-  if (normalizedRank === "Q" || normalizedRank === "QUEEN") return 12;
-  if (normalizedRank === "K" || normalizedRank === "KING") return 13;
+function normalizeRankKey(rank: Rank | string | number | undefined | null): Rank | "UNKNOWN" {
+  const normalizedRank = String(rank ?? "").trim().toUpperCase();
 
-  const numericRank = Number(normalizedRank);
-  return Number.isFinite(numericRank) ? numericRank : 0;
-}
-
-function cardRankValue(card: Card): number {
-  const valueFromRank = rankToValue(card.rank);
-
-  if (valueFromRank > 0) return valueFromRank;
-
-  // Safety for older saved/generated cards where Ace may still be value: 14.
-  // In this game Ace must be treated as 1 only, never as high Ace.
-  if (card.value === 14) return 1;
-  return card.value;
-}
-
-function getRankKey(card: Card): string {
-  const normalizedRank = String(card.rank).trim().toUpperCase();
-
-  if (normalizedRank === "A" || normalizedRank === "ACE" || card.value === 1 || card.value === 14) return "A";
-  if (normalizedRank === "J" || normalizedRank === "JACK" || card.value === 11) return "J";
-  if (normalizedRank === "Q" || normalizedRank === "QUEEN" || card.value === 12) return "Q";
-  if (normalizedRank === "K" || normalizedRank === "KING" || card.value === 13) return "K";
+  if (normalizedRank === "A" || normalizedRank === "ACE" || normalizedRank === "1") return "A";
+  if (normalizedRank === "J" || normalizedRank === "JACK") return "J";
+  if (normalizedRank === "Q" || normalizedRank === "QUEEN") return "Q";
+  if (normalizedRank === "K" || normalizedRank === "KING") return "K";
 
   if (
     normalizedRank === "2" ||
@@ -587,24 +594,39 @@ function getRankKey(card: Card): string {
     return normalizedRank as Rank;
   }
 
-  const valueRank = ranks.find(({ value }) => value === card.value)?.rank;
-  return valueRank ?? `UNKNOWN-${card.id}`;
+  return "UNKNOWN";
+}
+
+function getRankKey(card: Card): Rank | string {
+  const rankKey = normalizeRankKey(card.rank);
+  if (rankKey !== "UNKNOWN") return rankKey;
+
+  if (card.value === 1 || card.value === 14) return "A";
+  if (card.value >= 2 && card.value <= 10) return String(card.value) as Rank;
+  if (card.value === 11) return "J";
+  if (card.value === 12) return "Q";
+  if (card.value === 13) return "K";
+
+  return `UNKNOWN-${card.id}`;
+}
+
+function rankKeyToStraightValues(rankKey: Rank | string): number[] {
+  if (rankKey === "A") return [1, 14];
+  if (rankKey === "J") return [11];
+  if (rankKey === "Q") return [12];
+  if (rankKey === "K") return [13];
+
+  const numericValue = Number(rankKey);
+  return Number.isFinite(numericValue) ? [numericValue] : [];
+}
+
+function cardRankValue(card: Card): number {
+  const straightValues = rankKeyToStraightValues(getRankKey(card));
+  return straightValues[0] ?? card.value;
 }
 
 function isSameRankCard(a: Card, b: Card): boolean {
   return getRankKey(a) === getRankKey(b);
-}
-
-function isValidPairResult(board: Board, result: HandResult): boolean {
-  if (result.name !== "Pair") return true;
-  if (result.cards.length !== 2) return false;
-
-  const [firstPosition, secondPosition] = result.cards;
-  const firstCard = board[firstPosition.row]?.[firstPosition.col];
-  const secondCard = board[secondPosition.row]?.[secondPosition.col];
-
-  if (!firstCard || !secondCard) return false;
-  return isSameRankCard(firstCard, secondCard);
 }
 
 function cloneBoard(board: Board): Board {
@@ -613,46 +635,6 @@ function cloneBoard(board: Board): Board {
 
 function createCellKey(row: number, col: number): string {
   return `${row}-${col}`;
-}
-
-function getLines(board: Board): { label: string; cells: HandCardSnapshot[] }[] {
-  const lines: { label: string; cells: HandCardSnapshot[] }[] = [];
-
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    const cells: HandCardSnapshot[] = [];
-
-    for (let col = 0; col < BOARD_SIZE; col++) {
-      const card = board[row][col];
-      if (card) cells.push({ row, col, card });
-    }
-
-    lines.push({ label: `Row ${row + 1}`, cells });
-  }
-
-  for (let col = 0; col < BOARD_SIZE; col++) {
-    const cells: HandCardSnapshot[] = [];
-
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      const card = board[row][col];
-      if (card) cells.push({ row, col, card });
-    }
-
-    lines.push({ label: `Column ${col + 1}`, cells });
-  }
-
-  return lines;
-}
-
-function getRankGroups(cells: HandCardSnapshot[]): Map<number, HandCardSnapshot[]> {
-  const groups = new Map<number, HandCardSnapshot[]>();
-
-  for (const cell of cells) {
-    const value = cardRankValue(cell.card);
-    if (!groups.has(value)) groups.set(value, []);
-    groups.get(value)!.push(cell);
-  }
-
-  return groups;
 }
 
 function getLineAxis(cells: HandCardSnapshot[]): "ROW" | "COLUMN" | null {
@@ -706,13 +688,11 @@ function containsPlacedCell(cells: HandCardSnapshot[], placedRow: number, placed
 
 function createHandResult(params: {
   type: HandType;
-  name: string;
   cards: HandCardSnapshot[];
-  lineLabel: string;
   shouldClear: boolean;
 }): HandResult {
   return {
-    name: params.name,
+    name: HAND_NAME[params.type],
     cards: sortCellsByBoardOrder(params.cards).map((target) => ({
       row: target.row,
       col: target.col,
@@ -721,6 +701,20 @@ function createHandResult(params: {
     shouldClear: params.shouldClear,
     priority: HAND_PRIORITY[params.type],
   };
+}
+
+function getLineCells(board: Board, axis: "ROW" | "COLUMN", index: number): HandCardSnapshot[] {
+  const cells: HandCardSnapshot[] = [];
+
+  for (let cursor = 0; cursor < BOARD_SIZE; cursor++) {
+    const row = axis === "ROW" ? index : cursor;
+    const col = axis === "ROW" ? cursor : index;
+    const card = board[row][col];
+
+    if (card) cells.push({ row, col, card });
+  }
+
+  return cells;
 }
 
 function getConnectedSegments(cells: HandCardSnapshot[]): HandCardSnapshot[][] {
@@ -743,184 +737,288 @@ function getConnectedSegments(cells: HandCardSnapshot[]): HandCardSnapshot[][] {
   return segments;
 }
 
-function findFullHouseForPlaced(
+function getPlacedWindows(
   cells: HandCardSnapshot[],
-  lineLabel: string,
   placedRow: number,
-  placedCol: number
-): HandResult | null {
-  for (const segment of getConnectedSegments(cells)) {
-    if (segment.length !== 5) continue;
-    if (!containsPlacedCell(segment, placedRow, placedCol)) continue;
+  placedCol: number,
+  minLength: number,
+  maxLength: number
+): HandCardSnapshot[][] {
+  const windows: HandCardSnapshot[][] = [];
 
-    const groupSizes = [...getRankGroups(segment).values()]
-      .map((group) => group.length)
-      .sort((a, b) => b - a);
-
-    if (groupSizes.length === 2 && groupSizes[0] === 3 && groupSizes[1] === 2) {
-      return createHandResult({
-        type: "FULL_HOUSE",
-        name: "Full House",
-        cards: segment,
-        lineLabel,
-        shouldClear: true,
-      });
-    }
-  }
-
-  return null;
-}
-
-function findThreeForPlaced(
-  cells: HandCardSnapshot[],
-  lineLabel: string,
-  placedRow: number,
-  placedCol: number
-): HandResult | null {
   for (const segment of getConnectedSegments(cells)) {
     const sorted = sortCellsByBoardOrder(segment);
 
-    for (let start = 0; start <= sorted.length - 3; start++) {
-      const run = sorted.slice(start, start + 3);
-      if (!containsPlacedCell(run, placedRow, placedCol)) continue;
-
-      const firstValue = cardRankValue(run[0].card);
-      if (run.every((cell) => cardRankValue(cell.card) === firstValue)) {
-        return createHandResult({
-          type: "THREE",
-          name: "Three Card",
-          cards: run,
-          lineLabel,
-          shouldClear: true,
-        });
+    for (let length = Math.min(maxLength, sorted.length); length >= minLength; length--) {
+      for (let start = 0; start <= sorted.length - length; start++) {
+        const window = sorted.slice(start, start + length);
+        if (!containsPlacedCell(window, placedRow, placedCol)) continue;
+        windows.push(window);
       }
     }
   }
 
-  return null;
+  return windows;
 }
 
-function isStepStraightRun(run: HandCardSnapshot[]): boolean {
-  if (run.length < 3) return false;
-  if (!areCellsConnected(run)) return false;
+function getRankGroups(cells: HandCardSnapshot[]): Map<string, HandCardSnapshot[]> {
+  const groups = new Map<string, HandCardSnapshot[]>();
 
-  const sorted = sortCellsByBoardOrder(run);
-  const values = sorted.map((cell) => cardRankValue(cell.card));
+  for (const cell of cells) {
+    const rankKey = getRankKey(cell.card);
+    if (!groups.has(rankKey)) groups.set(rankKey, []);
+    groups.get(rankKey)!.push(cell);
+  }
+
+  return groups;
+}
+
+function getSuitGroups(cells: HandCardSnapshot[]): Map<Suit, HandCardSnapshot[]> {
+  const groups = new Map<Suit, HandCardSnapshot[]>();
+
+  for (const cell of cells) {
+    if (!groups.has(cell.card.suit)) groups.set(cell.card.suit, []);
+    groups.get(cell.card.suit)!.push(cell);
+  }
+
+  return groups;
+}
+
+function isSameRankRun(run: HandCardSnapshot[]): boolean {
+  return run.length > 0 && run.every((cell) => isSameRankCard(cell.card, run[0].card));
+}
+
+function isFlushRun(run: HandCardSnapshot[]): boolean {
+  return run.length === 5 && run.every((cell) => cell.card.suit === run[0].card.suit);
+}
+
+function areOrderedStepValues(values: number[]): boolean {
+  if (values.length < 3) return false;
+
   const firstDiff = values[1] - values[0];
-
   if (firstDiff !== 1 && firstDiff !== -1) return false;
 
-  for (let i = 2; i < values.length; i++) {
-    if (values[i] - values[i - 1] !== firstDiff) return false;
+  for (let index = 2; index < values.length; index++) {
+    if (values[index] - values[index - 1] !== firstDiff) return false;
   }
 
   return true;
 }
 
-function segmentHasDuplicateRank(segment: HandCardSnapshot[]): boolean {
-  const seenValues = new Set<number>();
+const STRAIGHT_RANK_SEQUENCES: Rank[][] = [
+  ["A", "2", "3"],
+  ["A", "2", "3", "4"],
+  ["A", "2", "3", "4", "5"],
+  ["2", "3", "4"],
+  ["2", "3", "4", "5"],
+  ["2", "3", "4", "5", "6"],
+  ["3", "4", "5"],
+  ["3", "4", "5", "6"],
+  ["3", "4", "5", "6", "7"],
+  ["4", "5", "6"],
+  ["4", "5", "6", "7"],
+  ["4", "5", "6", "7", "8"],
+  ["5", "6", "7"],
+  ["5", "6", "7", "8"],
+  ["5", "6", "7", "8", "9"],
+  ["6", "7", "8"],
+  ["6", "7", "8", "9"],
+  ["6", "7", "8", "9", "10"],
+  ["7", "8", "9"],
+  ["7", "8", "9", "10"],
+  ["7", "8", "9", "10", "J"],
+  ["8", "9", "10"],
+  ["8", "9", "10", "J"],
+  ["8", "9", "10", "J", "Q"],
+  ["9", "10", "J"],
+  ["9", "10", "J", "Q"],
+  ["9", "10", "J", "Q", "K"],
+  ["10", "J", "Q"],
+  ["10", "J", "Q", "K"],
+  ["10", "J", "Q", "K", "A"],
+  ["J", "Q", "K"],
+  ["J", "Q", "K", "A"],
+  ["Q", "K", "A"],
+];
 
-  for (const cell of segment) {
-    const value = cardRankValue(cell.card);
-    if (seenValues.has(value)) return true;
-    seenValues.add(value);
-  }
-
-  return false;
+function areSameRankSequence(left: Array<Rank | string>, right: Rank[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((rankKey, index) => rankKey === right[index]);
 }
 
-function findStraightForPlaced(
-  cells: HandCardSnapshot[],
-  lineLabel: string,
-  placedRow: number,
-  placedCol: number
-): HandResult | null {
-  let bestRun: HandCardSnapshot[] = [];
-
-  for (const segment of getConnectedSegments(cells)) {
-    if (segment.length < 3) continue;
-    if (!containsPlacedCell(segment, placedRow, placedCol)) continue;
-
-    // If one connected block contains duplicate ranks, do not cut out only A,2,3 from
-    // mixed patterns such as A,2,3,3,A. This keeps that bug fixed.
-    if (segmentHasDuplicateRank(segment)) continue;
-
-    const sorted = sortCellsByBoardOrder(segment);
-
-    for (let start = 0; start <= sorted.length - 3; start++) {
-      for (let end = sorted.length; end >= start + 3; end--) {
-        const run = sorted.slice(start, end);
-        if (!containsPlacedCell(run, placedRow, placedCol)) continue;
-        if (!isStepStraightRun(run)) continue;
-
-        if (run.length > bestRun.length) {
-          bestRun = run;
-        }
-
-        break;
-      }
-    }
+function getStraightValuesForSequence(sequence: Rank[]): number[] {
+  if (sequence[0] === "A" && sequence[1] === "2") {
+    return sequence.map((rankKey) => (rankKey === "A" ? 1 : Number(rankKey)));
   }
 
-  if (bestRun.length < 3) return null;
-
-  return createHandResult({
-    type: "STRAIGHT",
-    name: "Straight",
-    cards: bestRun,
-    lineLabel,
-    shouldClear: true,
+  return sequence.map((rankKey) => {
+    if (rankKey === "A") return 14;
+    if (rankKey === "J") return 11;
+    if (rankKey === "Q") return 12;
+    if (rankKey === "K") return 13;
+    return Number(rankKey);
   });
 }
 
-function findPairForPlaced(
-  cells: HandCardSnapshot[],
-  lineLabel: string,
-  placedRow: number,
-  placedCol: number
-): HandResult | null {
-  for (const segment of getConnectedSegments(cells)) {
-    const sorted = sortCellsByBoardOrder(segment);
+function getBestStraightValues(run: HandCardSnapshot[]): number[] | null {
+  if (run.length < 3 || run.length > 5) return null;
+  if (!areCellsConnected(run)) return null;
 
-    for (let start = 0; start <= sorted.length - 2; start++) {
-      const pair = sorted.slice(start, start + 2);
-      if (!containsPlacedCell(pair, placedRow, placedCol)) continue;
+  const orderedRankKeys = sortCellsByBoardOrder(run).map((cell) => getRankKey(cell.card));
+  const uniqueRanks = new Set(orderedRankKeys);
+  if (uniqueRanks.size !== orderedRankKeys.length) return null;
 
-      if (isSameRankCard(pair[0].card, pair[1].card)) {
-        return createHandResult({
-          type: "PAIR",
-          name: "Pair",
-          cards: pair,
-          lineLabel,
-          shouldClear: false,
-        });
-      }
+  for (const sequence of STRAIGHT_RANK_SEQUENCES) {
+    if (sequence.length !== orderedRankKeys.length) continue;
+
+    if (areSameRankSequence(orderedRankKeys, sequence)) {
+      return getStraightValuesForSequence(sequence);
+    }
+
+    const reversedSequence = [...sequence].reverse();
+    if (areSameRankSequence(orderedRankKeys, reversedSequence)) {
+      return getStraightValuesForSequence(reversedSequence);
     }
   }
 
   return null;
 }
 
-function judgeLineForPlaced(
-  cells: HandCardSnapshot[],
-  lineLabel: string,
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
-  const fullHouse = findFullHouseForPlaced(cells, lineLabel, placedRow, placedCol);
-  if (fullHouse) return [fullHouse];
-
-  const three = findThreeForPlaced(cells, lineLabel, placedRow, placedCol);
-  if (three) return [three];
-
-  const straight = findStraightForPlaced(cells, lineLabel, placedRow, placedCol);
-  if (straight) return [straight];
-
-  const pair = findPairForPlaced(cells, lineLabel, placedRow, placedCol);
-  if (pair) return [pair];
-
-  return [];
+function isStraightRun(run: HandCardSnapshot[]): boolean {
+  return getBestStraightValues(run) !== null;
 }
+
+function isRoyalStraightRun(run: HandCardSnapshot[]): boolean {
+  const straightValues = getBestStraightValues(run);
+  if (!straightValues || straightValues.length !== 5) return false;
+
+  const sorted = [...straightValues].sort((a, b) => a - b);
+  return sorted.join(",") === "10,11,12,13,14";
+}
+
+function getCardsForExactRankCount(run: HandCardSnapshot[], count: number): HandCardSnapshot[] | null {
+  const group = [...getRankGroups(run).values()].find((cards) => cards.length === count);
+  return group ? sortCellsByBoardOrder(group) : null;
+}
+
+function getCardsForAtLeastRankCount(run: HandCardSnapshot[], count: number): HandCardSnapshot[] | null {
+  const group = [...getRankGroups(run).values()].find((cards) => cards.length >= count);
+  return group ? sortCellsByBoardOrder(group).slice(0, count) : null;
+}
+
+function getFullHouseCards(run: HandCardSnapshot[]): HandCardSnapshot[] | null {
+  if (run.length !== 5 || !areCellsConnected(run)) return null;
+
+  const groups = [...getRankGroups(run).values()].sort((a, b) => b.length - a.length);
+  if (groups.length !== 2) return null;
+  if (groups[0].length !== 3 || groups[1].length !== 2) return null;
+
+  return sortCellsByBoardOrder([...groups[0], ...groups[1]]);
+}
+
+function getTwoPairCards(run: HandCardSnapshot[]): HandCardSnapshot[] | null {
+  const pairGroups = [...getRankGroups(run).values()].filter((cards) => cards.length === 2);
+  if (pairGroups.length < 2) return null;
+
+  return sortCellsByBoardOrder([...pairGroups[0], ...pairGroups[1]]);
+}
+
+function getOnePairCards(run: HandCardSnapshot[]): HandCardSnapshot[] | null {
+  if (run.length !== 2 || !areCellsConnected(run)) return null;
+  return isSameRankRun(run) ? sortCellsByBoardOrder(run) : null;
+}
+
+function judgePokerWindow(window: HandCardSnapshot[]): HandResult | null {
+  if (!areCellsConnected(window)) return null;
+
+  const flush = isFlushRun(window);
+  const straight = isStraightRun(window);
+
+  if (window.length === 5) {
+    if (flush && straight && isRoyalStraightRun(window)) {
+      return createHandResult({ type: "ROYAL_STRAIGHT_FLUSH", cards: window, shouldClear: true });
+    }
+
+    if (flush && straight) {
+      return createHandResult({ type: "STRAIGHT_FLUSH", cards: window, shouldClear: true });
+    }
+
+    const fourCards = getCardsForExactRankCount(window, 4);
+    if (fourCards) {
+      return createHandResult({ type: "FOUR_CARD", cards: fourCards, shouldClear: true });
+    }
+
+    const fullHouseCards = getFullHouseCards(window);
+    if (fullHouseCards) {
+      return createHandResult({ type: "FULL_HOUSE", cards: fullHouseCards, shouldClear: true });
+    }
+
+    if (flush) {
+      return createHandResult({ type: "FLUSH", cards: window, shouldClear: true });
+    }
+
+    if (straight) {
+      return createHandResult({ type: "STRAIGHT", cards: window, shouldClear: true });
+    }
+
+    const threeCards = getCardsForExactRankCount(window, 3);
+    if (threeCards) {
+      return createHandResult({ type: "THREE_CARD", cards: threeCards, shouldClear: true });
+    }
+
+    const twoPairCards = getTwoPairCards(window);
+    if (twoPairCards) {
+      return createHandResult({ type: "TWO_PAIR", cards: twoPairCards, shouldClear: true });
+    }
+
+    return null;
+  }
+
+  if (window.length === 4) {
+    if (straight) {
+      return createHandResult({ type: "STRAIGHT", cards: window, shouldClear: true });
+    }
+
+    if (isSameRankRun(window)) {
+      return createHandResult({ type: "FOUR_CARD", cards: window, shouldClear: true });
+    }
+
+    const twoPairCards = getTwoPairCards(window);
+    if (twoPairCards && twoPairCards.length === 4) {
+      return createHandResult({ type: "TWO_PAIR", cards: twoPairCards, shouldClear: true });
+    }
+
+    const threeCards = getCardsForAtLeastRankCount(window, 3);
+    if (threeCards) {
+      return createHandResult({ type: "THREE_CARD", cards: threeCards, shouldClear: true });
+    }
+
+    return null;
+  }
+
+  if (window.length === 3) {
+    if (straight) {
+      return createHandResult({ type: "STRAIGHT", cards: window, shouldClear: true });
+    }
+
+    if (isSameRankRun(window)) {
+      return createHandResult({ type: "THREE_CARD", cards: window, shouldClear: true });
+    }
+
+    return null;
+  }
+
+  if (window.length === 2) {
+    const pairCards = getOnePairCards(window);
+    if (pairCards) {
+      return createHandResult({ type: "ONE_PAIR", cards: pairCards, shouldClear: false });
+    }
+  }
+
+  // High Card is intentionally not a hand.
+  return null;
+}
+
 
 function normalizeResults(results: HandResult[]): HandResult[] {
   const unique = new Map<string, HandResult>();
@@ -938,75 +1036,518 @@ function normalizeResults(results: HandResult[]): HandResult[] {
     }
   }
 
-  return [...unique.values()].sort((a, b) => b.priority - a.priority);
+  return [...unique.values()].sort((a, b) => b.priority - a.priority || b.cards.length - a.cards.length);
 }
 
-function findDirectPlacedPairFallback(
-  board: Board,
-  placedRow: number,
-  placedCol: number
-): HandResult[] {
+
+function evaluateBoard(board: Board, placedRow: number, placedCol: number): HandResult[] {
+  // Evaluation rules:
+  // 1. Only hands that CONTAIN the just-placed card are reflected.
+  // 2. Cards must be adjacent: a hand is a connected run (no gaps) on the
+  //    placed card's own row or column.
+  // 3. The single best (highest-priority) hand on each axis is taken, so that
+  //    e.g. 2-3-4 resolves as a Straight rather than its inner sub-pairs.
+  // 4. Every hand clears EXCEPT One Pair, which only scores and builds combo.
   const placedCard = board[placedRow]?.[placedCol];
   if (!placedCard) return [];
 
-  const candidates: { row: number; col: number; lineLabel: string }[] = [
-    { row: placedRow, col: placedCol - 1, lineLabel: `Row ${placedRow + 1}` },
-    { row: placedRow, col: placedCol + 1, lineLabel: `Row ${placedRow + 1}` },
-    { row: placedRow - 1, col: placedCol, lineLabel: `Column ${placedCol + 1}` },
-    { row: placedRow + 1, col: placedCol, lineLabel: `Column ${placedCol + 1}` },
-  ];
+  const placedKey = createCellKey(placedRow, placedCol);
+  const perAxisBest: HandResult[] = [];
 
-  const fallbackResults: HandResult[] = [];
-
-  for (const candidate of candidates) {
-    if (candidate.row < 0 || candidate.row >= BOARD_SIZE) continue;
-    if (candidate.col < 0 || candidate.col >= BOARD_SIZE) continue;
-
-    const neighborCard = board[candidate.row][candidate.col];
-    if (!neighborCard) continue;
-    if (!isSameRankCard(placedCard, neighborCard)) continue;
-
-    fallbackResults.push(
-      createHandResult({
-        type: "PAIR",
-        name: "Pair",
-        cards: [
-          { row: placedRow, col: placedCol, card: placedCard },
-          { row: candidate.row, col: candidate.col, card: neighborCard },
-        ],
-        lineLabel: candidate.lineLabel,
-        shouldClear: false,
-      })
+  // Look only at the placed card's own row and column. On each axis, take the
+  // connected windows that include the placed card and keep the single best
+  // (highest-priority) hand. This guarantees rules 1-3.
+  for (const axis of ["ROW", "COLUMN"] as const) {
+    const lineIndex = axis === "ROW" ? placedRow : placedCol;
+    const windows = getPlacedWindows(
+      getLineCells(board, axis, lineIndex),
+      placedRow,
+      placedCol,
+      2,
+      5
     );
+
+    let best: HandResult | null = null;
+
+    for (const window of windows) {
+      const result = judgePokerWindow(window);
+      if (!result) continue;
+
+      // The resulting hand itself must contain the placed card,
+      // not merely the surrounding window.
+      const includesPlaced = result.cards.some(
+        (card) => createCellKey(card.row, card.col) === placedKey
+      );
+      if (!includesPlaced) continue;
+
+      const isBetter =
+        !best ||
+        result.priority > best.priority ||
+        (result.priority === best.priority && result.cards.length > best.cards.length);
+
+      if (isBetter) best = result;
+    }
+
+    if (best) perAxisBest.push(best);
   }
 
-  return normalizeResults(fallbackResults);
+  // Rule 4: every hand clears EXCEPT One Pair, which only scores + builds combo.
+  const clearingResults = perAxisBest.filter((result) => result.shouldClear);
+  const clearingCellKeys = new Set<string>();
+  for (const result of clearingResults) {
+    for (const card of result.cards) {
+      clearingCellKeys.add(createCellKey(card.row, card.col));
+    }
+  }
+
+  // Drop a One Pair when its cards are already part of a clearing hand made on
+  // the other axis (that card is going to be cleared anyway).
+  const pairResults = perAxisBest.filter(
+    (result) =>
+      !result.shouldClear &&
+      !result.cards.some((card) => clearingCellKeys.has(createCellKey(card.row, card.col)))
+  );
+
+  return normalizeResults([...clearingResults, ...pairResults]);
 }
 
-function evaluateBoard(board: Board, row: number, col: number): HandResult[] {
-  const results: HandResult[] = [];
+// Safety sweep: a completed clearing hand (anything except One Pair) must never
+// remain on the board. This scans every row and column for any adjacent window
+// that forms a clearing hand and returns all of its cell keys. Scoring/combo
+// still come from evaluateBoard (placed-card related only); this only governs
+// which cells get cleared, so leftover hands cannot get stuck on the board.
+function findBoardClearCellKeys(board: Board): Set<string> {
+  const cellKeys = new Set<string>();
 
-  const rowCells: HandCardSnapshot[] = [];
-  for (let targetCol = 0; targetCol < BOARD_SIZE; targetCol++) {
-    const card = board[row][targetCol];
-    if (card) rowCells.push({ row, col: targetCol, card });
+  for (let index = 0; index < BOARD_SIZE; index++) {
+    for (const axis of ["ROW", "COLUMN"] as const) {
+      const line = getLineCells(board, axis, index);
+
+      for (const segment of getConnectedSegments(line)) {
+        const sorted = sortCellsByBoardOrder(segment);
+
+        for (let length = Math.min(5, sorted.length); length >= 2; length--) {
+          for (let start = 0; start + length <= sorted.length; start++) {
+            const window = sorted.slice(start, start + length);
+            const result = judgePokerWindow(window);
+
+            // One Pair has shouldClear === false, so it is never swept.
+            if (result && result.shouldClear) {
+              for (const card of result.cards) {
+                cellKeys.add(createCellKey(card.row, card.col));
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
-  const colCells: HandCardSnapshot[] = [];
-  for (let targetRow = 0; targetRow < BOARD_SIZE; targetRow++) {
-    const card = board[targetRow][col];
-    if (card) colCells.push({ row: targetRow, col, card });
+  return cellKeys;
+}
+
+type HandJudgeSelfTestCase = {
+  label: string;
+  cells: Array<{ row: number; col: number; rank: Rank; suit?: Suit }>;
+  expectedNames: string[];
+  forbiddenNames?: string[];
+  expectedClear?: Record<string, boolean>;
+  placedRow?: number;
+  placedCol?: number;
+};
+
+type HandJudgeSelfTestRow = {
+  label: string;
+  expected: string;
+  actual: string;
+  passed: boolean;
+};
+
+type HandJudgeSelfTestSummary = {
+  passed: boolean;
+  passedCount: number;
+  failedCount: number;
+  rows: HandJudgeSelfTestRow[];
+};
+
+const TEST_RANKS: Rank[] = ranks.map((item) => item.rank);
+const TEST_MIXED_SUITS_5: Suit[] = ["spade", "heart", "diamond", "club", "spade"];
+const TEST_SAME_SUIT_5: Suit[] = ["spade", "spade", "spade", "spade", "spade"];
+const TEST_MIXED_SUITS_SHORT: Suit[] = ["spade", "heart", "diamond", "club"];
+
+function createEmptyTestBoard(): Board {
+  return Array.from({ length: BOARD_SIZE }, () => Array<BoardCell>(BOARD_SIZE).fill(null));
+}
+
+function createTestCard(rank: Rank, suit: Suit, index: number): Card {
+  const value = ranks.find((item) => item.rank === rank)?.value ?? Number(rank);
+
+  return {
+    id: `test-${rank}-${suit}-${index}`,
+    rank,
+    suit,
+    value,
+  };
+}
+
+function createBoardFromTestCells(cells: HandJudgeSelfTestCase["cells"]): Board {
+  const board = createEmptyTestBoard();
+
+  cells.forEach((cell, index) => {
+    board[cell.row][cell.col] = createTestCard(cell.rank, cell.suit ?? suits[index % suits.length], index);
+  });
+
+  return board;
+}
+
+function horizontalCards(
+  ranksToPlace: Rank[],
+  options: { row?: number; startCol?: number; suits?: Suit[] } = {}
+): HandJudgeSelfTestCase["cells"] {
+  const row = options.row ?? 0;
+  const startCol = options.startCol ?? 0;
+
+  return ranksToPlace.map((rank, index) => ({
+    row,
+    col: startCol + index,
+    rank,
+    suit: options.suits?.[index] ?? suits[index % suits.length],
+  }));
+}
+
+function verticalCards(
+  ranksToPlace: Rank[],
+  options: { col?: number; startRow?: number; suits?: Suit[] } = {}
+): HandJudgeSelfTestCase["cells"] {
+  const col = options.col ?? 0;
+  const startRow = options.startRow ?? 0;
+
+  return ranksToPlace.map((rank, index) => ({
+    row: startRow + index,
+    col,
+    rank,
+    suit: options.suits?.[index] ?? suits[index % suits.length],
+  }));
+}
+
+function createWindowSnapshots(ranksToPlace: Rank[], suitsToPlace: Suit[]): HandCardSnapshot[] {
+  return ranksToPlace.map((rank, index) => ({
+    row: 0,
+    col: index,
+    card: createTestCard(rank, suitsToPlace[index] ?? suits[index % suits.length], index),
+  }));
+}
+
+function summarizeHandResults(results: HandResult[]): string {
+  if (results.length === 0) return "なし";
+
+  return results
+    .map((result) => {
+      const cellsText = result.cards.map((card) => `${card.row},${card.col}`).join(" ");
+      return `${result.name}${result.shouldClear ? "[clear]" : "[stay]"}(${cellsText})`;
+    })
+    .join(" / ");
+}
+
+function hasExpectedHand(results: HandResult[], expectedName: string, expectedClear?: boolean): boolean {
+  return results.some((result) => {
+    if (result.name !== expectedName) return false;
+    if (typeof expectedClear === "boolean" && result.shouldClear !== expectedClear) return false;
+    return true;
+  });
+}
+
+function rankCountsForTest(ranksToCheck: Rank[]): Map<Rank, number> {
+  const counts = new Map<Rank, number>();
+  for (const rank of ranksToCheck) counts.set(rank, (counts.get(rank) ?? 0) + 1);
+  return counts;
+}
+
+function countGroupsForTest(ranksToCheck: Rank[]): number[] {
+  return [...rankCountsForTest(ranksToCheck).values()].sort((a, b) => b - a);
+}
+
+function isStraightRankSequenceForTest(ranksToCheck: Rank[]): boolean {
+  if (ranksToCheck.length < 3 || ranksToCheck.length > 5) return false;
+  if (new Set(ranksToCheck).size !== ranksToCheck.length) return false;
+
+  return STRAIGHT_RANK_SEQUENCES.some((sequence) => {
+    if (sequence.length !== ranksToCheck.length) return false;
+    const forward = sequence.every((rank, index) => rank === ranksToCheck[index]);
+    const reverse = sequence.every((rank, index) => rank === ranksToCheck[sequence.length - 1 - index]);
+    return forward || reverse;
+  });
+}
+
+function isRoyalRankSequenceForTest(ranksToCheck: Rank[]): boolean {
+  if (ranksToCheck.length !== 5) return false;
+  const royalForward: Rank[] = ["10", "J", "Q", "K", "A"];
+  const royalReverse: Rank[] = ["A", "K", "Q", "J", "10"];
+  return (
+    royalForward.every((rank, index) => rank === ranksToCheck[index]) ||
+    royalReverse.every((rank, index) => rank === ranksToCheck[index])
+  );
+}
+
+function getExpectedExactWindowResultForTest(
+  ranksToCheck: Rank[],
+  suitsToCheck: Suit[]
+): { name: string | null; shouldClear?: boolean } {
+  const length = ranksToCheck.length;
+  const groups = countGroupsForTest(ranksToCheck);
+  const flush = length === 5 && suitsToCheck.every((suit) => suit === suitsToCheck[0]);
+  const straight = isStraightRankSequenceForTest(ranksToCheck);
+
+  if (length === 5) {
+    if (flush && straight && isRoyalRankSequenceForTest(ranksToCheck)) {
+      return { name: "Royal Straight Flush", shouldClear: true };
+    }
+    if (flush && straight) return { name: "Straight Flush", shouldClear: true };
+    if (groups[0] === 4) return { name: "Four Card", shouldClear: true };
+    if (groups[0] === 3 && groups[1] === 2) return { name: "Full House", shouldClear: true };
+    if (flush) return { name: "Flush", shouldClear: true };
+    if (straight) return { name: "Straight", shouldClear: true };
+    if (groups[0] === 3) return { name: "Three Card", shouldClear: true };
+    if (groups[0] === 2 && groups[1] === 2) return { name: "Two Pair", shouldClear: true };
+    return { name: null };
   }
 
-  results.push(...judgeLineForPlaced(rowCells, `Row ${row + 1}`, row, col));
-  results.push(...judgeLineForPlaced(colCells, `Column ${col + 1}`, row, col));
+  if (length === 4) {
+    if (straight) return { name: "Straight", shouldClear: true };
+    if (groups[0] === 4) return { name: "Four Card", shouldClear: true };
+    if (groups[0] === 2 && groups[1] === 2) return { name: "Two Pair", shouldClear: true };
+    if (groups[0] === 3) return { name: "Three Card", shouldClear: true };
+    return { name: null };
+  }
 
-  // Pair safety net must always be merged, not only when no other hand exists.
-  // Otherwise a row/column Straight or Three can hide an adjacent A,A / 2,2 / ... pair
-  // made by the newly placed card on the other axis.
-  results.push(...findDirectPlacedPairFallback(board, row, col));
+  if (length === 3) {
+    if (straight) return { name: "Straight", shouldClear: true };
+    if (groups[0] === 3) return { name: "Three Card", shouldClear: true };
+    return { name: null };
+  }
 
-  return normalizeResults(results).filter((result) => isValidPairResult(board, result));
+  if (length === 2) {
+    if (groups[0] === 2) return { name: "One Pair", shouldClear: false };
+    return { name: null };
+  }
+
+  return { name: null };
+}
+
+function addSelfTestRow(
+  rows: HandJudgeSelfTestRow[],
+  label: string,
+  expectedName: string | null,
+  expectedClear: boolean | undefined,
+  actualResult: HandResult | null,
+  options: { storePasses?: boolean } = {}
+): void {
+  const actualName = actualResult?.name ?? null;
+  const actualClear = actualResult?.shouldClear;
+  const passed =
+    actualName === expectedName &&
+    (expectedName === null || typeof expectedClear !== "boolean" || actualClear === expectedClear);
+
+  if (passed && !options.storePasses) return;
+
+  rows.push({
+    label,
+    expected:
+      expectedName === null
+        ? "なし"
+        : `${expectedName}${expectedClear ? "[clear]" : "[stay]"}`,
+    actual:
+      actualResult === null
+        ? "なし"
+        : `${actualResult.name}${actualResult.shouldClear ? "[clear]" : "[stay]"}`,
+    passed,
+  });
+}
+
+function testManualBoardCase(testCase: HandJudgeSelfTestCase): HandJudgeSelfTestRow {
+  const board = createBoardFromTestCells(testCase.cells);
+  const placedRow = testCase.placedRow ?? testCase.cells[testCase.cells.length - 1]?.row ?? 0;
+  const placedCol = testCase.placedCol ?? testCase.cells[testCase.cells.length - 1]?.col ?? 0;
+  const results = evaluateBoard(board, placedRow, placedCol);
+  const expectedClear = testCase.expectedClear ?? {};
+  const hasExpected = testCase.expectedNames.every((name) =>
+    hasExpectedHand(results, name, expectedClear[name])
+  );
+  const hasForbidden = (testCase.forbiddenNames ?? []).some((name) =>
+    results.some((result) => result.name === name)
+  );
+  const passed = hasExpected && !hasForbidden;
+
+  return {
+    label: testCase.label,
+    expected: testCase.expectedNames.length > 0 ? testCase.expectedNames.join(" + ") : "なし",
+    actual: summarizeHandResults(results),
+    passed,
+  };
+}
+
+function generateRankSequences(length: number): Rank[][] {
+  const sequences: Rank[][] = [];
+
+  function build(current: Rank[]): void {
+    if (current.length === length) {
+      sequences.push([...current]);
+      return;
+    }
+
+    for (const rank of TEST_RANKS) {
+      current.push(rank);
+      build(current);
+      current.pop();
+    }
+  }
+
+  build([]);
+  return sequences;
+}
+
+function runExactWindowExhaustiveSelfTests(rows: HandJudgeSelfTestRow[]): { testedCount: number; failedCount: number } {
+  let testedCount = 0;
+  const failedBefore = rows.filter((row) => !row.passed).length;
+
+  for (const length of [2, 3, 4, 5]) {
+    const rankSequences = generateRankSequences(length);
+
+    for (const rankSequence of rankSequences) {
+      const suitVariants: Suit[][] =
+        length === 5
+          ? [TEST_MIXED_SUITS_5, TEST_SAME_SUIT_5]
+          : [TEST_MIXED_SUITS_SHORT.slice(0, length)];
+
+      for (const suitVariant of suitVariants) {
+        testedCount++;
+        const expected = getExpectedExactWindowResultForTest(rankSequence, suitVariant);
+        const actual = judgePokerWindow(createWindowSnapshots(rankSequence, suitVariant));
+        addSelfTestRow(
+          rows,
+          `exact window ${rankSequence.join(",")} / ${suitVariant.join(",")}`,
+          expected.name,
+          expected.shouldClear,
+          actual
+        );
+      }
+    }
+  }
+
+  const failedAfter = rows.filter((row) => !row.passed).length;
+  return { testedCount, failedCount: failedAfter - failedBefore };
+}
+
+function runBoardIntegrationSelfTests(rows: HandJudgeSelfTestRow[]): { testedCount: number; failedCount: number } {
+  const sameSuitSpades: Suit[] = ["spade", "spade", "spade", "spade", "spade"];
+  const sameSuitDiamonds: Suit[] = ["diamond", "diamond", "diamond", "diamond", "diamond"];
+  const cases: HandJudgeSelfTestCase[] = [
+    { label: "AA one pair horizontal", cells: horizontalCards(["A", "A"]), expectedNames: ["One Pair"], expectedClear: { "One Pair": false } },
+    { label: "AA one pair vertical placed second A", cells: verticalCards(["A", "A"], { col: 1, startRow: 2 }), placedRow: 3, placedCol: 1, expectedNames: ["One Pair"], expectedClear: { "One Pair": false } },
+    { label: "22 one pair horizontal", cells: horizontalCards(["2", "2"]), expectedNames: ["One Pair"], expectedClear: { "One Pair": false } },
+    { label: "22 one pair vertical placed second 2", cells: verticalCards(["2", "2"], { col: 1, startRow: 3 }), expectedNames: ["One Pair"], expectedClear: { "One Pair": false } },
+    { label: "33 one pair vertical", cells: verticalCards(["3", "3"]), expectedNames: ["One Pair"], expectedClear: { "One Pair": false } },
+    { label: "2,3 is not one pair", cells: horizontalCards(["2", "3"]), expectedNames: [], forbiddenNames: ["One Pair"] },
+    { label: "A,3 is not one pair", cells: horizontalCards(["A", "3"]), expectedNames: [], forbiddenNames: ["One Pair"] },
+    { label: "A gap A is not one pair", cells: [{ row: 0, col: 0, rank: "A", suit: "spade" }, { row: 0, col: 2, rank: "A", suit: "heart" }], expectedNames: [], forbiddenNames: ["One Pair"] },
+    { label: "AAA three card horizontal", cells: horizontalCards(["A", "A", "A"]), expectedNames: ["Three Card"], expectedClear: { "Three Card": true } },
+    { label: "222 three card vertical", cells: verticalCards(["2", "2", "2"]), expectedNames: ["Three Card"], expectedClear: { "Three Card": true } },
+    { label: "333 three card horizontal", cells: horizontalCards(["3", "3", "3"]), expectedNames: ["Three Card"], expectedClear: { "Three Card": true } },
+    { label: "A,2,3 straight horizontal", cells: horizontalCards(["A", "2", "3"]), expectedNames: ["Straight"], expectedClear: { Straight: true } },
+    { label: "3,2,A straight vertical", cells: verticalCards(["3", "2", "A"]), expectedNames: ["Straight"], expectedClear: { Straight: true } },
+    { label: "2,3,4 straight", cells: horizontalCards(["2", "3", "4"]), expectedNames: ["Straight"], expectedClear: { Straight: true } },
+    {
+      label: "overlap 5,5,4,3 still clears 5,4,3 straight",
+      cells: horizontalCards(["5", "5", "4", "3"], { suits: ["spade", "club", "spade", "diamond"] }),
+      expectedNames: ["Straight"],
+      expectedClear: { Straight: true },
+    },
+    { label: "2,3,4,5 straight", cells: horizontalCards(["2", "3", "4", "5"]), expectedNames: ["Straight"], expectedClear: { Straight: true } },
+    { label: "5,4,3,2,A straight", cells: horizontalCards(["5", "4", "3", "2", "A"]), expectedNames: ["Straight"], expectedClear: { Straight: true } },
+    {
+      label: "A,2,3 straight; unrelated 2,2 pair on another line is ignored",
+      cells: [
+        { row: 3, col: 1, rank: "2", suit: "heart" },
+        { row: 4, col: 0, rank: "A", suit: "diamond" },
+        { row: 4, col: 1, rank: "2", suit: "diamond" },
+        { row: 4, col: 2, rank: "3", suit: "heart" },
+      ],
+      placedRow: 4,
+      placedCol: 2,
+      expectedNames: ["Straight"],
+      forbiddenNames: ["One Pair"],
+      expectedClear: { Straight: true },
+    },
+    { label: "A,3,2 is not straight", cells: horizontalCards(["A", "3", "2"]), expectedNames: [], forbiddenNames: ["Straight"] },
+    { label: "2,A,3 is not straight", cells: horizontalCards(["2", "A", "3"]), expectedNames: [], forbiddenNames: ["Straight"] },
+    { label: "2 gap 3,4 is not straight", cells: [{ row: 0, col: 0, rank: "2", suit: "spade" }, { row: 0, col: 2, rank: "3", suit: "heart" }, { row: 0, col: 3, rank: "4", suit: "diamond" }], expectedNames: [], forbiddenNames: ["Straight"] },
+    { label: "Royal straight flush", cells: horizontalCards(["A", "K", "Q", "J", "10"], { suits: sameSuitSpades }), expectedNames: ["Royal Straight Flush"], expectedClear: { "Royal Straight Flush": true } },
+    { label: "Straight flush", cells: horizontalCards(["9", "8", "7", "6", "5"], { suits: sameSuitSpades }), expectedNames: ["Straight Flush"], expectedClear: { "Straight Flush": true } },
+    { label: "Four card", cells: horizontalCards(["7", "7", "7", "7", "K"]), placedRow: 0, placedCol: 0, expectedNames: ["Four Card"], expectedClear: { "Four Card": true } },
+    { label: "Full house AAA22", cells: horizontalCards(["A", "A", "A", "2", "2"]), expectedNames: ["Full House"], expectedClear: { "Full House": true } },
+    { label: "Full house 333AA", cells: horizontalCards(["3", "3", "3", "A", "A"]), expectedNames: ["Full House"], expectedClear: { "Full House": true } },
+    { label: "Flush", cells: horizontalCards(["K", "J", "8", "4", "2"], { suits: sameSuitDiamonds }), expectedNames: ["Flush"], expectedClear: { Flush: true } },
+    { label: "Two pair AA33", cells: horizontalCards(["A", "A", "3", "3"]), expectedNames: ["Two Pair"], expectedClear: { "Two Pair": true } },
+    { label: "Two pair 2233", cells: horizontalCards(["2", "2", "3", "3"]), expectedNames: ["Two Pair"], expectedClear: { "Two Pair": true } },
+  ];
+
+  for (const rank of TEST_RANKS) {
+    cases.push({
+      label: `${rank}${rank} runtime one pair horizontal placed second`,
+      cells: horizontalCards([rank, rank], { row: 2, startCol: 1 }),
+      placedRow: 2,
+      placedCol: 2,
+      expectedNames: ["One Pair"],
+      expectedClear: { "One Pair": false },
+    });
+
+    cases.push({
+      label: `${rank}${rank} runtime one pair vertical placed second`,
+      cells: verticalCards([rank, rank], { col: 2, startRow: 1 }),
+      placedRow: 2,
+      placedCol: 2,
+      expectedNames: ["One Pair"],
+      expectedClear: { "One Pair": false },
+    });
+  }
+
+  const failedBefore = rows.filter((row) => !row.passed).length;
+  for (const testCase of cases) {
+    const row = testManualBoardCase(testCase);
+    if (!row.passed) rows.push(row);
+  }
+
+  const failedAfter = rows.filter((row) => !row.passed).length;
+  return { testedCount: cases.length, failedCount: failedAfter - failedBefore };
+}
+
+function runNutsHandJudgeSelfTest(): HandJudgeSelfTestSummary {
+  const rows: HandJudgeSelfTestRow[] = [];
+  const integration = runBoardIntegrationSelfTests(rows);
+  const exhaustive = runExactWindowExhaustiveSelfTests(rows);
+  const failedRows = rows.filter((row) => !row.passed);
+  const totalCount = integration.testedCount + exhaustive.testedCount;
+  const summary: HandJudgeSelfTestSummary = {
+    passed: failedRows.length === 0,
+    passedCount: totalCount - failedRows.length,
+    failedCount: failedRows.length,
+    rows: failedRows,
+  };
+
+  if (typeof console !== "undefined") {
+    console.group(summary.passed ? "✅ NUTS hand judge exhaustive self-test: PASS" : "❌ NUTS hand judge exhaustive self-test: FAIL");
+    console.log(`Board integration tests: ${integration.testedCount}`);
+    console.log(`Exact adjacent window exhaustive tests: ${exhaustive.testedCount}`);
+    console.log(`Passed: ${summary.passedCount}/${totalCount}`);
+    console.log("Coverage: exact adjacent windows length 2/3/4 all rank-order combinations, length 5 all rank-order combinations with mixed suits and same-suit variants, plus horizontal/vertical board integration and gap checks.");
+    if (failedRows.length > 0) {
+      console.table(failedRows);
+      console.error("Failed cases", failedRows);
+    }
+    console.groupEnd();
+  }
+
+  return summary;
 }
 
 function clearHands(board: Board, results: HandResult[]): Board {
@@ -1128,36 +1669,86 @@ function StatBox({
 
 const roleExamples = [
   {
-    name: "Pair",
+    name: "Royal Straight Flush",
     cards: [
-      { rank: "7", suit: "heart" as Suit },
-      { rank: "7", suit: "spade" as Suit },
-    ],
-  },
-  {
-    name: "Three",
-    cards: [
+      { rank: "A", suit: "heart" as Suit },
+      { rank: "K", suit: "heart" as Suit },
       { rank: "Q", suit: "heart" as Suit },
-      { rank: "Q", suit: "diamond" as Suit },
-      { rank: "Q", suit: "club" as Suit },
+      { rank: "J", suit: "heart" as Suit },
+      { rank: "10", suit: "heart" as Suit },
     ],
   },
   {
-    name: "Straight",
+    name: "Straight Flush",
     cards: [
+      { rank: "9", suit: "spade" as Suit },
+      { rank: "8", suit: "spade" as Suit },
+      { rank: "7", suit: "spade" as Suit },
+      { rank: "6", suit: "spade" as Suit },
       { rank: "5", suit: "spade" as Suit },
-      { rank: "6", suit: "heart" as Suit },
+    ],
+  },
+  {
+    name: "Four Card",
+    cards: [
+      { rank: "7", suit: "spade" as Suit },
+      { rank: "7", suit: "heart" as Suit },
+      { rank: "7", suit: "diamond" as Suit },
       { rank: "7", suit: "club" as Suit },
     ],
   },
   {
     name: "Full House",
     cards: [
-      { rank: "9", suit: "heart" as Suit },
-      { rank: "9", suit: "spade" as Suit },
-      { rank: "9", suit: "club" as Suit },
+      { rank: "Q", suit: "spade" as Suit },
+      { rank: "Q", suit: "heart" as Suit },
+      { rank: "Q", suit: "diamond" as Suit },
+      { rank: "8", suit: "club" as Suit },
+      { rank: "8", suit: "spade" as Suit },
+    ],
+  },
+  {
+    name: "Flush",
+    cards: [
       { rank: "K", suit: "diamond" as Suit },
+      { rank: "J", suit: "diamond" as Suit },
+      { rank: "8", suit: "diamond" as Suit },
+      { rank: "4", suit: "diamond" as Suit },
+      { rank: "2", suit: "diamond" as Suit },
+    ],
+  },
+  {
+    name: "Straight",
+    cards: [
+      { rank: "10", suit: "spade" as Suit },
+      { rank: "9", suit: "heart" as Suit },
+      { rank: "8", suit: "diamond" as Suit },
+      { rank: "7", suit: "club" as Suit },
+      { rank: "6", suit: "spade" as Suit },
+    ],
+  },
+  {
+    name: "Three Card",
+    cards: [
+      { rank: "J", suit: "spade" as Suit },
+      { rank: "J", suit: "heart" as Suit },
+      { rank: "J", suit: "diamond" as Suit },
+    ],
+  },
+  {
+    name: "Two Pair",
+    cards: [
+      { rank: "K", suit: "spade" as Suit },
       { rank: "K", suit: "heart" as Suit },
+      { rank: "7", suit: "diamond" as Suit },
+      { rank: "7", suit: "club" as Suit },
+    ],
+  },
+  {
+    name: "One Pair",
+    cards: [
+      { rank: "A", suit: "spade" as Suit },
+      { rank: "A", suit: "heart" as Suit },
     ],
   },
 ];
@@ -2114,6 +2705,31 @@ export default function Home() {
   const bgmTrackRef = useRef<string>("");
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (typeof window === "undefined") return;
+
+    const testWindow = window as Window & {
+      __runNutsHandTests?: () => HandJudgeSelfTestSummary;
+    };
+
+    // Full exhaustive suite (773k cases) is available on demand. It is NOT run
+    // on mount because it blocks the main thread for several seconds.
+    testWindow.__runNutsHandTests = runNutsHandJudgeSelfTest;
+
+    // Lightweight board-integration check on mount (fast, ~tens of cases).
+    const integrationRows: HandJudgeSelfTestRow[] = [];
+    runBoardIntegrationSelfTests(integrationRows);
+    const integrationFailures = integrationRows.filter((row) => !row.passed);
+    if (typeof console !== "undefined") {
+      if (integrationFailures.length === 0) {
+        console.log("✅ NUTS board self-test: PASS");
+      } else {
+        console.error("❌ NUTS board self-test: FAIL", integrationFailures);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (typeof document === "undefined" || typeof window === "undefined") return;
     if (screen !== "game") return;
 
@@ -2650,7 +3266,7 @@ export default function Home() {
                     </div>
                     <div className="rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
                       <p className="font-black tracking-[0.12em] text-[#f7d17a]">03 CLEAR & COMBO</p>
-                      <p className="mt-1 text-xs leading-5">Three以上の役は消えます。Pairは消えずにコンボをつなぎます。</p>
+                      <p className="mt-1 text-xs leading-5">One Pair以外の役は消えます。High Cardは役ではありません。</p>
                     </div>
                   </div>
                 </div>
@@ -2661,37 +3277,28 @@ export default function Home() {
                   </h3>
 
                   <div className="grid gap-2 text-xs text-[#d9efe4]">
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">PAIR</p>
-                        <p className="mt-1 leading-5">同じ数字2枚。消えない。コンボ継続用。</p>
+                    {[
+                      ["ROYAL STRAIGHT FLUSH", "同じスートの A-K-Q-J-10。消える。", scoreTable.royalStraightFlush],
+                      ["STRAIGHT FLUSH", "同じスートで5枚連続。消える。", scoreTable.straightFlush],
+                      ["FOUR CARD", "同じ数字4枚。4枚だけ消える。", scoreTable.fourCard],
+                      ["FULL HOUSE", "同じ数字3枚 + 別の同じ数字2枚。消える。", scoreTable.fullHouse],
+                      ["FLUSH", "5枚すべて同じスート。消える。", scoreTable.flush],
+                      ["STRAIGHT", "3枚以上の数字が連続。スート不問。消える。", scoreTable.straight],
+                      ["THREE CARD", "同じ数字3枚。3枚だけ消える。", scoreTable.three],
+                      ["TWO PAIR", "同じ数字2枚が2組。4枚だけ消える。", scoreTable.twoPair],
+                      ["ONE PAIR", "同じ数字2枚。消えない。コンボ継続用。", scoreTable.onePair],
+                    ].map(([name, description, score]) => (
+                      <div
+                        key={String(name)}
+                        className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]"
+                      >
+                        <div>
+                          <p className="font-black tracking-[0.12em] text-[#fff4cf]">{name}</p>
+                          <p className="mt-1 leading-5">{description}</p>
+                        </div>
+                        <p className="font-black text-[#f7d17a]">+{score}</p>
                       </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.pair * 2}</p>
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">THREE CARD</p>
-                        <p className="mt-1 leading-5">同じ数字3枚。役カードが消える。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.three * 3}</p>
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">STRAIGHT</p>
-                        <p className="mt-1 leading-5">連続した数字3枚。Aは1としても使えます。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.straight * 3}</p>
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-xl border-[2px] border-[#06140f] bg-[#071b15] p-3 shadow-[3px_3px_0_#020806]">
-                      <div>
-                        <p className="font-black tracking-[0.12em] text-[#fff4cf]">FULL HOUSE</p>
-                        <p className="mt-1 leading-5">3枚同数字 + 2枚同数字。高得点。</p>
-                      </div>
-                      <p className="font-black text-[#f7d17a]">+{scoreTable.fullHouse * 5}</p>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
@@ -2939,20 +3546,18 @@ export default function Home() {
       nextComboWindow = MAX_COMBO_WINDOW;
     }
 
-    const clearTargets = new Set<string>();
+    // Highlight = the hand(s) related to the placed card (drives the HIT glow).
     const handTargets = new Set<string>();
-
     for (const result of results) {
       for (const cardPosition of result.cards) {
         handTargets.add(keyOf(cardPosition.row, cardPosition.col));
       }
-
-      if (!result.shouldClear) continue;
-
-      for (const cardPosition of result.cards) {
-        clearTargets.add(keyOf(cardPosition.row, cardPosition.col));
-      }
     }
+
+    // Clear = every completed clearing hand anywhere on the board (One Pair is
+    // never swept). This guarantees that no non-pair hand can stay on the board,
+    // even one left over from a previous turn.
+    const clearTargets = findBoardClearCellKeys(newBoard);
 
     const boardBeforeClear = newBoard.map((boardRow) => [...boardRow]);
 
